@@ -1,0 +1,123 @@
+@import 'tailwindcss';
+
+/*
+ * Sistema de diseño — Fase 0
+ *
+ * Origen: index.html del prototipo (bloque :root, lineas 11-47).
+ * Identidad derivada de la grafica municipal de La Paz: vino, rosa de acento,
+ * fondo rosado claro y textura de olas.
+ *
+ * Dos reglas que gobiernan este archivo:
+ *
+ * 1. Ningun color hexadecimal debe aparecer fuera de este bloque @theme.
+ *    Si una vista necesita un color que no esta aqui, el color falta aqui.
+ *
+ * 2. Los tokens terminados en -text son los unicos permitidos para texto e
+ *    iconos sobre superficies claras. Los tokens base son para rellenos,
+ *    graficas, bordes y fondos. El motivo esta documentado abajo.
+ */
+
+@theme {
+  /* Superficies */
+  --color-canvas: #f8eef1;
+  --color-surface: #ffffff;
+  --color-surface-sunken: #f7e8ec;
+
+  /* Texto */
+  --color-ink: #2c1119;
+  --color-ink-muted: #6a4650;
+  --color-ink-subtle: #82626b;
+
+  /* Lineas */
+  --color-line: #eedde2;
+  --color-line-strong: #ddc4cc;
+
+  /* Marca */
+  --color-primary: #7a1c38;
+  --color-primary-strong: #5c1329;
+  --color-primary-soft: #f3d9e0;
+  --color-on-primary: #ffffff;
+
+  --color-accent: #e6637a;
+  --color-accent-text: #ce2140;
+  --color-accent-soft: #fbe0e6;
+
+  /* Estados de satisfaccion */
+  --color-positive: #2f9e6b;
+  --color-positive-text: #247952;
+  --color-positive-soft: #dff2e7;
+
+  --color-neutral: #c08a1e;
+  --color-neutral-text: #8b6416;
+  --color-neutral-soft: #f7edd4;
+
+  --color-negative: #c14d4d;
+  --color-negative-text: #ba4141;
+  --color-negative-soft: #f7e0e0;
+
+  /* Foco */
+  --color-ring: #ce2140;
+
+  /* Tipografia */
+  --font-display: 'Poppins', 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-script: 'Pacifico', ui-serif, cursive;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  /* Radios */
+  --radius-card: 16px;
+  --radius-control: 10px;
+
+  /* Sombras */
+  --shadow-card: 0 1px 2px rgb(74 20 40 / 0.05), 0 8px 24px rgb(74 20 40 / 0.08);
+  --shadow-overlay: 0 16px 48px rgb(74 20 40 / 0.20);
+}
+
+/*
+ * CONTRASTE MEDIDO — WCAG 2.2 AA · RNF-GEN-006
+ *
+ * Calculado sobre las tres superficies del sistema. AA exige 4.5:1 para texto
+ * normal y 3:1 para componentes de interfaz y texto grande.
+ *
+ *                        #ffffff   #f8eef1   #f7e8ec
+ *   primary   #7a1c38     10.24     9.02      8.64    AA
+ *   ink       #2c1119     17.48    15.39     14.74    AA
+ *   ink-muted #6a4650      8.06     7.10      6.80    AA
+ *
+ *   accent    #e6637a      3.27     2.88      2.75    NO cumple para texto
+ *   positive  #2f9e6b      3.37     2.97      2.85    NO cumple para texto
+ *   neutral   #c08a1e      3.05     2.68      2.57    NO cumple para texto
+ *   negative  #c14d4d      4.73     4.17      3.99    NO cumple sobre canvas
+ *   ink-3     #9c7c85      3.73     3.28      3.14    NO cumple para texto
+ *
+ * De ahi salen las variantes -text, todas verificadas por encima de 4.50 en
+ * las tres superficies. Y de ahi sale tambien la sustitucion de --ink-3 del
+ * prototipo (#9c7c85, el color de .muted) por --color-ink-subtle (#82626b):
+ * ese token se usaba para texto secundario y no cumplia. La diferencia visual
+ * es minima; la diferencia de lectura no.
+ *
+ * El color nunca es el unico portador de un estado (ANEXO 1 seccion 47):
+ * positivo, neutral y negativo siempre llevan ademas texto o forma.
+ */
+
+/*
+ * DIRECCION DEL TEXTO — LTR y RTL · ANEXO 1 secciones 50 y 96
+ *
+ * No hay estilos direccionales en este archivo, y es deliberado. La direccion
+ * se resuelve con el atributo dir del elemento html y con las utilidades
+ * logicas de Tailwind: ms-* me-* ps-* pe-* start-* end-* text-start text-end.
+ *
+ * Las utilidades fisicas —ml-* mr-* pl-* pr-* left-* right-*— quedan
+ * prohibidas en plantillas. bin/check.sh lo verifica en cada entrega y el
+ * numero permitido es cero.
+ */
+
+/*
+ * TIPOGRAFIA — pendiente
+ *
+ * Las cuatro familias son de licencia abierta (OFL) y pueden autoalojarse.
+ * El prototipo las carga desde Google Fonts; produccion no debe depender de
+ * un tercero para renderizar texto. El autoalojado es TASK-006, Fase 1.
+ * Hasta entonces las declaraciones @font-face no existen y el navegador cae
+ * en las familias de respaldo, que ya estan declaradas arriba.
+ */
