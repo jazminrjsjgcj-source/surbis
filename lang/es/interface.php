@@ -15,6 +15,29 @@ return [
         'forgot' => 'Olvide mi contrasena',
     ],
 
+    'forgot' => [
+        'title' => 'Recuperar contrasena',
+        'subtitle' => 'Encuestas de satisfaccion',
+        'help' => 'Escribe tu correo y te enviaremos una liga para definir una contrasena nueva.',
+        'email' => 'Correo electronico',
+        'submit' => 'Enviar liga',
+        'back' => 'Volver al acceso',
+    ],
+
+    'reset' => [
+        'title' => 'Restablecer contrasena',
+        'subtitle' => 'Encuestas de satisfaccion',
+        'help' => 'Define una contrasena nueva para tu cuenta.',
+        'email' => 'Correo electronico',
+        'password' => 'Contrasena nueva',
+        'confirmation' => 'Confirma la contrasena',
+        'submit' => 'Guardar y continuar',
+    ],
+
+    'password' => [
+        'policy' => 'Al menos :min caracteres, con letras y numeros.',
+    ],
+
     'organizations' => [
         'title' => 'Elige una organizacion',
         'subtitle' => 'Encuestas de satisfaccion',

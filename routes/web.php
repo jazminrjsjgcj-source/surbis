@@ -3,7 +3,9 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\OrganizationChoiceController;
+use App\Http\Controllers\Auth\PasswordResetLinkController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -12,6 +14,24 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('guest')->group(function (): void {
     Route::get('/login', [LoginController::class, 'create'])->name('login');
     Route::post('/login', [LoginController::class, 'store']);
+
+    /*
+     * Recuperacion de contrasena. RF-AUT-008 a 013.
+     *
+     * Los nombres password.request, password.email, password.reset y
+     * password.store son los que Laravel espera: la notificacion que envia
+     * el broker construye la liga con route('password.reset'). Renombrarlos
+     * romperia el correo sin que ninguna prueba de rutas lo notara.
+     */
+    Route::get('/recuperar-contrasena', [PasswordResetLinkController::class, 'create'])
+        ->name('password.request');
+    Route::post('/recuperar-contrasena', [PasswordResetLinkController::class, 'store'])
+        ->name('password.email');
+
+    Route::get('/restablecer-contrasena/{token}', [NewPasswordController::class, 'create'])
+        ->name('password.reset');
+    Route::post('/restablecer-contrasena', [NewPasswordController::class, 'store'])
+        ->name('password.store');
 });
 
 Route::middleware('auth')->group(function (): void {

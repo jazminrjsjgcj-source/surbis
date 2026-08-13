@@ -349,6 +349,11 @@
     color: var(--color-negative-text);
   }
 
+  .alert-ok {
+    background: var(--color-positive-soft);
+    color: var(--color-positive-text);
+  }
+
   .alert-title {
     font-weight: 600;
   }

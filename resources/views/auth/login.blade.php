@@ -2,6 +2,8 @@
     <h1 class="text-xl">{{ __('interface.login.heading') }}</h1>
     <p class="hint mt-1 mb-4">{{ __('interface.login.help') }}</p>
 
+    <x-status-message />
+
     <x-error-summary />
 
     <form method="POST" action="{{ route('login') }}">
@@ -40,6 +42,10 @@
                 <input id="remember" name="remember" type="checkbox" value="1">
                 {{ __('interface.login.remember') }}
             </label>
+
+            <a href="{{ route('password.request') }}" class="text-primary text-sm">
+                {{ __('interface.login.forgot') }}
+            </a>
         </div>
 
         <button type="submit" class="btn btn-primary btn-lg btn-block">

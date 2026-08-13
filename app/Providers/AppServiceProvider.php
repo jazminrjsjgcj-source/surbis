@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Domain\Identity\PasswordPolicy;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -24,6 +26,7 @@ class AppServiceProvider extends ServiceProvider
         $this->configureDates();
         $this->configureDatabase();
         $this->configureUrls();
+        $this->configurePasswords();
     }
 
     /**
@@ -60,6 +63,15 @@ class AppServiceProvider extends ServiceProvider
     private function configureDatabase(): void
     {
         DB::prohibitDestructiveCommands($this->app->isProduction());
+    }
+
+    /**
+     * La politica de contrasenas del sistema se aplica en todas partes por
+     * defecto, no regla a regla en cada formulario. RF-AUT-012.
+     */
+    private function configurePasswords(): void
+    {
+        Password::defaults(fn (): Password => PasswordPolicy::rules());
     }
 
     /**
