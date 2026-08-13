@@ -65,6 +65,48 @@ return [
         'back' => 'Volver al inicio',
     ],
 
+    'branches' => [
+        'title' => 'Sucursales',
+        'subtitle' => 'Las sedes y oficinas de tu organizacion.',
+        'new' => 'Nueva sucursal',
+        'name' => 'Nombre',
+        'code' => 'Codigo',
+        'code_hint' => 'Letras, numeros, punto, guion y guion bajo. Unico dentro de tu organizacion.',
+        'status' => 'Estado',
+        'areas' => 'Areas',
+        'people' => 'Colaboradores',
+        'actions' => 'Acciones',
+        'edit' => 'Editar',
+        'archive' => 'Archivar',
+        'activate' => 'Activar',
+        'save' => 'Guardar',
+        'cancel' => 'Cancelar',
+        'search' => 'Buscar por nombre o codigo',
+        'filter_all' => 'Todas',
+        'filter_active' => 'Activas',
+        'filter_archived' => 'Archivadas',
+        'state_active' => 'Activa',
+        'state_archived' => 'Archivada',
+
+        'created' => 'Sucursal creada.',
+        'updated' => 'Sucursal actualizada.',
+        'archived' => 'Sucursal archivada. El historial se conserva.',
+        'activated' => 'Sucursal activada.',
+
+        'archive_blocked' => 'No se puede archivar todavia: hay :references. Reasignalos antes.',
+
+        'reference' => [
+            'memberships' => ':count colaborador asignado|:count colaboradores asignados',
+            'staff_members' => ':count persona evaluable asignada|:count personas evaluables asignadas',
+            'areas' => ':count area activa|:count areas activas',
+        ],
+
+        'empty_title' => 'Todavia no hay sucursales',
+        'empty_help' => 'Las sucursales son las sedes donde se levantan encuestas. Crea la primera para poder asignarle colaboradores y dispositivos.',
+        'empty_search_title' => 'Ninguna sucursal coincide',
+        'empty_search_help' => 'Prueba con otro nombre o codigo, o quita el filtro.',
+    ],
+
     'organizations' => [
         'title' => 'Elige una organizacion',
         'subtitle' => 'Encuestas de satisfaccion',

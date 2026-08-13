@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Domain\Identity\PasswordPolicy;
+use App\Domain\Organizations\Models\Branch;
+use App\Policies\BranchPolicy;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
@@ -27,6 +30,7 @@ class AppServiceProvider extends ServiceProvider
         $this->configureDatabase();
         $this->configureUrls();
         $this->configurePasswords();
+        $this->configurePolicies();
     }
 
     /**
@@ -63,6 +67,22 @@ class AppServiceProvider extends ServiceProvider
     private function configureDatabase(): void
     {
         DB::prohibitDestructiveCommands($this->app->isProduction());
+    }
+
+    /**
+     * Laravel descubre las Policies por convencion: busca App\Policies\XPolicy
+     * para App\Models\X. Los modelos de este proyecto viven en
+     * App\Domain\...\Models, asi que el descubrimiento no los encuentra y hay
+     * que registrarlas a mano.
+     *
+     * Si se olvida una, `authorize()` lanza AuthorizationException y la accion
+     * se deniega: falla en la direccion segura y de forma ruidosa. Aun asi se
+     * registra explicitamente, porque un 403 inexplicable cuesta mas de
+     * diagnosticar que una linea aqui.
+     */
+    private function configurePolicies(): void
+    {
+        Gate::policy(Branch::class, BranchPolicy::class);
     }
 
     /**

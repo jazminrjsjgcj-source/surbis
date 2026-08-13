@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Account\SecurityController;
+use App\Http\Controllers\Admin\BranchController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\OrganizationChoiceController;
@@ -97,6 +98,29 @@ Route::middleware(['auth', 'organization'])->group(function (): void {
     Route::middleware('role:admin')->group(function (): void {
         Route::view('/admin', 'placeholder.module', ['module' => 'Panel de organizacion'])
             ->name('admin.dashboard');
+
+        /*
+         * Sucursales. RF-AO-BRA-001, 002 y 004.
+         *
+         * Sin resource(): no hay destroy. RF-GEN-010 prohibe el borrado
+         * fisico de entidades con historial, asi que archive/activate
+         * sustituyen a delete y decirlo en la ruta evita que alguien anada
+         * un destroy por costumbre.
+         */
+        Route::get('/admin/sucursales', [BranchController::class, 'index'])
+            ->name('admin.branches.index');
+        Route::get('/admin/sucursales/nueva', [BranchController::class, 'create'])
+            ->name('admin.branches.create');
+        Route::post('/admin/sucursales', [BranchController::class, 'store'])
+            ->name('admin.branches.store');
+        Route::get('/admin/sucursales/{branch}/editar', [BranchController::class, 'edit'])
+            ->name('admin.branches.edit');
+        Route::put('/admin/sucursales/{branch}', [BranchController::class, 'update'])
+            ->name('admin.branches.update');
+        Route::post('/admin/sucursales/{branch}/archivar', [BranchController::class, 'archive'])
+            ->name('admin.branches.archive');
+        Route::post('/admin/sucursales/{branch}/activar', [BranchController::class, 'activate'])
+            ->name('admin.branches.activate');
     });
 
     Route::middleware('role:collaborator')->group(function (): void {
