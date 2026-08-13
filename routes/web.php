@@ -2,10 +2,12 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Account\SecurityController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\OrganizationChoiceController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
+use App\Http\Controllers\Auth\SecondFactorController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -34,8 +36,41 @@ Route::middleware('guest')->group(function (): void {
         ->name('password.store');
 });
 
+/*
+ * Verificacion del segundo factor. RF-AUT-007, 014 y 015.
+ *
+ * NO va detras de 'auth': en este punto el usuario todavia no tiene sesion.
+ * La puerta es 'pending', que exige un identificador pendiente en la sesion
+ * parcial.
+ */
+Route::middleware('pending')->group(function (): void {
+    Route::get('/verificacion', [SecondFactorController::class, 'create'])
+        ->name('auth.second-factor.challenge');
+    Route::post('/verificacion', [SecondFactorController::class, 'store']);
+    Route::post('/verificacion/reenviar', [SecondFactorController::class, 'resend'])
+        ->name('auth.second-factor.resend');
+    Route::post('/verificacion/cancelar', [SecondFactorController::class, 'destroy'])
+        ->name('auth.second-factor.cancel');
+});
+
 Route::middleware('auth')->group(function (): void {
     Route::post('/logout', [LoginController::class, 'destroy'])->name('logout');
+
+    /*
+     * Seguridad de la cuenta. Acordada en P-011: sin ella nadie puede activar
+     * el segundo factor y la pantalla de verificacion seria inalcanzable.
+     *
+     * Es de la cuenta, no de la organizacion, asi que no lleva el middleware
+     * 'organization': un administrador de plataforma tambien necesita entrar.
+     */
+    Route::get('/cuenta/seguridad', [SecurityController::class, 'show'])
+        ->name('account.security');
+    Route::post('/cuenta/seguridad/mfa', [SecurityController::class, 'enable'])
+        ->name('account.security.enable');
+    Route::delete('/cuenta/seguridad/mfa', [SecurityController::class, 'disable'])
+        ->name('account.security.disable');
+    Route::post('/cuenta/seguridad/codigos', [SecurityController::class, 'regenerate'])
+        ->name('account.security.codes');
 
     Route::get('/organizaciones', [OrganizationChoiceController::class, 'create'])
         ->name('auth.organizations.choose');

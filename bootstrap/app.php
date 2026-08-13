@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Middleware\EnsureActiveOrganization;
 use App\Http\Middleware\EnsureMembershipRole;
+use App\Http\Middleware\EnsurePendingSecondFactor;
 use App\Http\Middleware\EnsurePlatformAdmin;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -35,6 +36,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'organization' => EnsureActiveOrganization::class,
             'role' => EnsureMembershipRole::class,
             'platform' => EnsurePlatformAdmin::class,
+            'pending' => EnsurePendingSecondFactor::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
