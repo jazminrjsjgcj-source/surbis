@@ -1,0 +1,10 @@
+Borra el diagnostico temporal, que ya cumplio su funcion:
+
+    tests/Feature/Auth/PasswordHashDiagnosticTest.php
+
+Sus tres pruebas comprueban el comportamiento de Laravel, no el del producto.
+Dejarlas seria conservar tres pruebas verdes que no vigilan ninguna regla
+nuestra: ruido que cuesta 30 segundos en cada ejecucion y que el dia que
+fallen no dira nada sobre el sistema.
+
+Lo que averiguaron queda escrito en SessionInvalidationTest.
