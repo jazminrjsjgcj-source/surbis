@@ -17,20 +17,15 @@ cd "$(dirname "$0")/.."
 # nada y la 3 recibiria rutas inexistentes. Se detecto ejecutando el script
 # contra un archivo con emoji en el nombre.
 GIT=(git -c core.quotepath=off)
-
-# Si git no puede leer el repositorio, las tres comprobaciones se basan en
-# `git ls-files` y no devuelven nada. El `|| true` que necesita grep se traga
-# tambien el error de git, la variable queda vacia, y "vacia" se lee como
-# "limpia": el script informaba de cero hallazgos habiendo mirado cero
-# archivos. Detectado en la primera ejecucion real, 13 ago 2026.
+# Sin repositorio git, las tres comprobaciones se basan en `git ls-files` y no
+# devuelven nada. El `|| true` que necesita grep se traga tambien el error de
+# git, la variable queda vacia, y "vacia" se lee como "limpia": el script
+# informaba de cero hallazgos habiendo mirado cero archivos.
+# Detectado en la primera ejecucion real, 13 ago 2026.
 if ! "${GIT[@]}" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-  printf 'check.sh: git no puede leer este repositorio.\n'
-  printf '  Las tres comprobaciones dependen de git ls-files. Causa probable:\n'
-  printf '    no hay repositorio        -> git init\n'
-  printf '    propietario no coincide   -> git config --global --add \\\n'
-  printf '                                   safe.directory /var/www/html\n'
-  printf '\n  Error original de git:\n'
-  "${GIT[@]}" rev-parse --is-inside-work-tree || true
+  printf 'check.sh: esto no es un repositorio git.\n'
+  printf '  Las tres comprobaciones dependen de git ls-files y no pueden\n'
+  printf '  ejecutarse. Ejecuta primero:  git init\n'
   exit 1
 fi
 
@@ -88,13 +83,24 @@ mapfile -d '' plantillas < <("${GIT[@]}" ls-files -z '*.blade.php' '*.css')
 if [ "${#plantillas[@]}" -eq 0 ]; then
   printf '   no hay plantillas todavia\n'
 else
+  # Utilidades de Tailwind
   fisicas=$(grep -nE '(^|[^a-z-])(ml|mr|pl|pr)-[0-9a-z]|(^|[^a-z-])(left|right)-[0-9]|text-(left|right)([^a-z-]|$)' \
     "${plantillas[@]}" || true)
-  if [ -z "$fisicas" ]; then
+
+  # Propiedades CSS. Esta mitad falto en la primera version: la comprobacion
+  # solo miraba nombres de utilidad, asi que un `margin-left: 12px` escrito a
+  # mano en una hoja de estilos pasaba sin que nadie lo viera. Se anadio al
+  # escribir el primer CSS del sistema.
+  propiedades=$(grep -nE 'margin-(left|right)[[:space:]]*:|padding-(left|right)[[:space:]]*:|border-(left|right)[[:space:]]*(-[a-z]+)?[[:space:]]*:|(^|[^-a-z])(left|right)[[:space:]]*:|text-align[[:space:]]*:[[:space:]]*(left|right)' \
+    "${plantillas[@]}" || true)
+
+  hallazgos=$(printf '%s\n%s' "$fisicas" "$propiedades" | grep -v '^$' || true)
+
+  if [ -z "$hallazgos" ]; then
     ok
   else
-    fallo "sustituye por la utilidad logica equivalente:"
-    printf '     %s\n' "$fisicas"
+    fallo "sustituye por la propiedad o utilidad logica equivalente:"
+    printf '     %s\n' "$hallazgos"
   fi
 fi
 

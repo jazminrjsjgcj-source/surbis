@@ -55,6 +55,10 @@
   --color-negative-text: #ba4141;
   --color-negative-soft: #f7e0e0;
 
+  /* Marca sobre fondo oscuro */
+  --color-wordmark-accent: #ffd7e0;
+  --color-primary-deep: #93264a;
+
   /* Foco */
   --color-ring: #ce2140;
 
@@ -121,3 +125,251 @@
  * Hasta entonces las declaraciones @font-face no existen y el navegador cae
  * en las familias de respaldo, que ya estan declaradas arriba.
  */
+
+/* ===========================================================================
+   PATRON DE OLAS
+   Textura de la identidad municipal de La Paz. Va fuera de @theme porque no
+   pertenece a ninguna familia de utilidades de Tailwind: es una imagen.
+   =========================================================================== */
+
+:root {
+  --pattern-waves: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='60' viewBox='0 0 240 60'%3E%3Cpath d='M0 30 C 40 6, 80 6, 120 30 S 200 54, 240 30' fill='none' stroke='%23ffffff' stroke-opacity='0.10' stroke-width='2'/%3E%3Cpath d='M0 48 C 40 24, 80 24, 120 48 S 200 72, 240 48' fill='none' stroke='%23ffffff' stroke-opacity='0.07' stroke-width='2'/%3E%3C/svg%3E");
+}
+
+/* ===========================================================================
+   BASE
+   =========================================================================== */
+
+@layer base {
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  /*
+     Foco visible en todo el sistema, no pantalla por pantalla.
+     RNF-GEN-006 y RNF-AUT-004: la interfaz debe poder recorrerse con teclado
+     viendo siempre donde se esta.
+  */
+  :focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
+  ::selection {
+    background: var(--color-primary-soft);
+  }
+
+  /* Respeta a quien pidio menos movimiento en su sistema operativo. */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* ===========================================================================
+   COMPONENTES
+   Primitivas que reutilizaran las 46 pantallas. Definirlas una vez evita que
+   cada plantilla repita quince utilidades y que el sistema derive hacia el
+   "CSS acumulado sin estructura" que el ANEXO 1 seccion 28 prohibe.
+
+   Todas usan propiedades LOGICAS. Ni una izquierda o derecha fija.
+   =========================================================================== */
+
+@layer components {
+  /*
+     Fondo de las pantallas sin sesion. Va aqui y no en un atributo style de
+     la plantilla: el prototipo usaba 380 estilos inline y el ANEXO 1 pide
+     reproducir el resultado visual sin heredar la tecnica.
+  */
+  .auth-backdrop {
+    background-color: var(--color-primary);
+    background-image:
+      var(--pattern-waves),
+      linear-gradient(
+        155deg,
+        var(--color-primary) 0%,
+        var(--color-primary-deep) 42%,
+        var(--color-accent) 130%
+      );
+    background-size: 240px 60px, cover;
+  }
+
+  .card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-card);
+  }
+
+  .card-pad {
+    padding: 1.25rem;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+    margin-block-end: 0.875rem;
+  }
+
+  .field > label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--color-ink-muted);
+  }
+
+    /*
+     .hint se usa dentro y fuera de .field: es el texto secundario del
+     sistema. Definirla anidada bajo .field, como estaba, la habria dejado sin
+     efecto en los parrafos de ayuda de cada pantalla. El texto se veria, solo
+     que negro y grande, y nadie lo habria relacionado con esta regla.
+  */
+
+  .hint {
+    font-size: 0.75rem;
+    color: var(--color-ink-subtle);
+  }
+
+  .field .error {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--color-negative-text);
+  }
+
+  .input {
+    inline-size: 100%;
+    block-size: 2.5rem;
+    padding-inline: 0.75rem;
+    border-radius: var(--radius-control);
+    border: 1px solid var(--color-line-strong);
+    background: var(--color-surface);
+    color: var(--color-ink);
+    font-family: inherit;
+    font-size: 0.875rem;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+
+  .input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--color-primary-soft);
+  }
+
+  .input[aria-invalid="true"] {
+    border-color: var(--color-negative);
+    box-shadow: 0 0 0 3px var(--color-negative-soft);
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    block-size: 2.375rem;
+    padding-inline: 1.125rem;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    font-weight: 600;
+    font-size: 0.84rem;
+    font-family: inherit;
+    cursor: pointer;
+    white-space: nowrap;
+    user-select: none;
+    transition: background 0.15s, border-color 0.15s, transform 0.05s;
+  }
+
+  .btn:active {
+    transform: translateY(1px);
+  }
+
+  .btn[disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  .btn-lg {
+    block-size: 3rem;
+    padding-inline: 1.5rem;
+    font-size: 0.94rem;
+  }
+
+  .btn-block {
+    inline-size: 100%;
+  }
+
+  .btn-primary {
+    background: var(--color-primary);
+    color: var(--color-on-primary);
+  }
+
+  .btn-primary:hover {
+    background: var(--color-primary-strong);
+  }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--color-ink-muted);
+    border-color: var(--color-line-strong);
+  }
+
+  .btn-ghost:hover {
+    background: var(--color-surface-sunken);
+    color: var(--color-ink);
+  }
+
+  .alert {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+    padding: 0.75rem 0.875rem;
+    border-radius: var(--radius-control);
+    font-size: 0.8125rem;
+    border: 1px solid transparent;
+  }
+
+  /*
+     El estado nunca viaja solo en el color: el titulo lo nombra en texto.
+     ANEXO 1 seccion 47.
+  */
+  .alert-error {
+    background: var(--color-negative-soft);
+    color: var(--color-negative-text);
+  }
+
+  .alert-title {
+    font-weight: 600;
+  }
+
+  .choice {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.75rem 0.875rem;
+    border: 1px solid var(--color-line-strong);
+    border-radius: var(--radius-control);
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+  }
+
+  .choice:hover {
+    background: var(--color-surface-sunken);
+  }
+
+  .choice:has(input:checked) {
+    border-color: var(--color-primary);
+    background: var(--color-primary-soft);
+  }
+}
