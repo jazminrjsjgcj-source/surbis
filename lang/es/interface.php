@@ -65,6 +65,21 @@ return [
         'back' => 'Volver al inicio',
     ],
 
+    'nav' => [
+        'label' => 'Secciones',
+        'organization' => 'Organizacion',
+        'dashboard' => 'Panel',
+        'branches' => 'Sucursales',
+        'security' => 'Mi seguridad',
+    ],
+
+    'pagination' => [
+        'label' => 'Paginacion',
+        'showing' => 'Mostrando <strong>:first</strong> a <strong>:last</strong> de <strong>:total</strong>',
+        'previous' => 'Anterior',
+        'next' => 'Siguiente',
+    ],
+
     'branches' => [
         'title' => 'Sucursales',
         'subtitle' => 'Las sedes y oficinas de tu organizacion.',
@@ -77,6 +92,10 @@ return [
         'people' => 'Colaboradores',
         'actions' => 'Acciones',
         'edit' => 'Editar',
+        'edit_title' => 'Editar sucursal',
+        'apply' => 'Aplicar',
+        'clear_filters' => 'Quitar filtros',
+        'caption' => 'Sucursales de tu organizacion, con sus areas y colaboradores asignados.',
         'archive' => 'Archivar',
         'activate' => 'Activar',
         'save' => 'Guardar',
@@ -104,6 +123,43 @@ return [
         'empty_title' => 'Todavia no hay sucursales',
         'empty_help' => 'Las sucursales son las sedes donde se levantan encuestas. Crea la primera para poder asignarle colaboradores y dispositivos.',
         'empty_search_title' => 'Ninguna sucursal coincide',
+        'empty_search_help' => 'Prueba con otro nombre o codigo, o quita el filtro.',
+    ],
+
+    'areas' => [
+        'title' => 'Areas de :branch',
+        'subtitle' => 'Las areas son los puntos de atencion dentro de una sucursal.',
+        'new' => 'Nueva area',
+        'edit_title' => 'Editar area',
+        'name' => 'Nombre',
+        'code' => 'Codigo',
+        'code_hint' => 'Letras, numeros, punto, guion y guion bajo. Unico dentro de esta sucursal.',
+        'status' => 'Estado',
+        'people' => 'Colaboradores',
+        'evaluable' => 'Personas evaluables',
+        'actions' => 'Acciones',
+        'edit' => 'Editar',
+        'archive' => 'Archivar',
+        'activate' => 'Activar',
+        'save' => 'Guardar',
+        'cancel' => 'Cancelar',
+        'search' => 'Buscar por nombre o codigo',
+        'apply' => 'Aplicar',
+        'clear_filters' => 'Quitar filtros',
+        'back' => 'Volver a sucursales',
+        'caption' => 'Areas de esta sucursal, con los colaboradores asignados a cada una.',
+
+        'created' => 'Area creada.',
+        'updated' => 'Area actualizada.',
+        'archived' => 'Area archivada. El historial se conserva.',
+        'activated' => 'Area activada.',
+
+        'archive_blocked' => 'No se puede archivar todavia: hay :references. Reasignalos antes.',
+        'activate_blocked' => 'No se puede activar un area dentro de una sucursal archivada. Activa antes la sucursal.',
+
+        'empty_title' => 'Esta sucursal no tiene areas',
+        'empty_help' => 'Las areas separan los puntos de atencion dentro de una sede: ventanillas, mostradores, departamentos. Sirven para saber donde se levanto cada encuesta.',
+        'empty_search_title' => 'Ninguna area coincide',
         'empty_search_help' => 'Prueba con otro nombre o codigo, o quita el filtro.',
     ],
 

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\Organizations;
 
-use App\Application\Organizations\Exceptions\BranchHasActiveReferences;
+use App\Application\Organizations\Exceptions\HasActiveReferences;
 use App\Domain\Audit\RecordAuditLog;
 use App\Domain\Organizations\Enums\BranchStatus;
 use App\Domain\Organizations\Models\Branch;
@@ -14,14 +14,14 @@ final class ArchiveBranch
     public function __construct(private readonly RecordAuditLog $audit) {}
 
     /**
-     * @throws BranchHasActiveReferences
+     * @throws HasActiveReferences
      */
     public function execute(Branch $branch): void
     {
         $references = $branch->activeReferences();
 
         if ($references !== []) {
-            throw new BranchHasActiveReferences($references);
+            throw new HasActiveReferences($references);
         }
 
         $branch->forceFill([

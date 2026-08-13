@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Domain\Identity\PasswordPolicy;
+use App\Domain\Organizations\Models\Area;
 use App\Domain\Organizations\Models\Branch;
+use App\Policies\AreaPolicy;
 use App\Policies\BranchPolicy;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -31,6 +34,7 @@ class AppServiceProvider extends ServiceProvider
         $this->configureUrls();
         $this->configurePasswords();
         $this->configurePolicies();
+        $this->configurePagination();
     }
 
     /**
@@ -70,6 +74,19 @@ class AppServiceProvider extends ServiceProvider
     }
 
     /**
+     * La paginacion usa la plantilla del proyecto y no la de Laravel.
+     *
+     * La del framework trae utilidades de Tailwind escritas a mano, con
+     * colores fuera de nuestros tokens y direcciones fijas que romperian en
+     * arabe. Adaptarla cuesta mas que escribirla.
+     */
+    private function configurePagination(): void
+    {
+        Paginator::defaultView('vendor.pagination.default');
+        Paginator::defaultSimpleView('vendor.pagination.default');
+    }
+
+    /**
      * Laravel descubre las Policies por convencion: busca App\Policies\XPolicy
      * para App\Models\X. Los modelos de este proyecto viven en
      * App\Domain\...\Models, asi que el descubrimiento no los encuentra y hay
@@ -82,6 +99,7 @@ class AppServiceProvider extends ServiceProvider
      */
     private function configurePolicies(): void
     {
+        Gate::policy(Area::class, AreaPolicy::class);
         Gate::policy(Branch::class, BranchPolicy::class);
     }
 

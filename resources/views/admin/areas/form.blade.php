@@ -1,21 +1,23 @@
-<x-layouts.admin :title="$branch ? __('interface.branches.edit_title') : __('interface.branches.new')">
+<x-layouts.admin :title="$area ? __('interface.areas.edit_title') : __('interface.areas.new')"
+                 :subtitle="$branch->name">
+
     <div class="card card-pad max-w-140">
         <form method="POST"
-              action="{{ $branch
-                  ? route('admin.branches.update', $branch)
-                  : route('admin.branches.store') }}">
+              action="{{ $area
+                  ? route('admin.areas.update', [$branch, $area])
+                  : route('admin.areas.store', $branch) }}">
             @csrf
-            @if ($branch)
+            @if ($area)
                 @method('PUT')
             @endif
 
             <div class="field">
-                <label for="name">{{ __('interface.branches.name') }}</label>
+                <label for="name">{{ __('interface.areas.name') }}</label>
                 <input id="name"
                        name="name"
                        type="text"
                        class="input"
-                       value="{{ old('name', $branch?->name) }}"
+                       value="{{ old('name', $area?->name) }}"
                        required
                        @error('name') aria-invalid="true" aria-describedby="name-error" @enderror>
                 @error('name')
@@ -24,28 +26,25 @@
             </div>
 
             <div class="field">
-                <label for="code">{{ __('interface.branches.code') }}</label>
+                <label for="code">{{ __('interface.areas.code') }}</label>
                 <input id="code"
                        name="code"
                        type="text"
                        class="input"
-                       value="{{ old('code', $branch?->code) }}"
+                       value="{{ old('code', $area?->code) }}"
                        required
                        aria-describedby="code-hint @error('code') code-error @enderror"
                        @error('code') aria-invalid="true" @enderror>
-                <span id="code-hint" class="hint">{{ __('interface.branches.code_hint') }}</span>
+                <span id="code-hint" class="hint">{{ __('interface.areas.code_hint') }}</span>
                 @error('code')
                     <span id="code-error" class="error">{{ $message }}</span>
                 @enderror
             </div>
 
             <div class="actions">
-                <button type="submit" class="btn btn-primary">
-                    {{ __('interface.branches.save') }}
-                </button>
-
-                <a href="{{ route('admin.branches.index') }}" class="btn btn-ghost">
-                    {{ __('interface.branches.cancel') }}
+                <button type="submit" class="btn btn-primary">{{ __('interface.areas.save') }}</button>
+                <a href="{{ route('admin.areas.index', $branch) }}" class="btn btn-ghost">
+                    {{ __('interface.areas.cancel') }}
                 </a>
             </div>
         </form>

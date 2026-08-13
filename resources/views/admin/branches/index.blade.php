@@ -1,97 +1,132 @@
-{{--
-    Vista desnuda. El sistema de diseno llega en TASK-012b: tabla, paginacion,
-    filtros y estados vacios son piezas nuevas que van a reutilizar treinta
-    pantallas, y construirlas bien una vez vale mas que decorar esta.
---}}
-<x-layout :title="__('interface.branches.title')">
-    <main>
-        <h1>{{ __('interface.branches.title') }}</h1>
-        <p>{{ __('interface.branches.subtitle') }}</p>
+<x-layouts.admin :title="__('interface.branches.title')"
+                 :subtitle="__('interface.branches.subtitle')">
 
-        <x-status-message />
-        <x-error-summary />
+    <div class="toolbar">
+        <form method="GET" action="{{ route('admin.branches.index') }}" class="toolbar contents">
+            <div class="field toolbar-grow">
+                <label for="q">{{ __('interface.branches.search') }}</label>
+                <input id="q" name="q" type="search" class="input" value="{{ $search }}">
+            </div>
 
-        <p><a href="{{ route('admin.branches.create') }}">{{ __('interface.branches.new') }}</a></p>
+            <div class="field">
+                <label for="status">{{ __('interface.branches.status') }}</label>
+                <select id="status" name="status" class="input">
+                    <option value="">{{ __('interface.branches.filter_all') }}</option>
+                    <option value="active" @selected($status === 'active')>
+                        {{ __('interface.branches.filter_active') }}
+                    </option>
+                    <option value="archived" @selected($status === 'archived')>
+                        {{ __('interface.branches.filter_archived') }}
+                    </option>
+                </select>
+            </div>
 
-        <form method="GET" action="{{ route('admin.branches.index') }}">
-            <label for="q">{{ __('interface.branches.search') }}</label>
-            <input id="q" name="q" type="search" value="{{ $search }}">
-
-            <label for="status">{{ __('interface.branches.status') }}</label>
-            <select id="status" name="status">
-                <option value="">{{ __('interface.branches.filter_all') }}</option>
-                <option value="active" @selected($status === 'active')>{{ __('interface.branches.filter_active') }}</option>
-                <option value="archived" @selected($status === 'archived')>{{ __('interface.branches.filter_archived') }}</option>
-            </select>
-
-            <button type="submit">{{ __('interface.branches.search') }}</button>
+            <button type="submit" class="btn btn-ghost">{{ __('interface.branches.apply') }}</button>
         </form>
 
-        @if ($branches->isEmpty())
-            {{--
-                Dos estados vacios distintos, no uno.
-                "No hay sucursales" cuando de verdad no hay ninguna explica
-                que son y como crear la primera. "Ninguna coincide" cuando hay
-                un filtro puesto dice otra cosa y ofrece otra salida. Un solo
-                mensaje para los dos casos deja al usuario creyendo que perdio
-                sus datos.
-            --}}
+        <a href="{{ route('admin.branches.create') }}" class="btn btn-primary ms-auto">
+            {{ __('interface.branches.new') }}
+        </a>
+    </div>
+
+    @if ($branches->isEmpty())
+        <div class="card card-pad">
             @if ($search !== '' || $status !== '')
-                <h2>{{ __('interface.branches.empty_search_title') }}</h2>
-                <p>{{ __('interface.branches.empty_search_help') }}</p>
+                <x-empty-state :title="__('interface.branches.empty_search_title')"
+                               :help="__('interface.branches.empty_search_help')">
+                    <a href="{{ route('admin.branches.index') }}" class="btn btn-ghost">
+                        {{ __('interface.branches.clear_filters') }}
+                    </a>
+                </x-empty-state>
             @else
-                <h2>{{ __('interface.branches.empty_title') }}</h2>
-                <p>{{ __('interface.branches.empty_help') }}</p>
+                <x-empty-state :title="__('interface.branches.empty_title')"
+                               :help="__('interface.branches.empty_help')">
+                    <a href="{{ route('admin.branches.create') }}" class="btn btn-primary">
+                        {{ __('interface.branches.new') }}
+                    </a>
+                </x-empty-state>
             @endif
-        @else
-            <table>
-                <caption>{{ __('interface.branches.title') }}</caption>
-                <thead>
-                    <tr>
-                        <th scope="col">{{ __('interface.branches.name') }}</th>
-                        <th scope="col">{{ __('interface.branches.code') }}</th>
-                        <th scope="col">{{ __('interface.branches.status') }}</th>
-                        <th scope="col">{{ __('interface.branches.areas') }}</th>
-                        <th scope="col">{{ __('interface.branches.people') }}</th>
-                        <th scope="col">{{ __('interface.branches.actions') }}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach ($branches as $branch)
+        </div>
+    @else
+        <div class="card">
+            <div class="table-wrap">
+                <table class="table">
+                    <caption class="ps-3.5 pt-3">{{ __('interface.branches.caption') }}</caption>
+
+                    <thead>
                         <tr>
-                            <td>{{ $branch->name }}</td>
-                            <td>{{ $branch->code }}</td>
-                            <td>
-                                {{-- El estado se nombra en texto. ANEXO 1 seccion 47. --}}
-                                {{ $branch->isActive()
-                                    ? __('interface.branches.state_active')
-                                    : __('interface.branches.state_archived') }}
-                            </td>
-                            <td>{{ $branch->areas_count }}</td>
-                            <td>{{ $branch->memberships_count }}</td>
-                            <td>
-                                <a href="{{ route('admin.branches.edit', $branch) }}">
-                                    {{ __('interface.branches.edit') }}
-                                </a>
-
-                                @if ($branch->isActive())
-                                    <form method="POST" action="{{ route('admin.branches.archive', $branch) }}">
-                                        @csrf
-                                        <button type="submit">{{ __('interface.branches.archive') }}</button>
-                                    </form>
-                                @else
-                                    <form method="POST" action="{{ route('admin.branches.activate', $branch) }}">
-                                        @csrf
-                                        <button type="submit">{{ __('interface.branches.activate') }}</button>
-                                    </form>
-                                @endif
-                            </td>
+                            <th scope="col">{{ __('interface.branches.name') }}</th>
+                            <th scope="col">{{ __('interface.branches.code') }}</th>
+                            <th scope="col">{{ __('interface.branches.status') }}</th>
+                            <th scope="col">{{ __('interface.branches.areas') }}</th>
+                            <th scope="col">{{ __('interface.branches.people') }}</th>
+                            <th scope="col">{{ __('interface.branches.actions') }}</th>
                         </tr>
-                    @endforeach
-                </tbody>
-            </table>
+                    </thead>
 
-            {{ $branches->links() }}
-        @endif
-    </main>
-</x-layout>
+                    <tbody>
+                        @foreach ($branches as $branch)
+                            <tr>
+                                <td>{{ $branch->name }}</td>
+                                <td class="table-numeric">{{ $branch->code }}</td>
+
+                                <td>
+                                    {{-- El estado se nombra en texto dentro de
+                                         la etiqueta: el color acompana, no
+                                         informa. ANEXO 1 seccion 47. --}}
+                                    @if ($branch->isActive())
+                                        <span class="badge badge-active">
+                                            {{ __('interface.branches.state_active') }}
+                                        </span>
+                                    @else
+                                        <span class="badge badge-archived">
+                                            {{ __('interface.branches.state_archived') }}
+                                        </span>
+                                    @endif
+                                </td>
+
+                                <td class="table-numeric">
+                                    {{-- El conteo enlaza en lugar de quedarse
+                                         en un numero que no lleva a ningun
+                                         sitio. --}}
+                                    <a href="{{ route('admin.areas.index', $branch) }}"
+                                       class="text-primary">{{ $branch->areas_count }}</a>
+                                </td>
+                                <td class="table-numeric">{{ $branch->memberships_count }}</td>
+
+                                <td>
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <a href="{{ route('admin.branches.edit', $branch) }}"
+                                           class="text-primary text-sm">
+                                            {{ __('interface.branches.edit') }}
+                                        </a>
+
+                                        @if ($branch->isActive())
+                                            <form method="POST"
+                                                  action="{{ route('admin.branches.archive', $branch) }}">
+                                                @csrf
+                                                <button type="submit" class="text-ink-muted text-sm">
+                                                    {{ __('interface.branches.archive') }}
+                                                </button>
+                                            </form>
+                                        @else
+                                            <form method="POST"
+                                                  action="{{ route('admin.branches.activate', $branch) }}">
+                                                @csrf
+                                                <button type="submit" class="text-primary text-sm">
+                                                    {{ __('interface.branches.activate') }}
+                                                </button>
+                                            </form>
+                                        @endif
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {{ $branches->links() }}
+    @endif
+</x-layouts.admin>

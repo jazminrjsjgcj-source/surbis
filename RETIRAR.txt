@@ -1,10 +1,7 @@
-Borra el diagnostico temporal, que ya cumplio su funcion:
+Borra la excepcion que quedo sin uso:
 
-    tests/Feature/Auth/PasswordHashDiagnosticTest.php
+    app/Application/Organizations/Exceptions/BranchHasActiveReferences.php
 
-Sus tres pruebas comprueban el comportamiento de Laravel, no el del producto.
-Dejarlas seria conservar tres pruebas verdes que no vigilan ninguna regla
-nuestra: ruido que cuesta 30 segundos en cada ejecucion y que el dia que
-fallen no dira nada sobre el sistema.
-
-Lo que averiguaron queda escrito en SessionInvalidationTest.
+La sustituye HasActiveReferences, que sirve para sucursales y areas. Dejar la
+anterior seria conservar una clase que nadie instancia: codigo muerto que el
+dia que alguien lo encuentre le hara dudar de cual de las dos es la buena.

@@ -6,7 +6,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Application\Organizations\ActivateBranch;
 use App\Application\Organizations\ArchiveBranch;
-use App\Application\Organizations\Exceptions\BranchHasActiveReferences;
+use App\Application\Organizations\Exceptions\HasActiveReferences;
 use App\Application\Organizations\SaveBranch;
 use App\Domain\Identity\Models\Membership;
 use App\Domain\Organizations\Models\Branch;
@@ -93,7 +93,7 @@ final class BranchController extends Controller
 
         try {
             $archive->execute($branch);
-        } catch (BranchHasActiveReferences $blocked) {
+        } catch (HasActiveReferences $blocked) {
             // El mensaje dice CUANTAS cosas hay que mover y de que tipo.
             // RNF-AO-BRA-001 pide advertencia y resolucion explicita, y una
             // advertencia sin el detalle obliga a buscarlo a mano.

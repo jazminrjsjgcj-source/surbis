@@ -436,3 +436,301 @@
     background: var(--color-primary-soft);
   }
 }
+
+/* ===========================================================================
+   MARCO DE ADMINISTRACION
+   Barra lateral y contenido. Todo en propiedades logicas: en arabe la barra
+   pasa al otro lado sin tocar una linea.
+   =========================================================================== */
+
+@layer components {
+  .shell {
+    display: grid;
+    grid-template-columns: 15rem 1fr;
+    min-block-size: 100vh;
+  }
+
+  .shell-nav {
+    background: var(--color-surface);
+    border-inline-end: 1px solid var(--color-line);
+    display: flex;
+    flex-direction: column;
+    padding-block: 1.125rem;
+  }
+
+  .shell-main {
+    display: flex;
+    flex-direction: column;
+    min-inline-size: 0;
+  }
+
+  .shell-topbar {
+    block-size: 3.75rem;
+    background: var(--color-surface);
+    border-block-end: 1px solid var(--color-line);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-inline: 1.5rem;
+  }
+
+  .shell-content {
+    padding: 1.5rem;
+    flex: 1;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding-inline: 1.125rem;
+    padding-block-end: 0.875rem;
+  }
+
+  .brand-mark {
+    inline-size: 1.875rem;
+    block-size: 1.875rem;
+    border-radius: 0.5625rem;
+    background: var(--color-primary);
+    color: var(--color-on-primary);
+    display: grid;
+    place-items: center;
+    font-family: var(--font-display);
+    font-weight: 700;
+  }
+
+  .nav-section {
+    padding-inline: 0.75rem;
+  }
+
+  .nav-label {
+    font-size: 0.66rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-ink-subtle);
+    font-weight: 700;
+    padding: 0.625rem 0.625rem 0.375rem;
+  }
+
+  .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 0.6875rem;
+    padding: 0.5625rem 0.625rem;
+    border-radius: var(--radius-control);
+    color: var(--color-ink-muted);
+    font-weight: 500;
+    font-size: 0.845rem;
+    text-align: start;
+    transition: background 0.12s, color 0.12s;
+  }
+
+  .nav-link:hover {
+    background: var(--color-surface-sunken);
+    color: var(--color-ink);
+  }
+
+  /*
+     aria-current="page" y no una clase: el estado activo tiene que estar en
+     el marcado para que un lector de pantalla lo anuncie, no solo en el
+     color. ANEXO 1 seccion 47.
+  */
+  .nav-link[aria-current="page"] {
+    background: var(--color-primary-soft);
+    color: var(--color-primary-strong);
+    font-weight: 600;
+  }
+
+  .page-header {
+    margin-block-end: 1.25rem;
+  }
+
+  .page-header h1 {
+    font-size: 1.3rem;
+  }
+
+  /* Por debajo de 1000px la barra lateral pasa a ser una fila arriba. Sin
+     JavaScript: un menu que necesita script para abrirse es un menu que no
+     existe si el script falla. */
+  @media (max-width: 1000px) {
+    .shell {
+      grid-template-columns: 1fr;
+    }
+
+    .shell-nav {
+      border-inline-end: 0;
+      border-block-end: 1px solid var(--color-line);
+      padding-block: 0.75rem;
+    }
+
+    .nav-section {
+      display: flex;
+      gap: 0.25rem;
+      overflow-x: auto;
+    }
+
+    .nav-label {
+      display: none;
+    }
+
+    .nav-link {
+      white-space: nowrap;
+    }
+  }
+}
+
+/* ===========================================================================
+   TABLA, BARRA DE FILTROS, ETIQUETAS DE ESTADO, VACIOS Y PAGINACION
+   Las piezas que van a reutilizar treinta pantallas.
+   =========================================================================== */
+
+@layer components {
+  /* El envoltorio permite desplazamiento lateral en pantallas estrechas sin
+     romper la tabla ni esconder columnas. RNF-GEN-007. */
+  .table-wrap {
+    overflow-x: auto;
+  }
+
+  .table {
+    inline-size: 100%;
+    border-collapse: collapse;
+    font-size: 0.845rem;
+  }
+
+  .table caption {
+    text-align: start;
+    padding-block-end: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--color-ink-subtle);
+  }
+
+  .table th {
+    text-align: start;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-ink-subtle);
+    font-weight: 600;
+    padding: 0.625rem 0.875rem;
+    border-block-end: 1px solid var(--color-line);
+    white-space: nowrap;
+  }
+
+  .table td {
+    padding: 0.75rem 0.875rem;
+    border-block-end: 1px solid var(--color-line);
+    vertical-align: middle;
+  }
+
+  .table tbody tr:last-child td {
+    border-block-end: 0;
+  }
+
+  .table-numeric {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .toolbar {
+    display: flex;
+    gap: 0.625rem;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    margin-block-end: 1rem;
+  }
+
+  .toolbar .field {
+    margin-block-end: 0;
+  }
+
+  .toolbar-grow {
+    flex: 1;
+    min-inline-size: 12rem;
+    max-inline-size: 22rem;
+  }
+
+  /*
+     Etiqueta de estado. Lleva SIEMPRE texto: el color acompana, no informa.
+     Quien no distingue rojo de verde tiene que poder leer el estado.
+  */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.625rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: 1px solid transparent;
+  }
+
+  .badge-active {
+    background: var(--color-positive-soft);
+    color: var(--color-positive-text);
+  }
+
+  .badge-archived {
+    background: var(--color-surface-sunken);
+    color: var(--color-ink-muted);
+    border-color: var(--color-line-strong);
+  }
+
+  .empty {
+    text-align: center;
+    padding: 3rem 1.25rem;
+    max-inline-size: 28rem;
+    margin-inline: auto;
+  }
+
+  .empty h2 {
+    font-size: 1.05rem;
+  }
+
+  .empty p {
+    margin-block: 0.5rem 1rem;
+    font-size: 0.845rem;
+    color: var(--color-ink-subtle);
+  }
+
+  .pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-block-start: 1rem;
+    font-size: 0.8rem;
+    color: var(--color-ink-muted);
+  }
+
+  .pagination-links {
+    display: flex;
+    gap: 0.375rem;
+  }
+
+  .pagination-link {
+    display: inline-grid;
+    place-items: center;
+    min-inline-size: 2rem;
+    block-size: 2rem;
+    padding-inline: 0.5rem;
+    border-radius: var(--radius-control);
+    border: 1px solid var(--color-line-strong);
+    font-weight: 600;
+  }
+
+  .pagination-link:hover {
+    background: var(--color-surface-sunken);
+  }
+
+  .pagination-link[aria-current="page"] {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: var(--color-on-primary);
+  }
+
+  .pagination-link[aria-disabled="true"] {
+    opacity: 0.45;
+    pointer-events: none;
+  }
+}

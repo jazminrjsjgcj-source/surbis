@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Account\SecurityController;
+use App\Http\Controllers\Admin\AreaController;
 use App\Http\Controllers\Admin\BranchController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\NewPasswordController;
@@ -121,6 +122,32 @@ Route::middleware(['auth', 'organization'])->group(function (): void {
             ->name('admin.branches.archive');
         Route::post('/admin/sucursales/{branch}/activar', [BranchController::class, 'activate'])
             ->name('admin.branches.activate');
+
+        /*
+         * Areas, anidadas bajo su sucursal. RF-AO-BRA-001.
+         *
+         * scopeBindings(): Laravel comprueba que el area pertenezca a la
+         * sucursal de la URL antes de entrar al controlador. Es la misma
+         * regla que ensureBelongsTo(), aplicada una capa antes.
+         */
+        Route::prefix('/admin/sucursales/{branch}/areas')
+            ->scopeBindings()
+            ->group(function (): void {
+                Route::get('/', [AreaController::class, 'index'])
+                    ->name('admin.areas.index');
+                Route::get('/nueva', [AreaController::class, 'create'])
+                    ->name('admin.areas.create');
+                Route::post('/', [AreaController::class, 'store'])
+                    ->name('admin.areas.store');
+                Route::get('/{area}/editar', [AreaController::class, 'edit'])
+                    ->name('admin.areas.edit');
+                Route::put('/{area}', [AreaController::class, 'update'])
+                    ->name('admin.areas.update');
+                Route::post('/{area}/archivar', [AreaController::class, 'archive'])
+                    ->name('admin.areas.archive');
+                Route::post('/{area}/activar', [AreaController::class, 'activate'])
+                    ->name('admin.areas.activate');
+            });
     });
 
     Route::middleware('role:collaborator')->group(function (): void {
