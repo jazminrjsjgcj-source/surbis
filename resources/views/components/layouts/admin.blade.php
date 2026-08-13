@@ -28,8 +28,14 @@
 
                 <a href="{{ route('admin.branches.index') }}"
                    class="nav-link"
-                   @if (request()->routeIs('admin.branches.*')) aria-current="page" @endif>
+                   @if (request()->routeIs('admin.branches.*') || request()->routeIs('admin.areas.*')) aria-current="page" @endif>
                     {{ __('interface.nav.branches') }}
+                </a>
+
+                <a href="{{ route('admin.people.index') }}"
+                   class="nav-link"
+                   @if (request()->routeIs('admin.people.*')) aria-current="page" @endif>
+                    {{ __('interface.nav.people') }}
                 </a>
             </div>
         </nav>

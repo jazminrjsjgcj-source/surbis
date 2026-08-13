@@ -11,6 +11,23 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ isset($title) ? $title.' · '.config('app.name') : config('app.name') }}</title>
+
+    {{--
+        Vite::fonts() emite los @font-face de las familias declaradas en
+        vite.config.js. Devuelve un bloque <style> embebido, no un <link>, asi
+        que el navegador puede empezar a pedir las fuentes sin esperar a
+        descargar otra hoja.
+
+        Va ANTES de @vite: las declaraciones tienen que existir cuando llega la
+        hoja que las usa.
+
+        Sin esta linea, las fuentes se compilaban y quedaban en public/build
+        sin que ninguna pagina las pidiera. No daba error: la pagina cargaba,
+        se veia bien, y el navegador caia en la tipografia del sistema. Se
+        detecto mirando el listado de archivos generados, no el codigo.
+    --}}
+    {!! Vite::fonts() !!}
+
     @vite('resources/css/app.css')
 </head>
 <body class="min-h-screen">

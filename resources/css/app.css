@@ -117,13 +117,15 @@
  */
 
 /*
- * TIPOGRAFIA — pendiente
+ * TIPOGRAFIA
  *
- * Las cuatro familias son de licencia abierta (OFL) y pueden autoalojarse.
- * El prototipo las carga desde Google Fonts; produccion no debe depender de
- * un tercero para renderizar texto. El autoalojado es TASK-006, Fase 1.
- * Hasta entonces las declaraciones @font-face no existen y el navegador cae
- * en las familias de respaldo, que ya estan declaradas arriba.
+ * Las cuatro familias se declaran en vite.config.js y el plugin las descarga
+ * durante el build: se sirven desde public/build, sin peticiones a terceros
+ * en tiempo de ejecucion.
+ *
+ * Las familias de respaldo de cada token siguen ahi y no sobran: cubren el
+ * instante entre que la pagina se pinta y la fuente termina de cargar, y el
+ * caso de que no cargue.
  */
 
 /* ===========================================================================

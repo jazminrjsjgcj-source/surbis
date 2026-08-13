@@ -8,6 +8,7 @@ use App\Domain\Identity\Models\Membership;
 use App\Domain\Organizations\Enums\StaffMemberStatus;
 use App\Domain\Shared\Concerns\HasPublicUlid;
 use Database\Factories\StaffMemberFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -57,6 +58,49 @@ class StaffMember extends Model
     public function area(): BelongsTo
     {
         return $this->belongsTo(Area::class);
+    }
+
+    /**
+     * @param  Builder<StaffMember>  $query
+     * @return Builder<StaffMember>
+     */
+    public function scopeForOrganization(Builder $query, int $organizationId): Builder
+    {
+        return $query->where('organization_id', $organizationId);
+    }
+
+    /**
+     * Solo las que NO tienen cuenta.
+     *
+     * Las que la tienen ya aparecen en la lista a traves de su membresia; sin
+     * este filtro saldrian dos veces, una como cuenta y otra como persona, y
+     * el administrador creeria que hay dos Marias.
+     *
+     * @param  Builder<StaffMember>  $query
+     * @return Builder<StaffMember>
+     */
+    public function scopeWithoutAccount(Builder $query): Builder
+    {
+        return $query->whereNull('membership_id');
+    }
+
+    /**
+     * @param  Builder<StaffMember>  $query
+     * @return Builder<StaffMember>
+     */
+    public function scopeSearch(Builder $query, ?string $term): Builder
+    {
+        $term = trim((string) $term);
+
+        if ($term === '') {
+            return $query;
+        }
+
+        return $query->where(function (Builder $builder) use ($term): void {
+            $builder->where('first_name', 'ilike', '%'.$term.'%')
+                ->orWhere('last_name', 'ilike', '%'.$term.'%')
+                ->orWhere('employee_code', 'ilike', '%'.$term.'%');
+        });
     }
 
     public function hasUserAccount(): bool

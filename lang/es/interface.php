@@ -65,11 +65,86 @@ return [
         'back' => 'Volver al inicio',
     ],
 
+    'dashboard' => [
+        'title' => 'Panel',
+        'subtitle' => 'Punto de entrada a tu organizacion.',
+        'available' => 'Lo que ya puedes hacer',
+        'available_help' => 'Da de alta tus sedes y las personas que van a usar el sistema o ser evaluadas.',
+        'pending' => 'Lo que llega despues',
+        'pending_help' => 'Los indicadores de satisfaccion, las respuestas y el analisis aparecen cuando existan encuestas publicadas y respuestas que mostrar. Hasta entonces, este panel se queda como esta a proposito: un panel con cifras inventadas es peor que un panel sin cifras.',
+    ],
+
+    'people' => [
+        'title' => 'Usuarios y colaboradores',
+        'subtitle' => 'Las personas de tu organizacion: las que usan el sistema y las que se evaluan.',
+        'invite' => 'Invitar a alguien',
+        'name' => 'Nombre',
+        'email' => 'Correo',
+        'role' => 'Rol',
+        'branch' => 'Sucursal',
+        'area' => 'Area',
+        'kind' => 'En el sistema',
+        'status' => 'Estado',
+        'actions' => 'Acciones',
+        'caption' => 'Personas de tu organizacion. Las que no tienen cuenta solo se evaluan; no inician sesion.',
+
+        /*
+         * Lo que en una tabla normal serian celdas vacias. Un guion no
+         * distingue "no tiene" de "no se sabe" de "no aplica"; estas frases
+         * si.
+         */
+        'kind_account' => 'Cuenta',
+        'kind_account_evaluated' => 'Cuenta y se evalua',
+        'kind_evaluated' => 'Solo se evalua',
+        'no_login' => 'No inicia sesion',
+        'no_branch' => 'Sin asignar',
+
+        'role_admin' => 'Administrador',
+        'role_collaborator' => 'Colaborador',
+
+        'state_active' => 'Activa',
+        'state_suspended' => 'Suspendida',
+        'state_invited' => 'Invitacion pendiente',
+
+        'suspend' => 'Suspender',
+        'activate' => 'Reactivar',
+        'assign' => 'Asignar',
+        'save' => 'Guardar',
+        'cancel' => 'Cancelar',
+        'search' => 'Buscar por nombre, correo o codigo',
+        'apply' => 'Aplicar',
+        'clear_filters' => 'Quitar filtros',
+
+        'filter_all' => 'Todas',
+        'filter_accounts' => 'Con cuenta',
+        'filter_evaluated' => 'Solo evaluadas',
+
+        'invited' => 'Invitacion enviada. La persona entrara al definir su contrasena.',
+        'suspended' => 'Membresia suspendida. Su historial se conserva.',
+        'activated' => 'Membresia reactivada.',
+        'assigned' => 'Asignacion actualizada.',
+
+        'last_admin' => 'No se puede suspender al ultimo administrador activo. Nombra a otro antes.',
+        'self' => 'Tus propias acciones se hacen desde tu perfil.',
+
+        'invite_title' => 'Invitar a la organizacion',
+        'invite_help' => 'Le enviaremos una liga de un solo uso para que defina su contrasena. Al usarla, su cuenta queda activada.',
+        'invite_send' => 'Enviar invitacion',
+        'branch_none' => 'Sin sucursal',
+        'area_none' => 'Sin area',
+
+        'empty_title' => 'Todavia no hay nadie',
+        'empty_help' => 'Invita a las personas que van a administrar el sistema o abrir estaciones de quiosco. Las personas que solo se evaluan se registran desde su sucursal.',
+        'empty_search_title' => 'Nadie coincide',
+        'empty_search_help' => 'Prueba con otro nombre o correo, o quita el filtro.',
+    ],
+
     'nav' => [
         'label' => 'Secciones',
         'organization' => 'Organizacion',
         'dashboard' => 'Panel',
         'branches' => 'Sucursales',
+        'people' => 'Personas',
         'security' => 'Mi seguridad',
     ],
 

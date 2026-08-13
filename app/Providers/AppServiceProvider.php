@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Domain\Identity\Models\Membership;
 use App\Domain\Identity\PasswordPolicy;
 use App\Domain\Organizations\Models\Area;
 use App\Domain\Organizations\Models\Branch;
 use App\Policies\AreaPolicy;
 use App\Policies\BranchPolicy;
+use App\Policies\MembershipPolicy;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\Paginator;
@@ -101,6 +103,7 @@ class AppServiceProvider extends ServiceProvider
     {
         Gate::policy(Area::class, AreaPolicy::class);
         Gate::policy(Branch::class, BranchPolicy::class);
+        Gate::policy(Membership::class, MembershipPolicy::class);
     }
 
     /**

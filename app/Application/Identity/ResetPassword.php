@@ -21,7 +21,10 @@ use Illuminate\Support\Str;
  */
 final class ResetPassword
 {
-    public function __construct(private readonly PasswordBroker $broker) {}
+    public function __construct(
+        private readonly PasswordBroker $broker,
+        private readonly AcceptInvitation $accept,
+    ) {}
 
     /**
      * @param  array{email: string, password: string, password_confirmation: string, token: string}  $credentials
@@ -37,6 +40,12 @@ final class ResetPassword
                     'password' => $password,
                     'remember_token' => Str::random(60),
                 ])->save();
+
+                // P-015: si la contrasena se definia desde una invitacion,
+                // usarla la acepta y activa la membresia. Un restablecimiento
+                // normal no toca ninguna membresia, porque AcceptInvitation
+                // solo mira las invitadas y nunca usadas.
+                $this->accept->execute($user);
 
                 event(new PasswordResetEvent($user));
             }

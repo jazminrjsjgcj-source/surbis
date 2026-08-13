@@ -1,7 +1,7 @@
-Borra la excepcion que quedo sin uso:
+Si creaste tests/Feature/Admin/SuspendDiagnosticTest.php para diagnosticar
+esto, ya puedes borrarlo: la causa era el lockForUpdate y esta corregida.
 
-    app/Application/Organizations/Exceptions/BranchHasActiveReferences.php
+    Remove-Item tests\Feature\Admin\SuspendDiagnosticTest.php
 
-La sustituye HasActiveReferences, que sirve para sucursales y areas. Dejar la
-anterior seria conservar una clase que nadie instancia: codigo muerto que el
-dia que alguien lo encuentre le hara dudar de cual de las dos es la buena.
+Un diagnostico que sobrevive a su diagnostico se convierte en ruido: cuesta
+tiempo en cada ejecucion y el dia que falle no dira nada sobre el sistema.

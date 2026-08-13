@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\Account\SecurityController;
 use App\Http\Controllers\Admin\AreaController;
 use App\Http\Controllers\Admin\BranchController;
+use App\Http\Controllers\Admin\PersonController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\OrganizationChoiceController;
@@ -97,8 +98,15 @@ Route::middleware(['auth', 'platform'])->group(function (): void {
 
 Route::middleware(['auth', 'organization'])->group(function (): void {
     Route::middleware('role:admin')->group(function (): void {
-        Route::view('/admin', 'placeholder.module', ['module' => 'Panel de organizacion'])
-            ->name('admin.dashboard');
+        /*
+         * El panel usa el marco de administracion, no la vista marcador.
+         *
+         * Con el marcador, quien entraba aterrizaba en una pagina sin barra
+         * lateral y sin forma de llegar a sucursales ni a personas: las
+         * secciones existian y eran inalcanzables salvo escribiendo la
+         * direccion.
+         */
+        Route::view('/admin', 'admin.dashboard')->name('admin.dashboard');
 
         /*
          * Sucursales. RF-AO-BRA-001, 002 y 004.
@@ -122,6 +130,28 @@ Route::middleware(['auth', 'organization'])->group(function (): void {
             ->name('admin.branches.archive');
         Route::post('/admin/sucursales/{branch}/activar', [BranchController::class, 'activate'])
             ->name('admin.branches.activate');
+
+        /*
+         * Usuarios y colaboradores. RF-AO-COL-001 a 006.
+         *
+         * El parametro es el id de la membresia y no un ULID: memberships no
+         * tiene columna ulid en el modelo aprobado en TASK-004. La Policy
+         * comprueba la organizacion en cada accion, asi que un id ajeno da
+         * 403 y no toca nada. Queda anotado como P-019 por consistencia con
+         * el resto de las rutas.
+         */
+        Route::get('/admin/personas', [PersonController::class, 'index'])
+            ->name('admin.people.index');
+        Route::get('/admin/personas/invitar', [PersonController::class, 'create'])
+            ->name('admin.people.create');
+        Route::post('/admin/personas', [PersonController::class, 'store'])
+            ->name('admin.people.store');
+        Route::post('/admin/personas/{membership}/suspender', [PersonController::class, 'suspend'])
+            ->name('admin.people.suspend');
+        Route::post('/admin/personas/{membership}/activar', [PersonController::class, 'activate'])
+            ->name('admin.people.activate');
+        Route::put('/admin/personas/{membership}/asignacion', [PersonController::class, 'assign'])
+            ->name('admin.people.assign');
 
         /*
          * Areas, anidadas bajo su sucursal. RF-AO-BRA-001.
