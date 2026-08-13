@@ -8,7 +8,10 @@ use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\OrganizationChoiceController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\SecondFactorController;
+use App\Http\Controllers\HomeController;
 use Illuminate\Support\Facades\Route;
+
+Route::get('/', HomeController::class)->name('home');
 
 /*
  * Autenticacion. RF-AUT-001 a 006.

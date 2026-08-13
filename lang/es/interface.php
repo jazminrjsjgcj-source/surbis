@@ -62,6 +62,7 @@ return [
         'codes_help' => 'Guardalos ahora en un lugar seguro. No volveran a mostrarse: si los pierdes, tendras que generar otros.',
         'codes_regenerate' => 'Generar codigos nuevos',
         'codes_regenerated' => 'Codigos de recuperacion nuevos. Los anteriores dejaron de servir.',
+        'back' => 'Volver al inicio',
     ],
 
     'organizations' => [

@@ -27,6 +27,24 @@ class UserFactory extends Factory
             'status' => UserStatus::Active,
             'is_platform_admin' => false,
             'remember_token' => Str::random(10),
+
+            /*
+             * Estas tres van explicitas aunque su valor por defecto en la
+             * base ya sea null.
+             *
+             * create() devuelve un modelo con SOLO los atributos que se
+             * insertaron, no con la fila entera. Y Model::shouldBeStrict()
+             * convierte en excepcion leer un atributo que no se cargo. Asi
+             * que sin estas lineas, cualquier codigo que consulte
+             * hasMfaEnabled() sobre un usuario recien creado por la factory
+             * revienta, aunque sobre uno leido de la base funcione.
+             *
+             * Regla general: la factory declara todas las columnas que el
+             * modelo lee.
+             */
+            'mfa_secret' => null,
+            'mfa_confirmed_at' => null,
+            'mfa_channel' => null,
         ];
     }
 
