@@ -159,6 +159,40 @@ return [
         'empty_search_help' => 'Prueba con otro nombre o correo, o quita el filtro.',
     ],
 
+    'settings' => [
+        'title' => 'Configuracion de la encuesta',
+        'subtitle' => 'Como se comporta cuando alguien la contesta.',
+        'draft_notice' => 'Estos cambios se guardan en el borrador :version. La version publicada no se toca.',
+
+        'identity_mode' => 'Que se le pide a quien responde',
+        'identity_anonymous' => 'Nada. Anonima',
+        'identity_anonymous_help' => 'No se guarda ningun dato personal. Es lo mas seguro y lo que viene por defecto.',
+        'identity_confidential' => 'Sus datos, en confidencial',
+        'identity_confidential_help' => 'Se guardan cifrados y no aparecen en resultados. Solo puede consultarlos alguien autorizado, y cada consulta queda registrada.',
+        'identity_optional' => 'Sus datos, si quiere darlos',
+        'identity_identified' => 'Sus datos, obligatoriamente',
+
+        'comment_mode' => 'Comentario libre',
+        'comment_disabled' => 'No se pide',
+        'comment_optional' => 'Se ofrece, sin obligar',
+        'comment_required' => 'Se exige antes de terminar',
+
+        'allow_back' => 'Permitir volver a la pregunta anterior',
+        'help_enabled' => 'Ofrecer solicitar ayuda durante la encuesta',
+
+        'inactivity' => 'Reiniciar tras inactividad',
+        'inactivity_hint' => 'Segundos sin tocar la pantalla antes de descartar lo contestado y volver al inicio. Entre :min y :max.',
+
+        'introduction' => 'Texto de bienvenida',
+        'introduction_hint' => 'Lo primero que ve quien va a responder. Opcional.',
+        'thank_you' => 'Texto de agradecimiento',
+        'thank_you_hint' => 'Lo que ve al terminar. Opcional.',
+
+        'save' => 'Guardar configuracion',
+        'saved' => 'Configuracion guardada en el borrador.',
+        'link' => 'Configuracion',
+    ],
+
     'surveys' => [
         'title' => 'Encuestas',
         'subtitle' => 'Lo que se le pregunta a quien atiendes.',

@@ -6,6 +6,7 @@ namespace Tests\Feature\Admin;
 
 use App\Application\Surveys\OpenDraft;
 use App\Domain\Identity\Models\Membership;
+use App\Domain\Surveys\Enums\IdentityMode;
 use App\Domain\Surveys\Models\Survey;
 use App\Domain\Surveys\Models\SurveyVersion;
 use Illuminate\Database\QueryException;
@@ -101,14 +102,26 @@ final class SurveyTest extends TestCase
 
         $this->assertSame('published', $publicada->status->value);
         $this->assertSame(1, $publicada->version_number);
-        $this->assertSame(['identity_mode' => 'anonymous'], $publicada->settings);
+
+        /*
+         * Se compara el modo de identidad, no el array entero.
+         *
+         * Cuando se escribio esta prueba, settings era un array. TASK-016 le
+         * puso un cast y ahora devuelve un VersionSettings, asi que comparar
+         * contra ['identity_mode' => 'anonymous'] enfrentaba un objeto con un
+         * array y fallaba sin que hubiera nada roto.
+         *
+         * Comparar el valor concreto ademas dice mejor lo que se vigila: que
+         * la version publicada conserva lo que se le configuro.
+         */
+        $this->assertSame(IdentityMode::Anonymous, $publicada->settings->identityMode);
 
         $borrador = $survey->fresh()->draft;
         $this->assertSame(2, $borrador->version_number);
 
         // Y parte de la configuracion anterior: empezar en blanco obligaria a
         // reescribir todos los ajustes para cambiar una coma.
-        $this->assertSame(['identity_mode' => 'anonymous'], $borrador->settings);
+        $this->assertSame(IdentityMode::Anonymous, $borrador->settings->identityMode);
     }
 
     public function test_abrir_borrador_dos_veces_devuelve_el_mismo(): void

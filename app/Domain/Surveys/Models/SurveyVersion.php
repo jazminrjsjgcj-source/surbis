@@ -7,6 +7,7 @@ namespace App\Domain\Surveys\Models;
 use App\Domain\Identity\Models\User;
 use App\Domain\Organizations\Models\Organization;
 use App\Domain\Shared\Concerns\HasPublicUlid;
+use App\Domain\Surveys\Casts\VersionSettingsCast;
 use App\Domain\Surveys\Enums\SurveyVersionStatus;
 use Database\Factories\SurveyVersionFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -77,7 +78,7 @@ class SurveyVersion extends Model
     {
         return [
             'status' => SurveyVersionStatus::class,
-            'settings' => 'array',
+            'settings' => VersionSettingsCast::class,
             'version_number' => 'integer',
             'published_at' => 'immutable_datetime',
             'archived_at' => 'immutable_datetime',

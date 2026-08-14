@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\BranchController;
 use App\Http\Controllers\Admin\PersonController;
 use App\Http\Controllers\Admin\StaffMemberController;
 use App\Http\Controllers\Admin\SurveyController;
+use App\Http\Controllers\Admin\VersionSettingsController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\OrganizationChoiceController;
@@ -207,6 +208,18 @@ Route::middleware(['auth', 'organization'])->group(function (): void {
             ->name('admin.surveys.archive');
         Route::post('/admin/encuestas/{survey}/activar', [SurveyController::class, 'activate'])
             ->name('admin.surveys.activate');
+
+        /*
+         * Configuracion de la version. RF-AO-PUB-001.
+         *
+         * Cuelga de la encuesta y no de la version: siempre se edita el
+         * borrador, y pedir su identificador en la URL obligaria a quien
+         * llega a saber cual es.
+         */
+        Route::get('/admin/encuestas/{survey}/configuracion', [VersionSettingsController::class, 'edit'])
+            ->name('admin.surveys.settings');
+        Route::put('/admin/encuestas/{survey}/configuracion', [VersionSettingsController::class, 'update'])
+            ->name('admin.surveys.settings.update');
 
         /*
          * Areas, anidadas bajo su sucursal. RF-AO-BRA-001.

@@ -96,7 +96,11 @@
         </div>
 
         <div class="card card-pad mt-4 max-w-140">
-            <p class="hint">{{ __('interface.surveys.builder_pending') }}</p>
+            <a href="{{ route('admin.surveys.settings', $survey) }}" class="btn btn-ghost">
+                {{ __('interface.settings.link') }}
+            </a>
+
+            <p class="hint mt-3">{{ __('interface.surveys.builder_pending') }}</p>
         </div>
     @endif
 </x-layouts.admin>

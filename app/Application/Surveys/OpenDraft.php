@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Application\Surveys;
 
 use App\Domain\Audit\RecordAuditLog;
+use App\Domain\Surveys\Enums\SurveyVersionStatus;
 use App\Domain\Surveys\Models\Survey;
 use App\Domain\Surveys\Models\SurveyVersion;
 use Illuminate\Support\Facades\DB;
@@ -53,6 +54,17 @@ final class OpenDraft
                 'survey_id' => $survey->id,
                 'organization_id' => $survey->organization_id,
                 'version_number' => (int) ($versiones->max('version_number') ?? 0) + 1,
+
+                /*
+                 * status va explicito aunque la base lo ponga por defecto.
+                 *
+                 * create() devuelve un modelo con SOLO los atributos que se
+                 * le pasaron. Sin esta linea, el objeto que sale de aqui no
+                 * tiene status, y quien pregunte isDraft() compara contra null
+                 * y concluye que la version esta publicada. La base estaba
+                 * bien; el objeto en memoria, incompleto. Es T-027.
+                 */
+                'status' => SurveyVersionStatus::Draft,
 
                 // El borrador nuevo parte de la configuracion de la anterior:
                 // empezar en blanco obligaria a reescribir todos los ajustes

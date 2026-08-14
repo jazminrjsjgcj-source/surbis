@@ -7,6 +7,7 @@ namespace App\Application\Surveys;
 use App\Domain\Audit\RecordAuditLog;
 use App\Domain\Identity\Models\User;
 use App\Domain\Organizations\Models\Organization;
+use App\Domain\Surveys\Enums\SurveyVersionStatus;
 use App\Domain\Surveys\Models\Survey;
 use App\Domain\Surveys\Models\SurveyVersion;
 use Illuminate\Support\Facades\DB;
@@ -37,6 +38,10 @@ final class CreateSurvey
                 'survey_id' => $survey->id,
                 'organization_id' => $organization->id,
                 'version_number' => 1,
+
+                // Explicito por el mismo motivo que en OpenDraft: el modelo
+                // que devuelve create() no carga lo que no se le paso (T-027).
+                'status' => SurveyVersionStatus::Draft,
             ]);
 
             $this->audit->record('survey.created', $survey, [
