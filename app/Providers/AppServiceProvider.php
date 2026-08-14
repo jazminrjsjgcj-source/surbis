@@ -9,10 +9,12 @@ use App\Domain\Identity\PasswordPolicy;
 use App\Domain\Organizations\Models\Area;
 use App\Domain\Organizations\Models\Branch;
 use App\Domain\Organizations\Models\StaffMember;
+use App\Domain\Surveys\Models\Survey;
 use App\Policies\AreaPolicy;
 use App\Policies\BranchPolicy;
 use App\Policies\MembershipPolicy;
 use App\Policies\StaffMemberPolicy;
+use App\Policies\SurveyPolicy;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\Paginator;
@@ -107,6 +109,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Branch::class, BranchPolicy::class);
         Gate::policy(Membership::class, MembershipPolicy::class);
         Gate::policy(StaffMember::class, StaffMemberPolicy::class);
+        Gate::policy(Survey::class, SurveyPolicy::class);
     }
 
     /**

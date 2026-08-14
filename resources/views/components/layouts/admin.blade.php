@@ -37,6 +37,12 @@
                    @if (request()->routeIs('admin.people.*')) aria-current="page" @endif>
                     {{ __('interface.nav.people') }}
                 </a>
+
+                <a href="{{ route('admin.surveys.index') }}"
+                   class="nav-link"
+                   @if (request()->routeIs('admin.surveys.*')) aria-current="page" @endif>
+                    {{ __('interface.nav.surveys') }}
+                </a>
             </div>
         </nav>
 

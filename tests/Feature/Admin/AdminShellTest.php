@@ -45,15 +45,37 @@ final class AdminShellTest extends TestCase
 
     public function test_la_navegacion_no_promete_pantallas_que_no_existen(): void
     {
-        // Un menu con entradas que no llevan a ningun sitio es un mecanismo
-        // que no hace nada. Cada fase anade la suya cuando tiene algo detras.
+        /*
+         * Un menu con entradas que no llevan a ningun sitio es un mecanismo
+         * que no hace nada. Cada fase anade la suya cuando tiene algo detras.
+         *
+         * La lista se acorta segun avanzan las fases, y eso es deliberado:
+         * cuando una ruta empieza a existir, esta prueba se pone roja y
+         * obliga a retirarla de aqui a mano. Es lo que paso con
+         * /admin/encuestas al abrir la Fase 3.
+         *
+         * Podria comprobarse automaticamente contra la tabla de rutas, pero
+         * entonces no avisaria de nada: pasaria siempre.
+         */
         $this->admin();
 
         $respuesta = $this->get(route('admin.branches.index'))->assertOk();
 
-        foreach (['/admin/encuestas', '/admin/respuestas', '/admin/analisis', '/admin/multimedia'] as $ruta) {
+        // Fase 5, 9 y 12. Se retiran de aqui cuando existan.
+        foreach (['/admin/multimedia', '/admin/respuestas', '/admin/analisis'] as $ruta) {
             $respuesta->assertDontSee($ruta, false);
         }
+    }
+
+    public function test_la_navegacion_lleva_a_las_encuestas(): void
+    {
+        // Contrapartida de la anterior: lo que ya existe tiene que estar.
+        $this->admin();
+
+        $this->get(route('admin.branches.index'))
+            ->assertOk()
+            ->assertSee(route('admin.surveys.index'), false)
+            ->assertSee(__('interface.nav.surveys'), false);
     }
 
     public function test_la_tabla_tiene_titulo_y_encabezados_de_columna(): void

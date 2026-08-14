@@ -47,7 +47,9 @@ final class DashboardTest extends TestCase
 
         $respuesta = $this->get(route('admin.dashboard'))->assertOk();
 
-        foreach (['/admin/encuestas', '/admin/respuestas', '/admin/analisis'] as $ruta) {
+        // Fase 5, 9 y 12. /admin/encuestas salio de esta lista al abrir la
+        // Fase 3: la prueba se puso roja y aviso, que es su trabajo.
+        foreach (['/admin/multimedia', '/admin/respuestas', '/admin/analisis'] as $ruta) {
             $respuesta->assertDontSee($ruta, false);
         }
     }

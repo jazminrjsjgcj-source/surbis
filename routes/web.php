@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\AreaController;
 use App\Http\Controllers\Admin\BranchController;
 use App\Http\Controllers\Admin\PersonController;
 use App\Http\Controllers\Admin\StaffMemberController;
+use App\Http\Controllers\Admin\SurveyController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\OrganizationChoiceController;
@@ -182,6 +183,30 @@ Route::middleware(['auth', 'organization'])->group(function (): void {
             ->name('admin.people.person.account');
         Route::post('/admin/personas/{staffMember}/cuenta', [StaffMemberController::class, 'grantAccount'])
             ->name('admin.people.person.account.store');
+
+        /*
+         * Encuestas y versiones. RF-AO-SUR-001 a 008.
+         *
+         * Sin destroy: RF-AO-SUR-004 prohibe el borrado fisico cuando hay
+         * versiones publicadas o respuestas, y RF-GEN-010 lo prohibe en
+         * general para entidades con historial. Archivar ocupa su lugar.
+         */
+        Route::get('/admin/encuestas', [SurveyController::class, 'index'])
+            ->name('admin.surveys.index');
+        Route::get('/admin/encuestas/nueva', [SurveyController::class, 'create'])
+            ->name('admin.surveys.create');
+        Route::post('/admin/encuestas', [SurveyController::class, 'store'])
+            ->name('admin.surveys.store');
+        Route::get('/admin/encuestas/{survey}', [SurveyController::class, 'edit'])
+            ->name('admin.surveys.edit');
+        Route::put('/admin/encuestas/{survey}', [SurveyController::class, 'update'])
+            ->name('admin.surveys.update');
+        Route::post('/admin/encuestas/{survey}/borrador', [SurveyController::class, 'draft'])
+            ->name('admin.surveys.draft');
+        Route::post('/admin/encuestas/{survey}/archivar', [SurveyController::class, 'archive'])
+            ->name('admin.surveys.archive');
+        Route::post('/admin/encuestas/{survey}/activar', [SurveyController::class, 'activate'])
+            ->name('admin.surveys.activate');
 
         /*
          * Areas, anidadas bajo su sucursal. RF-AO-BRA-001.
