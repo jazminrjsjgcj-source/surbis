@@ -6,6 +6,7 @@ use App\Http\Controllers\Account\SecurityController;
 use App\Http\Controllers\Admin\AreaController;
 use App\Http\Controllers\Admin\BranchController;
 use App\Http\Controllers\Admin\PersonController;
+use App\Http\Controllers\Admin\StaffMemberController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\OrganizationChoiceController;
@@ -152,6 +153,35 @@ Route::middleware(['auth', 'organization'])->group(function (): void {
             ->name('admin.people.activate');
         Route::put('/admin/personas/{membership}/asignacion', [PersonController::class, 'assign'])
             ->name('admin.people.assign');
+
+        /*
+         * Personas evaluables sin cuenta. RF-AO-COL-002 y P-016.
+         *
+         * El parametro se llama {staffMember} para que el enlace implicito
+         * deduzca la clase por convencion y resuelva por ulid, que es el
+         * route key del modelo.
+         *
+         * Se llamo {staffMember} un momento, con un Route::model para atarlo a
+         * mano. Era peor por dos motivos: el nombre del parametro NO aparece
+         * en la URL —solo su valor— asi que no aportaba legibilidad, y
+         * ataba el enlace a un mecanismo que no podia comprobar.
+         */
+        Route::get('/admin/personas/registrar', [StaffMemberController::class, 'create'])
+            ->name('admin.people.person.create');
+        Route::post('/admin/personas/registrar', [StaffMemberController::class, 'store'])
+            ->name('admin.people.person.store');
+        Route::get('/admin/personas/{staffMember}/editar', [StaffMemberController::class, 'edit'])
+            ->name('admin.people.person.edit');
+        Route::put('/admin/personas/{staffMember}', [StaffMemberController::class, 'update'])
+            ->name('admin.people.person.update');
+        Route::post('/admin/personas/{staffMember}/archivar', [StaffMemberController::class, 'archive'])
+            ->name('admin.people.person.archive');
+        Route::post('/admin/personas/{staffMember}/activar', [StaffMemberController::class, 'activate'])
+            ->name('admin.people.person.activate');
+        Route::get('/admin/personas/{staffMember}/cuenta', [StaffMemberController::class, 'accountForm'])
+            ->name('admin.people.person.account');
+        Route::post('/admin/personas/{staffMember}/cuenta', [StaffMemberController::class, 'grantAccount'])
+            ->name('admin.people.person.account.store');
 
         /*
          * Areas, anidadas bajo su sucursal. RF-AO-BRA-001.

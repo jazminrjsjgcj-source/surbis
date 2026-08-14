@@ -127,6 +127,26 @@ return [
         'last_admin' => 'No se puede suspender al ultimo administrador activo. Nombra a otro antes.',
         'self' => 'Tus propias acciones se hacen desde tu perfil.',
 
+        'first_name' => 'Nombre',
+        'last_name' => 'Apellidos',
+        'employee_code' => 'Codigo de empleado',
+        'employee_code_hint' => 'Opcional. Si lo usas, debe ser unico en tu organizacion.',
+        'edit' => 'Editar',
+        'give_account' => 'Dar cuenta',
+
+        'person_new' => 'Registrar persona',
+        'person_edit_title' => 'Editar persona',
+        'person_help' => 'Alguien que se evalua pero no usa el sistema: no inicia sesion ni recibe correos.',
+        'person_created' => 'Persona registrada.',
+        'person_updated' => 'Persona actualizada.',
+        'person_archived' => 'Persona archivada. Sus evaluaciones anteriores se conservan.',
+        'person_activated' => 'Persona reactivada.',
+
+        'account_title' => 'Dar cuenta a esta persona',
+        'account_help' => 'Se le enviara una liga para definir su contrasena. Sus evaluaciones anteriores NO se pierden: sigue siendo la misma persona, solo que ahora tambien puede entrar al sistema.',
+        'account_send' => 'Enviar invitacion',
+        'account_granted' => 'Invitacion enviada. La persona conserva su historial.',
+
         'invite_title' => 'Invitar a la organizacion',
         'invite_help' => 'Le enviaremos una liga de un solo uso para que defina su contrasena. Al usarla, su cuenta queda activada.',
         'invite_send' => 'Enviar invitacion',

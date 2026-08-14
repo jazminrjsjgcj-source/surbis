@@ -24,9 +24,15 @@
             <button type="submit" class="btn btn-ghost">{{ __('interface.people.apply') }}</button>
         </form>
 
-        <a href="{{ route('admin.people.create') }}" class="btn btn-primary ms-auto">
-            {{ __('interface.people.invite') }}
-        </a>
+        <div class="actions ms-auto">
+            <a href="{{ route('admin.people.person.create') }}" class="btn btn-ghost">
+                {{ __('interface.people.person_new') }}
+            </a>
+
+            <a href="{{ route('admin.people.create') }}" class="btn btn-primary">
+                {{ __('interface.people.invite') }}
+            </a>
+        </div>
     </div>
 
     @if ($rows->isEmpty())
@@ -92,6 +98,24 @@
                                 </td>
 
                                 <td>
+                                    {{-- Acciones de la persona evaluable, si
+                                         la hay: existan o no cuenta. --}}
+                                    @if ($row->staffMember)
+                                        <div class="flex flex-wrap items-center gap-2">
+                                            <a href="{{ route('admin.people.person.edit', $row->staffMember) }}"
+                                               class="text-primary text-sm">
+                                                {{ __('interface.people.edit') }}
+                                            </a>
+
+                                            @can('grantAccount', $row->staffMember)
+                                                <a href="{{ route('admin.people.person.account', $row->staffMember) }}"
+                                                   class="text-primary text-sm">
+                                                    {{ __('interface.people.give_account') }}
+                                                </a>
+                                            @endcan
+                                        </div>
+                                    @endif
+
                                     @if ($row->membership)
                                         {{ $row->membership->isAdmin()
                                             ? __('interface.people.role_admin')
@@ -131,6 +155,24 @@
                                 </td>
 
                                 <td>
+                                    {{-- Acciones de la persona evaluable, si
+                                         la hay: existan o no cuenta. --}}
+                                    @if ($row->staffMember)
+                                        <div class="flex flex-wrap items-center gap-2">
+                                            <a href="{{ route('admin.people.person.edit', $row->staffMember) }}"
+                                               class="text-primary text-sm">
+                                                {{ __('interface.people.edit') }}
+                                            </a>
+
+                                            @can('grantAccount', $row->staffMember)
+                                                <a href="{{ route('admin.people.person.account', $row->staffMember) }}"
+                                                   class="text-primary text-sm">
+                                                    {{ __('interface.people.give_account') }}
+                                                </a>
+                                            @endcan
+                                        </div>
+                                    @endif
+
                                     @if ($row->membership)
                                         <div class="flex flex-wrap items-center gap-2">
                                             @can('suspend', $row->membership)
