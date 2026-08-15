@@ -35,6 +35,7 @@ final class HandleInertiaRequests extends Middleware
             ['key' => 'branches', 'url' => route('admin.branches.index')],
             ['key' => 'people', 'url' => route('admin.people.index')],
             ['key' => 'surveys', 'url' => route('admin.surveys.index')],
+            ['key' => 'deployments', 'url' => route('admin.deployments.index')],
         ];
     }
 

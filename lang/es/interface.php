@@ -341,6 +341,7 @@ return [
         'branches' => 'Sucursales',
         'people' => 'Personas',
         'surveys' => 'Encuestas',
+        'deployments' => 'Aplicaciones',
         'security' => 'Mi seguridad',
     ],
 
