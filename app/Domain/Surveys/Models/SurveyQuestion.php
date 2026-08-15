@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class SurveyQuestion extends Model
 {
@@ -49,6 +50,32 @@ class SurveyQuestion extends Model
     public function options(): HasMany
     {
         return $this->hasMany(SurveyQuestionOption::class)->orderBy('position');
+    }
+
+    /**
+     * La condicion que decide si esta pregunta se muestra. RF-AO-BLD-007.
+     *
+     * HasOne y no HasMany: una sola condicion por pregunta. La base lo
+     * garantiza con un unique sobre survey_question_id.
+     *
+     * @return HasOne<SurveyQuestionCondition, $this>
+     */
+    public function condition(): HasOne
+    {
+        return $this->hasOne(SurveyQuestionCondition::class, 'survey_question_id');
+    }
+
+    /**
+     * Las preguntas que dependen de ESTA.
+     *
+     * Sirve para decir por que no se puede borrar o mover: "no se puede" sin
+     * decir que lo impide obliga a probar una por una.
+     *
+     * @return HasMany<SurveyQuestionCondition, $this>
+     */
+    public function dependents(): HasMany
+    {
+        return $this->hasMany(SurveyQuestionCondition::class, 'depends_on_question_id');
     }
 
     public function hasOptions(): bool

@@ -6,9 +6,11 @@ namespace App\Application\Surveys;
 
 use App\Application\Surveys\Exceptions\VersionConflict;
 use App\Domain\Audit\RecordAuditLog;
+use App\Domain\Surveys\ConditionRules;
 use App\Domain\Surveys\Enums\OptionDisplay;
 use App\Domain\Surveys\Enums\QuestionType;
 use App\Domain\Surveys\Models\SurveyQuestion;
+use App\Domain\Surveys\Models\SurveyQuestionCondition;
 use App\Domain\Surveys\Models\SurveyVersion;
 use App\Domain\Surveys\QuestionLimits;
 use Illuminate\Support\Collection;
@@ -32,6 +34,7 @@ final class SaveBuilderState
 {
     public function __construct(
         private readonly BuilderGuard $guard,
+        private readonly ConditionRules $conditions,
         private readonly LockVersion $lock,
         private readonly RecordAuditLog $audit,
     ) {}
@@ -46,6 +49,7 @@ final class SaveBuilderState
     {
         $this->guard->ensureEditable($version);
         $this->validate($questions);
+        $this->validateConditions($questions);
 
         return DB::transaction(function () use ($version, $expectedLock, $questions): int {
             /*
@@ -70,10 +74,30 @@ final class SaveBuilderState
                 $this->saveOptions($question, $datos['options']);
             }
 
+            /*
+             * Las condiciones se borran ANTES que las preguntas.
+             *
+             * depends_on_question_id es restrictOnDelete: si quedara una
+             * condicion apuntando a una pregunta que se va, la base rechazaria
+             * el borrado con un error de clave foranea que no dice nada util.
+             *
+             * Ya se comprobo en validateConditions() que ninguna condicion
+             * superviviente se queda huerfana, asi que aqui solo se limpian
+             * las de las preguntas que desaparecen.
+             */
+            SurveyQuestionCondition::query()
+                ->whereIn('survey_question_id', SurveyQuestion::query()
+                    ->where('survey_version_id', $version->id)
+                    ->whereNotIn('ulid', $conservadas === [] ? [''] : $conservadas)
+                    ->select('id'))
+                ->delete();
+
             SurveyQuestion::query()
                 ->where('survey_version_id', $version->id)
                 ->whereNotIn('ulid', $conservadas === [] ? [''] : $conservadas)
                 ->delete();
+
+            $this->saveConditions($version, $questions);
 
             $this->audit->record('survey_version.builder_saved', $version, [
                 'questions' => count($questions),
@@ -177,6 +201,92 @@ final class SaveBuilderState
             ->whereNotIn('ulid', $conservadas === [] ? [''] : $conservadas)
             ->whereIn('ulid', $existentes->keys())
             ->delete();
+    }
+
+    /**
+     * Ninguna condicion puede apuntar hacia delante. RF-AO-BLD-007.
+     *
+     * Decision del area usuaria: las condiciones NUNCA se eliminan solas al
+     * reordenar. El movimiento se rechaza, aqui y en el constructor.
+     *
+     * Retirar una condicion sin que nadie lo pida es perder trabajo ajeno, y
+     * el aviso llegaria cuando ya no se puede deshacer.
+     *
+     * @param  list<array<string, mixed>>  $questions
+     */
+    private function validateConditions(array $questions): void
+    {
+        $rotas = $this->conditions->forwardConditions($questions);
+
+        if ($rotas->isEmpty()) {
+            return;
+        }
+
+        $posiciones = $rotas->pluck('position')->implode(', ');
+
+        throw new InvalidArgumentException(
+            "Este orden dejaria condiciones apuntando hacia delante en las preguntas: {$posiciones}."
+        );
+    }
+
+    /**
+     * Las condiciones, despues de que existan todas las preguntas.
+     *
+     * Van al final porque una condicion referencia OTRA pregunta: hasta que
+     * no se han guardado todas, la mitad de los ulid no existen todavia.
+     *
+     * @param  list<array<string, mixed>>  $questions
+     */
+    private function saveConditions(SurveyVersion $version, array $questions): void
+    {
+        $guardadas = SurveyQuestion::query()
+            ->where('survey_version_id', $version->id)
+            ->with('options')
+            ->get()
+            ->keyBy('position');
+
+        foreach ($questions as $indice => $datos) {
+            $question = $guardadas->get($indice + 1);
+
+            if ($question === null) {
+                continue;
+            }
+
+            $condition = $datos['condition'] ?? null;
+
+            if ($condition === null) {
+                $question->condition()?->delete();
+
+                continue;
+            }
+
+            $origen = $guardadas->first(
+                fn (SurveyQuestion $candidata): bool => $candidata->ulid === $condition['depends_on_ulid']
+            );
+
+            $opcion = $origen?->options->firstWhere('ulid', $condition['option_ulid']);
+
+            /*
+             * Si la opcion elegida ya no existe —alguien la borro en el mismo
+             * guardado— la condicion se descarta en lugar de guardar una
+             * referencia rota. Es el unico caso en que una condicion
+             * desaparece sola, y ocurre porque su objeto desaparecio.
+             */
+            if ($origen === null || $opcion === null) {
+                $question->condition()?->delete();
+
+                continue;
+            }
+
+            SurveyQuestionCondition::query()->updateOrCreate(
+                ['survey_question_id' => $question->id],
+                [
+                    'organization_id' => $version->organization_id,
+                    'depends_on_question_id' => $origen->id,
+                    'option_id' => $opcion->id,
+                ],
+            );
+        }
     }
 
     /** @param list<array<string, mixed>> $questions */
