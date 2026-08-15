@@ -308,6 +308,22 @@ return [
         'version_author' => 'Publicada por',
 
         'builder_link' => 'Preguntas',
+
+        'publish_title' => 'Publicar',
+        'publish_help' => 'Al publicar, este borrador pasa a ser la version que contesta la gente. Deja de poder editarse: para cambiar algo se abre un borrador nuevo.',
+        'publish' => 'Publicar esta version',
+        'publish_warning' => 'La version publicada anterior se archiva. Las respuestas que ya la contestaron se conservan.',
+        'published' => 'Version :number publicada.',
+        'publish_blocked' => 'No se publico: falta resolver :count cosa.|No se publico: faltan resolver :count cosas.',
+        'no_draft_to_publish' => 'Esta encuesta no tiene borrador que publicar.',
+
+        'problems_title' => 'Antes de publicar hay que resolver esto',
+        'problem_at' => 'Pregunta :position:',
+        'problem_no_questions' => 'La encuesta no tiene preguntas. Anade al menos una desde el constructor.',
+        'problem_question_without_text' => 'falta el texto de la pregunta.',
+        'problem_too_few_options' => 'tiene :count opcion y necesita al menos :min.|tiene :count opciones y necesita al menos :min.',
+        'problem_option_without_label' => 'hay una opcion sin nombre. El nombre es lo que lee quien usa lector de pantalla.',
+
         'open' => 'Abrir',
         'open_draft' => 'Abrir borrador nuevo',
         'versions' => 'Versiones',

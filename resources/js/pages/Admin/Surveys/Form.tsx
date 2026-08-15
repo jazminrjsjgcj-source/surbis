@@ -2,6 +2,7 @@ import { Head, Link, router, useForm } from '@inertiajs/react'
 import type { FormEvent } from 'react'
 
 import ErrorSummary from '@/Components/ErrorSummary'
+import PublicationProblems, { type Problem } from '@/Components/PublicationProblems'
 import StatusMessage from '@/Components/StatusMessage'
 import AdminShell from '@/Layouts/AdminShell'
 import { useTranslate } from '@/lib/translate'
@@ -27,6 +28,8 @@ interface Props {
     builderUrl: string | null
     settingsUrl: string | null
     draftUrl: string | null
+    publishUrl: string | null
+    problems: Problem[]
 }
 
 const MAX_NAME = 160
@@ -40,6 +43,8 @@ export default function Form({
     builderUrl,
     settingsUrl,
     draftUrl,
+    publishUrl,
+    problems,
 }: Props) {
     const t = useTranslate()
 
@@ -151,6 +156,36 @@ export default function Form({
                             </button>
                         )}
                     </div>
+                </div>
+            )}
+
+            {/* Publicar. RF-AO-PUB-005 a 007. */}
+            {survey && publishUrl && (
+                <div className="card card-pad mt-4 max-w-140">
+                    <h2 className="text-lg">{t('interface.surveys.publish_title')}</h2>
+                    <p className="hint mt-1 mb-3">{t('interface.surveys.publish_help')}</p>
+
+                    <PublicationProblems problems={problems} />
+
+                    {/*
+                        El boton se deshabilita si hay problemas.
+                        Deshabilitarlo NO es la proteccion —esa la da
+                        PublishVersion, que vuelve a comprobar dentro de una
+                        transaccion— sino evitar un intento que ya se sabe que
+                        va a fallar.
+                    */}
+                    <button
+                        type="button"
+                        className="btn btn-primary"
+                        disabled={problems.length > 0}
+                        onClick={() => router.post(publishUrl, {}, { preserveScroll: true })}
+                    >
+                        {t('interface.surveys.publish')}
+                    </button>
+
+                    {problems.length === 0 && (
+                        <p className="hint mt-3">{t('interface.surveys.publish_warning')}</p>
+                    )}
                 </div>
             )}
 

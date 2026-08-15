@@ -6,11 +6,15 @@ namespace App\Http\Controllers\Admin;
 
 use App\Application\Surveys\ArchiveSurvey;
 use App\Application\Surveys\CreateSurvey;
+use App\Application\Surveys\Exceptions\VersionNotPublishable;
 use App\Application\Surveys\OpenDraft;
+use App\Application\Surveys\PublishVersion;
 use App\Application\Surveys\UpdateSurveyGeneral;
 use App\Domain\Identity\Models\Membership;
 use App\Domain\Identity\Models\User;
 use App\Domain\Surveys\Models\Survey;
+use App\Domain\Surveys\PublicationChecklist;
+use App\Domain\Surveys\PublicationProblem;
 use App\Http\Controllers\Controller;
 use App\Http\Middleware\EnsureActiveOrganization;
 use App\Http\Requests\Admin\SurveyRequest;
@@ -74,6 +78,8 @@ final class SurveyController extends Controller
             'builderUrl' => null,
             'settingsUrl' => null,
             'draftUrl' => null,
+            'publishUrl' => null,
+            'problems' => [],
         ]);
     }
 
@@ -94,11 +100,12 @@ final class SurveyController extends Controller
             ->with('status', __('interface.surveys.created'));
     }
 
-    public function edit(Survey $survey): InertiaResponse
+    public function edit(Survey $survey, PublicationChecklist $checklist): InertiaResponse
     {
         $this->authorize('view', $survey);
 
         $survey->load(['versions' => fn ($query) => $query->orderByDesc('version_number')]);
+        $draft = $survey->draft;
 
         return Inertia::render('Admin/Surveys/Form', [
             'survey' => [
@@ -124,6 +131,21 @@ final class SurveyController extends Controller
             'builderUrl' => route('admin.surveys.builder', $survey),
             'settingsUrl' => route('admin.surveys.settings', $survey),
             'draftUrl' => route('admin.surveys.draft', $survey),
+
+            /*
+             * Los problemas se calculan ANTES de que nadie pulse publicar.
+             *
+             * RF-AO-PUB-006 pide que el bloqueo indique ubicacion y
+             * correccion. Si solo se supieran al intentar publicar, la unica
+             * forma de saber si una encuesta esta lista seria intentarlo y
+             * leer el error.
+             */
+            'publishUrl' => $draft === null ? null : route('admin.surveys.publish', $survey),
+            'problems' => $draft === null
+                ? []
+                : $checklist->problems($draft)->map(
+                    fn (PublicationProblem $problem): array => $problem->toArray()
+                )->all(),
         ]);
     }
 
@@ -144,6 +166,46 @@ final class SurveyController extends Controller
         $open->execute($survey);
 
         return back()->with('status', __('interface.surveys.draft_opened'));
+    }
+
+    /**
+     * RF-AO-PUB-005, 006 y 007.
+     *
+     * Publicar convierte el borrador en la version publicada. Deja de haber
+     * borrador: para cambiar algo hay que abrir otro. Es lo que hace que
+     * "inmutable" signifique algo.
+     */
+    public function publish(Request $request, Survey $survey, PublishVersion $publish): RedirectResponse
+    {
+        $this->authorize('update', $survey);
+
+        $draft = $survey->draft;
+
+        if ($draft === null) {
+            return back()->withErrors(['survey' => __('interface.surveys.no_draft_to_publish')]);
+        }
+
+        /** @var User $user */
+        $user = $request->user();
+
+        try {
+            $version = $publish->execute($draft, $user);
+        } catch (VersionNotPublishable $bloqueo) {
+            /*
+             * Los problemas ya viajan como prop en cada carga, asi que aqui
+             * basta con decir que se bloqueo y cuantos hay. Repetirlos en el
+             * error los duplicaria en pantalla.
+             */
+            return back()->withErrors([
+                'survey' => __('interface.surveys.publish_blocked', [
+                    'count' => $bloqueo->problems->count(),
+                ]),
+            ]);
+        }
+
+        return back()->with('status', __('interface.surveys.published', [
+            'number' => $version->version_number,
+        ]));
     }
 
     public function archive(Survey $survey, ArchiveSurvey $archive): RedirectResponse
