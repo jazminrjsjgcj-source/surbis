@@ -16,13 +16,13 @@ use Illuminate\Support\Collection;
  * solo existiera dentro de Publish, la unica forma de saber si una encuesta
  * esta lista seria intentar publicarla y leer el error.
  *
- * LO QUE TODAVIA NO SE COMPRUEBA, y RF-AO-PUB-005 menciona:
+ * Cubre lo que RF-AO-PUB-005 pide: preguntas, opciones, puntuaciones,
+ * logica e imagenes.
  *
- *   logica condicional   no existe (TASK-021)
- *   imagenes             no existe la biblioteca (Fase 5)
- *
- * Cuando lleguen, sus comprobaciones se anaden aqui. Queda escrito para que
- * nadie de por hecho que "valida todo lo que dice el requisito".
+ * La logica condicional no necesita comprobacion aqui: los ciclos son
+ * imposibles por construccion y SaveBuilderState rechaza cualquier orden que
+ * deje una condicion mirando hacia delante. Anadir una comprobacion que nunca
+ * puede fallar seria un mecanismo que no hace nada.
  */
 final class PublicationChecklist
 {
@@ -76,14 +76,27 @@ final class PublicationChecklist
             ]));
         }
 
+        $sinEtiqueta = false;
+        $sinImagen = false;
+
         foreach ($options as $option) {
-            if (trim($option->label) === '') {
+            if (! $sinEtiqueta && trim($option->label) === '') {
                 // RF-AO-BLD-005: la etiqueta es el nombre accesible. Una
                 // opcion sin nombre no se puede elegir con lector de
                 // pantalla, y eso no puede llegar a produccion.
                 $problems->push(new PublicationProblem('option_without_label', $position));
+                $sinEtiqueta = true;
+            }
 
-                break;
+            if (! $sinImagen && ! $option->isDisplayable()) {
+                /*
+                 * RF-AO-BLD-004. Una opcion configurada como "solo imagen"
+                 * sin imagen es un hueco invisible: en el quiosco no se ve
+                 * nada que pulsar, y quien conteste no sabra que falta una
+                 * respuesta.
+                 */
+                $problems->push(new PublicationProblem('option_without_image', $position));
+                $sinImagen = true;
             }
         }
 

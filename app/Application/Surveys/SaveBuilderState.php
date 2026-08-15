@@ -6,6 +6,7 @@ namespace App\Application\Surveys;
 
 use App\Application\Surveys\Exceptions\VersionConflict;
 use App\Domain\Audit\RecordAuditLog;
+use App\Domain\Media\Models\MediaItem;
 use App\Domain\Surveys\ConditionRules;
 use App\Domain\Surveys\Enums\OptionDisplay;
 use App\Domain\Surveys\Enums\QuestionType;
@@ -175,6 +176,16 @@ final class SaveBuilderState
                 'value' => $datos['value'],
                 'score' => $datos['score'],
                 'display' => OptionDisplay::from($datos['display']),
+
+                /*
+                 * La imagen se resuelve por ULID contra lo que ESTA
+                 * organizacion puede usar.
+                 *
+                 * Sin usableBy(), un ULID de otra organizacion se guardaria
+                 * sin mas: bastaria con enviarlo a mano para mostrar una
+                 * imagen ajena en una encuesta propia. RNF-GEN-005.
+                 */
+                'media_id' => $this->resolveMedia($question->organization_id, $datos['media_ulid'] ?? null),
                 'appearance' => $datos['appearance'],
                 'position' => $indice + 1,
             ];
@@ -287,6 +298,25 @@ final class SaveBuilderState
                 ],
             );
         }
+    }
+
+    /**
+     * El id de la imagen, solo si esta organizacion puede usarla.
+     *
+     * Recibe el organization_id y no la version: saveOptions trabaja sobre
+     * una SurveyQuestion, que ya lo lleva. Pedir la version obligaba a
+     * arrastrarla por una firma que no la necesita.
+     */
+    private function resolveMedia(int $organizationId, ?string $ulid): ?int
+    {
+        if ($ulid === null) {
+            return null;
+        }
+
+        return MediaItem::query()
+            ->usableBy($organizationId)
+            ->where('ulid', $ulid)
+            ->value('id');
     }
 
     /** @param list<array<string, mixed>> $questions */

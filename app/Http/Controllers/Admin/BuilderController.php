@@ -8,6 +8,7 @@ use App\Application\Surveys\Exceptions\VersionConflict;
 use App\Application\Surveys\Exceptions\VersionNotEditable;
 use App\Application\Surveys\OpenDraft;
 use App\Application\Surveys\SaveBuilderState;
+use App\Domain\Media\Models\MediaItem;
 use App\Domain\Surveys\Enums\OptionDisplay;
 use App\Domain\Surveys\Enums\QuestionType;
 use App\Domain\Surveys\Models\Survey;
@@ -55,6 +56,27 @@ final class BuilderController extends Controller
             // siempre falla es una promesa falsa.
             // Importar preguntas desde texto. TASK-025.
             'importUrl' => route('admin.surveys.import', $survey),
+
+            /*
+             * La biblioteca completa: lo de esta organizacion y lo de sistema.
+             *
+             * Va entera y no paginada porque son decenas de imagenes, no
+             * miles, y el selector tiene que abrirse sin esperar. Si algun
+             * dia crece, se pagina; hoy seria complicar sin medir.
+             */
+            'media' => MediaItem::query()
+                ->usableBy($survey->organization_id)
+                ->orderByRaw('organization_id nulls first')
+                ->orderBy('name')
+                ->get()
+                ->map(fn (MediaItem $item): array => [
+                    'ulid' => $item->ulid,
+                    'name' => $item->name,
+                    'url' => $item->url(),
+                    'alt_text' => $item->alt_text,
+                    'is_system' => $item->isSystem(),
+                ])
+                ->all(),
 
             'readOnly' => ! $version->isEditable(),
 
@@ -112,7 +134,7 @@ final class BuilderController extends Controller
     /** @return array<string, mixed> */
     private function serialize(SurveyVersion $version): array
     {
-        $version->load(['questions.options', 'questions.condition.dependsOn', 'questions.condition.option']);
+        $version->load(['questions.options.media', 'questions.condition.dependsOn', 'questions.condition.option']);
 
         return [
             'ulid' => $version->ulid,
@@ -145,6 +167,9 @@ final class BuilderController extends Controller
                     'value' => $option->value,
                     'score' => $option->score,
                     'display' => $option->display->value,
+
+                    // Por ULID, no por id: es lo que viaja al navegador.
+                    'media_ulid' => $option->media?->ulid,
                     'appearance' => $option->appearance,
                 ])->all(),
             ])->all(),

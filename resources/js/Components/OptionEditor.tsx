@@ -1,4 +1,7 @@
 import CharCount from '@/Components/CharCount'
+import MediaPicker, { type MediaOption } from '@/Components/MediaPicker'
+import { useState } from 'react'
+
 import { useTranslate } from '@/lib/translate'
 
 interface Option {
@@ -7,6 +10,7 @@ interface Option {
     value: string
     score: number | null
     display: string
+    media_ulid: string | null
     appearance: Record<string, unknown> | null
 }
 
@@ -15,6 +19,7 @@ interface Props {
     options: Option[]
     isScored: boolean
     readOnly: boolean
+    media: MediaOption[]
     onChange: (options: Option[]) => void
 }
 
@@ -26,9 +31,11 @@ export default function OptionEditor({
     options,
     isScored,
     readOnly,
+    media,
     onChange,
 }: Props) {
     const t = useTranslate()
+    const [eligiendoImagen, setEligiendoImagen] = useState<number | null>(null)
 
     /*
      * Valores repetidos, senalados mientras se escribe.
@@ -56,6 +63,7 @@ export default function OptionEditor({
                 value: '',
                 score: isScored ? 0 : null,
                 display: 'text',
+                media_ulid: null,
                 appearance: null,
             },
         ])
@@ -176,25 +184,47 @@ export default function OptionEditor({
                                         {t('interface.builder.display_text')}
                                     </option>
 
-                                    {/*
-                                        Desactivadas hasta que exista la
-                                        biblioteca multimedia (Fase 5).
-
-                                        Antes se podian elegir con un aviso
-                                        pequeno debajo. Eso estaba mal: un
-                                        desplegable que ofrece algo que no
-                                        funciona es peor que uno con menos
-                                        opciones.
-                                    */}
-                                    <option value="image" disabled>
-                                        {t('interface.builder.display_image')} —{' '}
-                                        {t('interface.builder.display_pending')}
+                                    {/* Ya existe la biblioteca (Fase 5), asi
+                                        que dejan de estar deshabilitadas. */}
+                                    <option value="image">
+                                        {t('interface.builder.display_image')}
                                     </option>
-                                    <option value="image_and_text" disabled>
-                                        {t('interface.builder.display_image_and_text')} —{' '}
-                                        {t('interface.builder.display_pending')}
+                                    <option value="image_and_text">
+                                        {t('interface.builder.display_image_and_text')}
                                     </option>
                                 </select>
+
+                                {/*
+                                    El boton solo aparece si el tipo de
+                                    presentacion necesita imagen. Ofrecerlo
+                                    siempre invitaria a elegir una que no se
+                                    va a mostrar.
+                                */}
+                                {opcion.display !== 'text' && (
+                                    <button
+                                        type="button"
+                                        className="btn btn-ghost mt-2"
+                                        disabled={readOnly}
+                                        onClick={() => setEligiendoImagen(indice)}
+                                    >
+                                        {opcion.media_ulid === null
+                                            ? t('interface.media.choose')
+                                            : t('interface.media.change')}
+                                    </button>
+                                )}
+
+                                {/*
+                                    Y se avisa si falta. Publicar con una
+                                    opcion "solo imagen" sin imagen deja un
+                                    hueco invisible en el quiosco;
+                                    PublicationChecklist lo impide, pero
+                                    enterarse aqui evita llegar hasta alli.
+                                */}
+                                {opcion.display !== 'text' && opcion.media_ulid === null && (
+                                    <span className="error">
+                                        {t('interface.media.missing')}
+                                    </span>
+                                )}
                             </div>
                         </div>
 
@@ -236,6 +266,22 @@ export default function OptionEditor({
                     {t('interface.builder.option_add')}
                 </button>
             )}
+
+            <MediaPicker
+                open={eligiendoImagen !== null}
+                media={media}
+                selected={
+                    eligiendoImagen === null
+                        ? null
+                        : (options[eligiendoImagen]?.media_ulid ?? null)
+                }
+                onSelect={(ulid) => {
+                    if (eligiendoImagen !== null) {
+                        update(eligiendoImagen, { media_ulid: ulid })
+                    }
+                }}
+                onClose={() => setEligiendoImagen(null)}
+            />
         </fieldset>
     )
 }

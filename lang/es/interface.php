@@ -453,22 +453,17 @@ return [
     'session' => [
         'logout' => 'Cerrar sesion',
     ],
-    'conditions' => [
-        'title' => 'Mostrar solo si',
-        'add' => 'Mostrar solo en algunos casos',
-        'source' => 'Depende de la pregunta',
-        'option' => 'Cuando la respuesta sea',
-        'always' => 'Se muestra siempre',
-        'choose_option' => 'Elige una respuesta',
-        'remove' => 'Quitar la condicion',
-        'no_sources' => 'Para condicionar esta pregunta necesitas una pregunta anterior con opciones.',
-        'blocked_by' => 'No se puede quitar: las preguntas :positions dependen de esta.',
-    ],
-
-    'confirm' => [
-        'cancel' => 'Cancelar',
-        'remove_question_title' => 'Quitar esta pregunta',
-        'remove_question_body' => 'Se va a quitar ":text" con sus opciones. Podras deshacerlo mientras no guardes, pero el guardado es automatico.',
+    'media' => [
+        'pick_title' => 'Elegir una imagen',
+        'search' => 'Buscar por nombre',
+        'empty' => 'No hay imagenes que coincidan.',
+        'system' => 'Del sistema',
+        'choose' => 'Elegir imagen',
+        'change' => 'Cambiar imagen',
+        'remove' => 'Quitar la imagen',
+        'missing' => 'Esta opcion se muestra como imagen y no tiene ninguna.',
+        'wrong_type' => 'Solo se admiten imagenes JPEG, PNG o WebP.',
+        'too_big' => 'La imagen no puede pesar mas de 2 MB.',
     ],
 
 ];

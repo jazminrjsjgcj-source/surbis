@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Surveys\Models;
 
+use App\Domain\Media\Models\MediaItem;
 use App\Domain\Organizations\Models\Organization;
 use App\Domain\Shared\Concerns\HasPublicUlid;
 use App\Domain\Surveys\Enums\OptionDisplay;
@@ -27,6 +28,7 @@ class SurveyQuestionOption extends Model
         'value',
         'score',
         'display',
+        'media_id',
         'appearance',
         'position',
     ];
@@ -35,6 +37,12 @@ class SurveyQuestionOption extends Model
     public function question(): BelongsTo
     {
         return $this->belongsTo(SurveyQuestion::class, 'survey_question_id');
+    }
+
+    /** @return BelongsTo<MediaItem, $this> */
+    public function media(): BelongsTo
+    {
+        return $this->belongsTo(MediaItem::class, 'media_id');
     }
 
     /** @return BelongsTo<Organization, $this> */
@@ -52,6 +60,18 @@ class SurveyQuestionOption extends Model
     public function accessibleName(): string
     {
         return $this->label;
+    }
+
+    /**
+     * Si esta opcion se puede mostrar tal como esta configurada.
+     *
+     * Elegir "solo imagen" y no poner ninguna deja una opcion invisible: en
+     * el quiosco apareceria un hueco que no se puede pulsar. Lo comprueba
+     * PublicationChecklist antes de publicar.
+     */
+    public function isDisplayable(): bool
+    {
+        return ! $this->display->needsImage() || $this->media_id !== null;
     }
 
     /** @return array<string, string> */

@@ -64,6 +64,7 @@ final class BuilderStateRequest extends FormRequest
             'questions.*.options.*.value' => ['present', 'string', 'max:255'],
             'questions.*.options.*.score' => ['nullable', 'integer', 'between:-32768,32767'],
             'questions.*.options.*.display' => ['required', Rule::enum(OptionDisplay::class)],
+            'questions.*.options.*.media_ulid' => ['nullable', 'string', 'size:26'],
             'questions.*.options.*.appearance' => ['nullable', 'array'],
         ];
     }
