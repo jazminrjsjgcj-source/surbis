@@ -6,6 +6,7 @@ use App\Http\Controllers\Account\SecurityController;
 use App\Http\Controllers\Admin\AreaController;
 use App\Http\Controllers\Admin\BranchController;
 use App\Http\Controllers\Admin\BuilderController;
+use App\Http\Controllers\Admin\DeploymentController;
 use App\Http\Controllers\Admin\PersonController;
 use App\Http\Controllers\Admin\QuestionImportController;
 use App\Http\Controllers\Admin\StaffMemberController;
@@ -223,6 +224,25 @@ Route::middleware(['auth', 'organization'])->group(function (): void {
 
         Route::post('/admin/encuestas/{survey}/publicar', [SurveyController::class, 'publish'])
             ->name('admin.surveys.publish');
+
+        Route::get('/admin/aplicaciones', [DeploymentController::class, 'index'])
+            ->name('admin.deployments.index');
+
+        /*
+         * Crear parte SIEMPRE de una encuesta: la version publicada es
+         * contexto de la ruta, no algo que se elija en un desplegable.
+         */
+        Route::get('/admin/encuestas/{survey}/aplicaciones/nueva', [DeploymentController::class, 'create'])
+            ->name('admin.deployments.create');
+        Route::post('/admin/encuestas/{survey}/aplicaciones', [DeploymentController::class, 'store'])
+            ->name('admin.deployments.store');
+
+        Route::post('/admin/aplicaciones/{deployment}/activar', [DeploymentController::class, 'activate'])
+            ->name('admin.deployments.activate');
+        Route::post('/admin/aplicaciones/{deployment}/suspender', [DeploymentController::class, 'suspend'])
+            ->name('admin.deployments.suspend');
+        Route::post('/admin/aplicaciones/{deployment}/cerrar', [DeploymentController::class, 'close'])
+            ->name('admin.deployments.close');
 
         /*
          * Importar preguntas desde texto. TASK-025.
