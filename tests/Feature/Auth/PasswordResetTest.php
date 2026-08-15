@@ -154,7 +154,10 @@ final class PasswordResetTest extends TestCase
         // nadie lo detecta hasta que un usuario se atasca.
         $this->get('/restablecer-contrasena/token-cualquiera')
             ->assertOk()
-            ->assertSee((string) PasswordPolicy::MIN_LENGTH, false);
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->component('Auth/ResetPassword')
+                ->where('minLength', PasswordPolicy::MIN_LENGTH)
+            );
     }
 
     public function test_la_pantalla_de_acceso_ofrece_recuperar_la_contrasena(): void

@@ -6,6 +6,7 @@ namespace Tests\Feature\Auth;
 
 use App\Domain\Identity\Models\Membership;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia;
 use Tests\TestCase;
 
 /**
@@ -96,18 +97,29 @@ final class LoginAccessibilityTest extends TestCase
             ->assertInvalid(['email']);
     }
 
-    public function test_la_eleccion_de_organizacion_sigue_en_blade(): void
+    public function test_la_eleccion_de_organizacion_recibe_sus_opciones(): void
     {
-        // Esta pantalla no se ha convertido todavia, asi que su marcado si
-        // se puede comprobar. Cuando pase a React, esta prueba se va con
-        // ella y hay que decidir que la sustituye.
+        /*
+         * Ya no se comprueba <fieldset> ni <legend>.
+         *
+         * Esta prueba se escribio con una nota: valia mientras la pantalla
+         * fuera Blade, y habia que cambiarla al convertirla. Ese momento
+         * llego.
+         *
+         * El agrupado sigue en ChooseOrganization.tsx —sin el, un lector de
+         * pantalla lee opciones sueltas sin decir de que eligen— pero eso
+         * ahora solo lo ve una prueba de navegador. Lo comprobable desde el
+         * servidor es que lleguen las organizaciones entre las que elegir.
+         */
         $user = Membership::factory()->create()->user;
         Membership::factory()->for($user)->create();
 
         $this->actingAs($user)
             ->get('/organizaciones')
             ->assertOk()
-            ->assertSee('<fieldset', false)
-            ->assertSee('<legend', false);
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->component('Auth/ChooseOrganization')
+                ->has('memberships', 2)
+            );
     }
 }

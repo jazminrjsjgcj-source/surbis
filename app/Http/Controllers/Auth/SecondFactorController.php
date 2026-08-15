@@ -17,14 +17,15 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
-use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 
 final class SecondFactorController extends Controller
 {
     /** Un envio por minuto. Sin esto, el boton de reenviar inunda el correo. */
     private const RESEND_PER_MINUTE = 1;
 
-    public function create(Request $request, PendingSecondFactor $pending, SendSecondFactorCode $send): View
+    public function create(Request $request, PendingSecondFactor $pending, SendSecondFactorCode $send): InertiaResponse
     {
         /** @var User $user */
         $user = $pending->user();
@@ -35,8 +36,11 @@ final class SecondFactorController extends Controller
             $send->execute($user);
         }
 
-        return view('auth.second-factor', [
+        return Inertia::render('Auth/SecondFactor', [
             'email' => $user->email,
+            'action' => route('auth.second-factor.challenge'),
+            'resendUrl' => route('auth.second-factor.resend'),
+            'cancelUrl' => route('auth.second-factor.cancel'),
         ]);
     }
 

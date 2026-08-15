@@ -8,6 +8,7 @@ use App\Domain\Identity\Models\Membership;
 use App\Domain\Identity\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
+use Inertia\Testing\AssertableInertia;
 use Tests\TestCase;
 
 /**
@@ -30,12 +31,22 @@ final class SecondFactorScreensTest extends TestCase
 
         $this->get('/verificacion')
             ->assertOk()
-            ->assertSee('for="code"', false)
-            ->assertSee('id="code"', false)
-            // one-time-code hace que iOS y Android ofrezcan el codigo del
-            // SMS o del correo sin teclearlo.
-            ->assertSee('autocomplete="one-time-code"', false)
-            ->assertSee('aria-describedby="code-hint', false);
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->component('Auth/SecondFactor')
+            );
+        // one-time-code hace que iOS y Android ofrezcan el codigo del
+        // SMS o del correo sin teclearlo.
+
+        /*
+         * LO QUE SE PIERDE AQUI, y no esta resuelto:
+         *
+         * la etiqueta asociada al campo, autocomplete="one-time-code" y
+         * aria-describedby. Ese marcado lo genera ahora el navegador a partir
+         * de SecondFactor.tsx, asi que una peticion HTTP no puede verlo.
+         *
+         * El componente los tiene. Lo que desaparece es la red que vigila que
+         * sigan estando manana, y eso pide una prueba de navegador.
+         */
     }
 
     public function test_la_pantalla_de_verificacion_ofrece_reenviar_y_cancelar(): void
@@ -49,8 +60,10 @@ final class SecondFactorScreensTest extends TestCase
 
         $this->get('/verificacion')
             ->assertOk()
-            ->assertSee(route('auth.second-factor.resend'), false)
-            ->assertSee(route('auth.second-factor.cancel'), false);
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->where('resendUrl', route('auth.second-factor.resend'))
+                ->where('cancelUrl', route('auth.second-factor.cancel'))
+            );
     }
 
     public function test_los_codigos_de_recuperacion_se_muestran_al_activar(): void
@@ -62,8 +75,9 @@ final class SecondFactorScreensTest extends TestCase
             ->followingRedirects()
             ->post(route('account.security.enable'))
             ->assertOk()
-            ->assertSee(__('interface.security.codes_heading'), false)
-            ->assertSee('role="alert"', false);
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->has('recoveryCodes', 8)
+            );
     }
 
     public function test_los_codigos_se_muestran_una_vez_y_solo_una(): void
@@ -86,12 +100,19 @@ final class SecondFactorScreensTest extends TestCase
         $this->actingAs($usuario)
             ->get(route('account.security'))
             ->assertOk()
-            ->assertSee(__('interface.security.codes_heading'), false);
+            ->assertInertia(fn (AssertableInertia $page) => $page->has('recoveryCodes', 8));
 
         $this->actingAs($usuario)
             ->get(route('account.security'))
             ->assertOk()
-            ->assertDontSee(__('interface.security.codes_heading'), false);
+            /*
+             * Los codigos NO vuelven a llegar.
+             *
+             * Se muestran una sola vez: en la base solo queda su hash. Y van
+             * como prop diferida para que Inertia no los deje en el estado
+             * que guarda el navegador, donde un "atras" podria reensenarlos.
+             */
+            ->assertInertia(fn (AssertableInertia $page) => $page->where('recoveryCodes', null));
     }
 
     public function test_la_pantalla_de_seguridad_dice_el_estado_en_texto(): void
@@ -103,7 +124,10 @@ final class SecondFactorScreensTest extends TestCase
         $this->actingAs($usuario)
             ->get(route('account.security'))
             ->assertOk()
-            ->assertSee(__('interface.security.mfa_off'), false);
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->component('Account/Security')
+                ->where('mfaEnabled', false)
+            );
     }
 
     public function test_la_pantalla_de_seguridad_es_para_cualquier_cuenta(): void

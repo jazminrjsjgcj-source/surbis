@@ -12,7 +12,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
-use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 
 /**
  * Un usuario puede pertenecer a varias organizaciones (P-004) y elige en
@@ -21,13 +22,25 @@ use Illuminate\View\View;
  */
 final class OrganizationChoiceController extends Controller
 {
-    public function create(Request $request, ActiveOrganizationContext $context): View
+    public function create(Request $request, ActiveOrganizationContext $context): InertiaResponse
     {
         /** @var User $user */
         $user = $request->user();
 
-        return view('auth.choose-organization', [
-            'memberships' => $context->usableMemberships($user),
+        return Inertia::render('Auth/ChooseOrganization', [
+            'memberships' => $context->usableMemberships($user)
+                ->map(fn (Membership $membership): array => [
+                    // El ULID y no el id: es lo que viaja al navegador, y un
+                    // identificador secuencial deja adivinar cuantas
+                    // organizaciones hay en el sistema.
+                    'ulid' => $membership->organization->ulid,
+                    'name' => $membership->organization->name,
+                    'role' => $membership->role->value,
+                ])
+                ->values()
+                ->all(),
+
+            'action' => route('auth.organizations.choose'),
         ]);
     }
 

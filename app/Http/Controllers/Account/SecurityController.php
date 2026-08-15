@@ -9,7 +9,8 @@ use App\Domain\Identity\Models\User;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 
 /**
  * Seguridad de la cuenta.
@@ -24,14 +25,29 @@ use Illuminate\View\View;
  */
 final class SecurityController extends Controller
 {
-    public function show(Request $request): View
+    public function show(Request $request): InertiaResponse
     {
         /** @var User $user */
         $user = $request->user();
 
-        return view('account.security', [
-            'user' => $user,
-            'recoveryCodes' => $request->session()->get('recovery_codes'),
+        return Inertia::render('Account/Security', [
+            'mfaEnabled' => $user->hasMfaEnabled(),
+
+            /*
+             * Los codigos vienen de un flash de sesion y se muestran UNA sola
+             * vez: en la base solo queda su hash.
+             *
+             * Van como prop diferida —el closure— para que Inertia NO los
+             * incluya al recargar parcialmente ni los deje en el estado que
+             * guarda el navegador. Sin esto, un "atras" podria volver a
+             * ensenar unos codigos que ya se consideraban entregados.
+             */
+            'recoveryCodes' => fn () => $request->session()->get('recovery_codes'),
+
+            'enableUrl' => route('account.security.enable'),
+            'disableUrl' => route('account.security.disable'),
+            'codesUrl' => route('account.security.codes'),
+            'backUrl' => route('admin.dashboard'),
         ]);
     }
 

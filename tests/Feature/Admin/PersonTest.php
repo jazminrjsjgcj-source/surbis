@@ -40,7 +40,18 @@ final class PersonTest extends TestCase
             ->assertInertia(fn (AssertableInertia $page) => $page
                 ->component('Admin/People/Index')
                 ->has('rows', 2)
-                ->where('rows.1.name', 'Maria Ventanilla')
+
+                /*
+                 * Se busca por nombre, NO por indice.
+                 *
+                 * Las filas van ordenadas alfabeticamente y el nombre del
+                 * administrador lo genera la factory al azar: 'Ona Graham
+                 * PhD' cayo antes que 'Maria Ventanilla' y la prueba fallo.
+                 * Con otra tirada habria pasado, que es peor.
+                 */
+                ->where('rows', fn (Collection $rows): bool => $rows
+                    ->pluck('name')
+                    ->contains('Maria Ventanilla'))
             );
     }
 
@@ -110,9 +121,11 @@ final class PersonTest extends TestCase
         $this->get(route('admin.people.index'))
             ->assertOk()
             ->assertInertia(fn (AssertableInertia $page) => $page
-                ->where('rows.1.email', null)
-                ->where('rows.1.has_account', false)
-                ->where('rows.1.is_evaluated', true)
+                // Misma razon: se busca la fila SIN correo, no un indice.
+                ->where('rows', fn (Collection $rows): bool => $rows
+                    ->contains(fn (array $row): bool => $row['email'] === null
+                        && $row['has_account'] === false
+                        && $row['is_evaluated'] === true))
             );
     }
 

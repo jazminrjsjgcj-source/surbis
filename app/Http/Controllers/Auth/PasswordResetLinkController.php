@@ -8,13 +8,17 @@ use App\Application\Identity\SendPasswordResetLink;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\PasswordResetLinkRequest;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 
 final class PasswordResetLinkController extends Controller
 {
-    public function create(): View
+    public function create(): InertiaResponse
     {
-        return view('auth.forgot-password');
+        return Inertia::render('Auth/ForgotPassword', [
+            'action' => route('password.email'),
+            'loginUrl' => route('login'),
+        ]);
     }
 
     public function store(
