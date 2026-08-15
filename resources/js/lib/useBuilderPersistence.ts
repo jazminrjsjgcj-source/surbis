@@ -54,13 +54,28 @@ export function useBuilderPersistence<T>({
     const lock = useRef(initialLock)
     const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
     const backoff = useRef(1000)
+
+    /*
+     * Cerrojo: solo una peticion a la vez.
+     *
+     * Sin esto, "Guardar ahora" y el debounce podian salir a la vez con el
+     * MISMO lock_version: la primera en llegar avanzaba el numero y la
+     * segunda recibia 409. Un conflicto contra uno mismo, sin nadie mas
+     * editando. El sintoma engana porque el aviso dice "otra persona guardo
+     * este borrador".
+     *
+     * useRef y no useState: tiene que leerse en el mismo instante en que se
+     * escribe, y setState no actualiza hasta el siguiente render.
+     */
+    const enVuelo = useRef(false)
     const primeraCarga = useRef(true)
 
     const send = useCallback(async (): Promise<void> => {
-        if (readOnly) {
+        if (readOnly || enVuelo.current) {
             return
         }
 
+        enVuelo.current = true
         setState('saving')
 
         try {
@@ -105,6 +120,7 @@ export function useBuilderPersistence<T>({
 
                 setConflict({ actual: datos.actual, version: datos.version })
                 setState('conflict')
+                enVuelo.current = false
 
                 return
             }
@@ -129,6 +145,7 @@ export function useBuilderPersistence<T>({
                     Array.isArray(primero) ? String(primero[0]) : (datos.message ?? '')
                 )
                 setState('rejected')
+                enVuelo.current = false
 
                 return
             }
@@ -152,6 +169,7 @@ export function useBuilderPersistence<T>({
             backoff.current = 1000
             setLastSavedAt(Date.now())
             setState('synced')
+            enVuelo.current = false
         } catch {
             /*
              * Fallo de red o del servidor. El trabajo esta en IndexedDB, asi
@@ -163,6 +181,7 @@ export function useBuilderPersistence<T>({
              * que la gente aprende a ignorar.
              */
             setState('local')
+            enVuelo.current = false
 
             backoff.current = Math.min(backoff.current * 2, MAX_BACKOFF_MS)
 

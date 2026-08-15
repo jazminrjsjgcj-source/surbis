@@ -31,6 +31,24 @@ interface Props {
  * Laravel, y escribirlas aqui crearia una segunda verdad sobre las mismas
  * direcciones.
  */
+/**
+ * Si esta entrada del menu corresponde a la pantalla actual.
+ *
+ * Fuera del componente porque no depende de su estado, y asi se puede leer
+ * de un vistazo sin buscarla entre el marcado.
+ */
+function isCurrent(currentUrl: string, itemUrl: string): boolean {
+    const destino = new URL(itemUrl, 'http://x').pathname
+    const actual = currentUrl.split('?')[0] ?? ''
+
+    // La raiz del panel solo coincide consigo misma.
+    if (destino === '/admin') {
+        return actual === '/admin'
+    }
+
+    return actual === destino || actual.startsWith(`${destino}/`)
+}
+
 export default function AdminShell({ children, logoutUrl = '/logout', securityUrl = '/cuenta/seguridad' }: Props) {
     const t = useTranslate()
 
@@ -65,10 +83,23 @@ export default function AdminShell({ children, logoutUrl = '/logout', securityUr
                             key={item.key}
                             href={item.url}
                             className="nav-link"
-                            // aria-current en el marcado, no solo un color:
-                            // quien no ve la pantalla tambien tiene que saber
-                            // donde esta.
-                            aria-current={url.startsWith(new URL(item.url, 'http://x').pathname) ? 'page' : undefined}
+                            /*
+                             * aria-current en el marcado, no solo un color:
+                             * quien no ve la pantalla tambien tiene que saber
+                             * donde esta.
+                             *
+                             * La comparacion NO puede ser startsWith a secas.
+                             * /admin/encuestas empieza por /admin, asi que el
+                             * panel salia marcado a la vez que la seccion
+                             * real: dos "estas aqui" en el mismo menu, que es
+                             * peor que ninguno.
+                             *
+                             * La raiz exige coincidencia exacta; las demas
+                             * aceptan sus subrutas, para que
+                             * /admin/sucursales/3/areas siga marcando
+                             * Sucursales.
+                             */
+                            aria-current={isCurrent(url, item.url) ? 'page' : undefined}
                         >
                             {t(`interface.nav.${item.key}`)}
                         </Link>

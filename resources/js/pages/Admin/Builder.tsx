@@ -4,6 +4,7 @@ import { useCallback, useState } from 'react'
 import CharCount from '@/Components/CharCount'
 import AdminShell from '@/Layouts/AdminShell'
 import ConditionEditor from '@/Components/ConditionEditor'
+import ConfirmDialog from '@/Components/ConfirmDialog'
 import ConflictNotice from '@/Components/ConflictNotice'
 import OptionEditor from '@/Components/OptionEditor'
 import QuestionList from '@/Components/QuestionList'
@@ -65,6 +66,7 @@ export default function Builder({ survey, version, readOnly, questionTypes, impo
     const t = useTranslate()
     const [questions, setQuestions] = useState<Question[]>(version.questions)
     const [selected, setSelected] = useState(0)
+    const [confirmandoQuitar, setConfirmandoQuitar] = useState(false)
 
     const { state, conflict, rejection, lastSavedAt, saveNow, retryWithServerVersion } =
         useBuilderPersistence({
@@ -159,6 +161,27 @@ export default function Builder({ survey, version, readOnly, questionTypes, impo
 
         setQuestions((actuales) => actuales.filter((_, i) => i !== selected))
         setSelected((anterior) => Math.max(0, anterior - 1))
+        setConfirmandoQuitar(false)
+    }
+
+    /*
+     * Solo se pregunta si hay algo que perder.
+     *
+     * Una pregunta recien anadida y vacia se quita sin mas: confirmar cada
+     * accion entrena a pulsar "si" sin leer, y entonces el dialogo deja de
+     * proteger justo cuando importa.
+     */
+    function pedirQuitar(): void {
+        const tieneContenido =
+            (actual?.text.trim() ?? '') !== '' || (actual?.options.length ?? 0) > 0
+
+        if (tieneContenido) {
+            setConfirmandoQuitar(true)
+
+            return
+        }
+
+        remove()
     }
 
     /**
@@ -390,7 +413,7 @@ export default function Builder({ survey, version, readOnly, questionTypes, impo
                                         type="button"
                                         className="btn btn-ghost btn-danger"
                                         disabled={dependientes.length > 0}
-                                        onClick={remove}
+                                        onClick={pedirQuitar}
                                     >
                                         {t('interface.builder.remove')}
                                     </button>
@@ -400,6 +423,18 @@ export default function Builder({ survey, version, readOnly, questionTypes, impo
                     )}
                 </div>
             )}
+
+            <ConfirmDialog
+                open={confirmandoQuitar}
+                title={t('interface.confirm.remove_question_title')}
+                body={t('interface.confirm.remove_question_body', {
+                    text: actual?.text || t('interface.builder.untitled'),
+                })}
+                confirmLabel={t('interface.builder.remove')}
+                destructive
+                onConfirm={remove}
+                onCancel={() => setConfirmandoQuitar(false)}
+            />
         </AdminShell>
     )
 }
