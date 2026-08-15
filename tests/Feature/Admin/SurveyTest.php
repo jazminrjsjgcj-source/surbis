@@ -12,6 +12,7 @@ use App\Domain\Surveys\Models\SurveyVersion;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Inertia\Testing\AssertableInertia;
 use Tests\TestCase;
 
 /**
@@ -106,13 +107,11 @@ final class SurveyTest extends TestCase
         /*
          * Se compara el modo de identidad, no el array entero.
          *
-         * Cuando se escribio esta prueba, settings era un array. TASK-016 le
-         * puso un cast y ahora devuelve un VersionSettings, asi que comparar
-         * contra ['identity_mode' => 'anonymous'] enfrentaba un objeto con un
-         * array y fallaba sin que hubiera nada roto.
-         *
-         * Comparar el valor concreto ademas dice mejor lo que se vigila: que
-         * la version publicada conserva lo que se le configuro.
+         * settings tiene un cast a VersionSettings desde TASK-016, asi que
+         * comparar contra ['identity_mode' => 'anonymous'] enfrenta un objeto
+         * con un array. Ya se corrigio una vez y volvio a aparecer al
+         * entregar este archivo desde una copia anterior al arreglo: es
+         * T-024.
          */
         $this->assertSame(IdentityMode::Anonymous, $publicada->settings->identityMode);
 
@@ -258,11 +257,23 @@ final class SurveyTest extends TestCase
 
     public function test_la_navegacion_lleva_a_las_encuestas(): void
     {
+        /*
+         * Se comprueba la PROP, no el marcado.
+         *
+         * El panel dejo de ser Blade: ya no devuelve el HTML con el enlace,
+         * lo monta React a partir de estas props. Y si la asercion hubiera
+         * seguido siendo assertSee, podria haber pasado en verde por el
+         * motivo equivocado el dia que esa URL apareciera dentro del JSON de
+         * props por cualquier otra razon.
+         */
         $this->admin();
 
         $this->get(route('admin.dashboard'))
             ->assertOk()
-            ->assertSee(route('admin.surveys.index'), false);
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->where('surveysUrl', route('admin.surveys.index'))
+                ->where('nav.3.key', 'surveys')
+            );
     }
 
     private function admin(): Membership

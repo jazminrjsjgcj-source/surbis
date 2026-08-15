@@ -9,6 +9,7 @@ use App\Domain\Organizations\Models\Area;
 use App\Domain\Organizations\Models\Branch;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Inertia\Testing\AssertableInertia;
 use Tests\TestCase;
 
 /**
@@ -20,7 +21,16 @@ final class BranchTest extends TestCase
 
     public function test_el_listado_solo_muestra_sucursales_de_la_organizacion_activa(): void
     {
-        // RNF-GEN-005. La prueba que da sentido a toda la fase.
+        /*
+         * RNF-GEN-005. La prueba que da sentido a toda la fase.
+         *
+         * Comprueba las PROPS y no el marcado, y aqui importa mas que en
+         * otros sitios: con Inertia, assertSee('Sucursal propia') pasaria
+         * igual porque ese texto viaja dentro del JSON de props. Y
+         * assertDontSee('Sucursal ajena') tambien pasaria... hasta el dia que
+         * una fuga real metiera esa fila en las props, momento en el que la
+         * prueba seguiria en verde. Verde por el motivo equivocado.
+         */
         $membership = $this->admin();
 
         Branch::factory()->for($membership->organization)->create(['name' => 'Sucursal propia']);
@@ -28,8 +38,11 @@ final class BranchTest extends TestCase
 
         $this->get(route('admin.branches.index'))
             ->assertOk()
-            ->assertSee('Sucursal propia')
-            ->assertDontSee('Sucursal ajena');
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->component('Admin/Branches/Index')
+                ->has('branches.data', 1)
+                ->where('branches.data.0.name', 'Sucursal propia')
+            );
     }
 
     public function test_no_se_puede_editar_una_sucursal_ajena(): void
@@ -187,7 +200,10 @@ final class BranchTest extends TestCase
 
         $this->get(route('admin.branches.index', ['q' => 'centro']))
             ->assertOk()
-            ->assertSee('Oficina CENTRO');
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->has('branches.data', 1)
+                ->where('branches.data.0.name', 'Oficina CENTRO')
+            );
     }
 
     public function test_la_busqueda_no_se_escapa_de_la_organizacion(): void
@@ -196,9 +212,11 @@ final class BranchTest extends TestCase
         $membership = $this->admin();
         Branch::factory()->create(['name' => 'Ajena buscable']);
 
+        // Un filtro que ignore el aislamiento es una fuga con buscador. Se
+        // comprueba que NO llega ninguna fila, no que no aparezca el texto.
         $this->get(route('admin.branches.index', ['q' => 'Ajena']))
             ->assertOk()
-            ->assertDontSee('Ajena buscable');
+            ->assertInertia(fn (AssertableInertia $page) => $page->has('branches.data', 0));
     }
 
     public function test_los_cambios_quedan_auditados(): void

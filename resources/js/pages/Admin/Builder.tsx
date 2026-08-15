@@ -1,8 +1,11 @@
 import { Head } from '@inertiajs/react'
 import { useCallback, useState } from 'react'
 
+import CharCount from '@/Components/CharCount'
+import AdminShell from '@/Layouts/AdminShell'
 import ConflictNotice from '@/Components/ConflictNotice'
 import OptionEditor from '@/Components/OptionEditor'
+import QuestionList from '@/Components/QuestionList'
 import SaveIndicator from '@/Components/SaveIndicator'
 import { useTranslate } from '@/lib/translate'
 import { useBuilderPersistence } from '@/lib/useBuilderPersistence'
@@ -40,9 +43,24 @@ interface Props {
     questionTypes: QuestionTypeInfo[]
 }
 
+const MAX_TEXT = 1000
+const MAX_HELP = 1000
+
+/**
+ * Constructor en dos columnas.
+ *
+ * La version anterior lo mostraba todo desplegado y era confusa: dos grupos
+ * de botones identicos —uno de opcion, otro de pregunta— sin nada que dijera
+ * cual actuaba sobre que.
+ *
+ * Aqui la lista manda el orden y el panel edita lo seleccionado. Los dos
+ * grupos dejan de confundirse porque estan en columnas distintas, no porque
+ * cambien de color.
+ */
 export default function Builder({ survey, version, readOnly, questionTypes }: Props) {
     const t = useTranslate()
     const [questions, setQuestions] = useState<Question[]>(version.questions)
+    const [selected, setSelected] = useState(0)
 
     const { state, conflict, lastSavedAt, saveNow, retryWithServerVersion } =
         useBuilderPersistence({
@@ -59,7 +77,15 @@ export default function Builder({ survey, version, readOnly, questionTypes }: Pr
         [questionTypes],
     )
 
-    function addQuestion(): void {
+    const actual = questions[selected]
+
+    function update(cambios: Partial<Question>): void {
+        setQuestions((actuales) =>
+            actuales.map((pregunta, i) => (i === selected ? { ...pregunta, ...cambios } : pregunta)),
+        )
+    }
+
+    function add(): void {
         setQuestions((actuales) => [
             ...actuales,
             {
@@ -72,21 +98,15 @@ export default function Builder({ survey, version, readOnly, questionTypes }: Pr
                 options: [],
             },
         ])
+
+        // La nueva queda seleccionada: anadir para luego tener que buscarla
+        // en la lista seria un paso de mas cada vez.
+        setSelected(questions.length)
     }
 
-    function updateQuestion(indice: number, cambios: Partial<Question>): void {
-        setQuestions((actuales) =>
-            actuales.map((pregunta, i) => (i === indice ? { ...pregunta, ...cambios } : pregunta)),
-        )
-    }
-
-    function removeQuestion(indice: number): void {
-        setQuestions((actuales) => actuales.filter((_, i) => i !== indice))
-    }
-
-    function duplicateQuestion(indice: number): void {
+    function duplicate(): void {
         setQuestions((actuales) => {
-            const original = actuales[indice]
+            const original = actuales[selected]
 
             if (!original) {
                 return actuales
@@ -100,23 +120,30 @@ export default function Builder({ survey, version, readOnly, questionTypes }: Pr
                 options: original.options.map((opcion) => ({ ...opcion, ulid: null })),
             }
 
-            return [...actuales.slice(0, indice + 1), copia, ...actuales.slice(indice + 1)]
+            return [...actuales.slice(0, selected + 1), copia, ...actuales.slice(selected + 1)]
         })
+
+        setSelected(selected + 1)
+    }
+
+    function remove(): void {
+        setQuestions((actuales) => actuales.filter((_, i) => i !== selected))
+        setSelected((anterior) => Math.max(0, anterior - 1))
     }
 
     /**
      * Mover con teclado. RNF-AO-BLD-001 exige alternativa a arrastrar y
      * soltar: sin ella, quien no usa raton no puede reordenar, y arrastrar es
-     * ademas dificil con temblor o con pantalla tactil pequena.
+     * ademas dificil con temblor o en una pantalla tactil pequena.
      */
-    function moveQuestion(indice: number, direccion: -1 | 1): void {
+    function move(indice: number, direccion: -1 | 1): void {
+        const destino = indice + direccion
+
+        if (destino < 0 || destino >= questions.length) {
+            return
+        }
+
         setQuestions((actuales) => {
-            const destino = indice + direccion
-
-            if (destino < 0 || destino >= actuales.length) {
-                return actuales
-            }
-
             const copia = [...actuales]
             const [movida] = copia.splice(indice, 1)
 
@@ -126,178 +153,178 @@ export default function Builder({ survey, version, readOnly, questionTypes }: Pr
 
             return copia
         })
+
+        // La seleccion sigue a la pregunta movida: si se quedara quieta, el
+        // panel pasaria a editar otra sin que nadie lo pidiera.
+        setSelected(destino)
     }
 
     return (
-        <>
+        <AdminShell>
             <Head title={t('interface.builder.title')} />
 
-            <div className="shell-content">
-                <div className="page-header flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                        <h1>{survey.name}</h1>
-                        <p className="hint mt-1">
-                            {t('interface.builder.version', { number: version.number })}
-                        </p>
-                    </div>
-
-                    {!readOnly && (
-                        <SaveIndicator state={state} lastSavedAt={lastSavedAt} onSaveNow={saveNow} />
-                    )}
+            <div className="page-header flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    <h1>{survey.name}</h1>
+                    <p className="hint mt-1">
+                        {t('interface.builder.version', { number: version.number })}
+                    </p>
                 </div>
 
-                {readOnly && (
-                    <div className="alert alert-neutral mb-4" role="status">
-                        {t('interface.builder.read_only')}
-                    </div>
-                )}
-
-                {conflict && (
-                    <ConflictNotice
-                        actual={conflict.actual}
-                        onDiscardMine={() => window.location.reload()}
-                        onRetry={() => retryWithServerVersion(conflict.actual)}
-                    />
-                )}
-
-                {questions.length === 0 ? (
-                    <div className="card card-pad">
-                        <div className="empty">
-                            <h2>{t('interface.builder.empty_title')}</h2>
-                            <p>{t('interface.builder.empty_help')}</p>
-
-                            {!readOnly && (
-                                <button type="button" className="btn btn-primary" onClick={addQuestion}>
-                                    {t('interface.builder.add')}
-                                </button>
-                            )}
-                        </div>
-                    </div>
-                ) : (
-                    <ol className="flex flex-col gap-3">
-                        {questions.map((pregunta, indice) => (
-                            <li key={pregunta.ulid ?? `nueva-${indice}`} className="card card-pad">
-                                <div className="field">
-                                    <label htmlFor={`text-${indice}`}>
-                                        {t('interface.builder.question_text')}
-                                    </label>
-                                    <input
-                                        id={`text-${indice}`}
-                                        type="text"
-                                        className="input"
-                                        value={pregunta.text}
-                                        disabled={readOnly}
-                                        onChange={(e) => updateQuestion(indice, { text: e.target.value })}
-                                    />
-                                </div>
-
-                                <div className="field">
-                                    <label htmlFor={`type-${indice}`}>
-                                        {t('interface.builder.question_type')}
-                                    </label>
-                                    <select
-                                        id={`type-${indice}`}
-                                        className="input"
-                                        value={pregunta.type}
-                                        disabled={readOnly}
-                                        onChange={(e) => {
-                                            const nuevo = tipoDe(e.target.value)
-
-                                            updateQuestion(indice, {
-                                                type: e.target.value,
-                                                // Si el tipo nuevo no admite
-                                                // opciones, se vacian aqui
-                                                // tambien: el servidor las
-                                                // borra igual, y verlas
-                                                // desaparecer al guardar
-                                                // seria desconcertante.
-                                                options: nuevo?.has_options ? pregunta.options : [],
-                                            })
-                                        }}
-                                    >
-                                        {questionTypes.map((tipo) => (
-                                            <option key={tipo.value} value={tipo.value}>
-                                                {t(`interface.builder.type_${tipo.value}`)}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                <label className="text-ink-muted flex items-center gap-2 text-sm">
-                                    <input
-                                        type="checkbox"
-                                        checked={pregunta.is_required}
-                                        disabled={readOnly}
-                                        onChange={(e) =>
-                                            updateQuestion(indice, { is_required: e.target.checked })
-                                        }
-                                    />
-                                    {t('interface.builder.required')}
-                                </label>
-
-                                {/* Las opciones solo aparecen si el tipo las
-                                    admite. Que tipos son lo dice el servidor,
-                                    no una lista escrita aqui: si divergieran,
-                                    el constructor ofreceria opciones que el
-                                    servidor descarta al guardar. */}
-                                {tipoDe(pregunta.type)?.has_options && (
-                                    <OptionEditor
-                                        questionIndex={indice}
-                                        options={pregunta.options}
-                                        isScored={tipoDe(pregunta.type)?.is_scored ?? false}
-                                        readOnly={readOnly}
-                                        onChange={(options) => updateQuestion(indice, { options })}
-                                    />
-                                )}
-
-                                {!readOnly && (
-                                    <div className="actions">
-                                        <button
-                                            type="button"
-                                            className="btn btn-ghost"
-                                            onClick={() => moveQuestion(indice, -1)}
-                                            disabled={indice === 0}
-                                        >
-                                            {t('interface.builder.move_up')}
-                                        </button>
-
-                                        <button
-                                            type="button"
-                                            className="btn btn-ghost"
-                                            onClick={() => moveQuestion(indice, 1)}
-                                            disabled={indice === questions.length - 1}
-                                        >
-                                            {t('interface.builder.move_down')}
-                                        </button>
-
-                                        <button
-                                            type="button"
-                                            className="btn btn-ghost"
-                                            onClick={() => duplicateQuestion(indice)}
-                                        >
-                                            {t('interface.builder.duplicate')}
-                                        </button>
-
-                                        <button
-                                            type="button"
-                                            className="btn btn-ghost"
-                                            onClick={() => removeQuestion(indice)}
-                                        >
-                                            {t('interface.builder.remove')}
-                                        </button>
-                                    </div>
-                                )}
-                            </li>
-                        ))}
-                    </ol>
-                )}
-
-                {!readOnly && questions.length > 0 && (
-                    <button type="button" className="btn btn-primary mt-4" onClick={addQuestion}>
-                        {t('interface.builder.add')}
-                    </button>
+                {!readOnly && (
+                    <SaveIndicator state={state} lastSavedAt={lastSavedAt} onSaveNow={saveNow} />
                 )}
             </div>
-        </>
+
+            {readOnly && (
+                <div className="alert alert-neutral mb-4" role="status">
+                    {t('interface.builder.read_only')}
+                </div>
+            )}
+
+            {conflict && (
+                <ConflictNotice
+                    actual={conflict.actual}
+                    onDiscardMine={() => window.location.reload()}
+                    onRetry={() => retryWithServerVersion(conflict.actual)}
+                />
+            )}
+
+            {questions.length === 0 ? (
+                <div className="card card-pad">
+                    <div className="empty">
+                        <h2>{t('interface.builder.empty_title')}</h2>
+                        <p>{t('interface.builder.empty_help')}</p>
+
+                        {!readOnly && (
+                            <button type="button" className="btn btn-primary" onClick={add}>
+                                {t('interface.builder.add')}
+                            </button>
+                        )}
+                    </div>
+                </div>
+            ) : (
+                <div className="builder">
+                    <div className="card card-pad">
+                        <QuestionList
+                            questions={questions}
+                            selected={selected}
+                            readOnly={readOnly}
+                            onSelect={setSelected}
+                            onMove={move}
+                        />
+
+                        {!readOnly && (
+                            <button type="button" className="btn btn-primary btn-block mt-3" onClick={add}>
+                                {t('interface.builder.add')}
+                            </button>
+                        )}
+                    </div>
+
+                    {actual && (
+                        <div className="card card-pad">
+                            <div className="field">
+                                <label htmlFor="text">{t('interface.builder.question_text')}</label>
+
+                                {/* textarea y no input: un texto largo en una
+                                    linea obliga a desplazarse dentro del
+                                    campo para releer lo escrito. */}
+                                <textarea
+                                    id="text"
+                                    className="input input-grow"
+                                    value={actual.text}
+                                    maxLength={MAX_TEXT}
+                                    disabled={readOnly}
+                                    aria-describedby="text-count"
+                                    onChange={(e) => update({ text: e.target.value })}
+                                />
+                                <CharCount id="text-count" value={actual.text} max={MAX_TEXT} />
+                            </div>
+
+                            <div className="field">
+                                <label htmlFor="help">{t('interface.builder.question_help')}</label>
+                                <textarea
+                                    id="help"
+                                    className="input input-grow"
+                                    value={actual.help ?? ''}
+                                    maxLength={MAX_HELP}
+                                    disabled={readOnly}
+                                    aria-describedby="help-hint help-count"
+                                    onChange={(e) => update({ help: e.target.value || null })}
+                                />
+                                <span id="help-hint" className="hint">
+                                    {t('interface.builder.question_help_hint')}
+                                </span>
+                                <CharCount id="help-count" value={actual.help ?? ''} max={MAX_HELP} />
+                            </div>
+
+                            <div className="field">
+                                <label htmlFor="type">{t('interface.builder.question_type')}</label>
+                                <select
+                                    id="type"
+                                    className="input"
+                                    value={actual.type}
+                                    disabled={readOnly}
+                                    onChange={(e) => {
+                                        const nuevo = tipoDe(e.target.value)
+
+                                        update({
+                                            type: e.target.value,
+                                            // El servidor las borra igual al
+                                            // cambiar a un tipo sin opciones.
+                                            // Verlas desaparecer un segundo
+                                            // despues seria desconcertante.
+                                            options: nuevo?.has_options ? actual.options : [],
+                                        })
+                                    }}
+                                >
+                                    {questionTypes.map((tipo) => (
+                                        <option key={tipo.value} value={tipo.value}>
+                                            {t(`interface.builder.type_${tipo.value}`)}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <label className="text-ink-muted flex items-center gap-2 text-sm">
+                                <input
+                                    type="checkbox"
+                                    checked={actual.is_required}
+                                    disabled={readOnly}
+                                    onChange={(e) => update({ is_required: e.target.checked })}
+                                />
+                                {t('interface.builder.required')}
+                            </label>
+
+                            {tipoDe(actual.type)?.has_options && (
+                                <OptionEditor
+                                    questionIndex={selected}
+                                    options={actual.options}
+                                    isScored={tipoDe(actual.type)?.is_scored ?? false}
+                                    readOnly={readOnly}
+                                    onChange={(options) => update({ options })}
+                                />
+                            )}
+
+                            {!readOnly && (
+                                <div className="actions border-line mt-4 border-t pt-3">
+                                    <button type="button" className="btn btn-ghost" onClick={duplicate}>
+                                        {t('interface.builder.duplicate')}
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        className="btn btn-ghost btn-danger"
+                                        onClick={remove}
+                                    >
+                                        {t('interface.builder.remove')}
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+            )}
+        </AdminShell>
     )
 }

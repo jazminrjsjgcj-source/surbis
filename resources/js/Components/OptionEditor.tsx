@@ -1,3 +1,4 @@
+import CharCount from '@/Components/CharCount'
 import { useTranslate } from '@/lib/translate'
 
 interface Option {
@@ -17,12 +18,9 @@ interface Props {
     onChange: (options: Option[]) => void
 }
 
-/**
- * Opciones de una pregunta. RF-AO-BLD-003, 005 y 010.
- *
- * Sin esto, el constructor permite crear una pregunta de tipo "Una opcion"
- * sin opciones: una pregunta que no se puede contestar.
- */
+const MAX_LABEL = 255
+const MAX_VALUE = 255
+
 export default function OptionEditor({
     questionIndex,
     options,
@@ -33,17 +31,16 @@ export default function OptionEditor({
     const t = useTranslate()
 
     /*
-     * Valores repetidos, senalados aqui y no solo al guardar.
+     * Valores repetidos, senalados mientras se escribe.
      *
-     * El servidor los rechaza igual —y la base tambien, que es la garantia de
-     * verdad— pero descubrirlo un segundo despues, cuando el autoguardado
-     * falla, obliga a recordar que se estaba escribiendo. Verlo mientras se
-     * escribe es prevencion de errores; verlo despues es un mensaje de error.
+     * El servidor los rechaza y la base tambien —esa es la garantia— pero
+     * descubrirlo un segundo despues, cuando el autoguardado falla, obliga a
+     * recordar que se estaba escribiendo.
      */
     const repetidos = new Set(
         options
             .map((opcion) => opcion.value.trim())
-            .filter((valor, indice, todos) => valor !== '' && todos.indexOf(valor) !== indice),
+            .filter((valor, i, todos) => valor !== '' && todos.indexOf(valor) !== i),
     )
 
     function update(indice: number, cambios: Partial<Option>): void {
@@ -64,10 +61,6 @@ export default function OptionEditor({
         ])
     }
 
-    function remove(indice: number): void {
-        onChange(options.filter((_, i) => i !== indice))
-    }
-
     function move(indice: number, direccion: -1 | 1): void {
         const destino = indice + direccion
 
@@ -86,7 +79,7 @@ export default function OptionEditor({
     }
 
     return (
-        <fieldset className="mt-3 border-0 p-0">
+        <fieldset className="mt-4 border-0 p-0">
             <legend className="text-sm font-semibold">{t('interface.builder.options')}</legend>
 
             {options.length === 0 && (
@@ -94,66 +87,67 @@ export default function OptionEditor({
             )}
 
             {options.map((opcion, indice) => {
-                const idBase = `q${questionIndex}-o${indice}`
+                const id = `q${questionIndex}-o${indice}`
                 const duplicado = opcion.value.trim() !== '' && repetidos.has(opcion.value.trim())
 
                 return (
-                    <div key={opcion.ulid ?? `nueva-${indice}`} className="panel">
-                        <div className="flex flex-wrap gap-3">
-                            <div className="field toolbar-grow">
-                                {/* La etiqueta es obligatoria SIEMPRE: es el
-                                    nombre accesible de RF-AO-BLD-005, tambien
-                                    cuando la opcion se muestra solo como
-                                    imagen. */}
-                                <label htmlFor={`${idBase}-label`}>
+                    <div key={opcion.ulid ?? `nueva-${indice}`} className="builder-option">
+                        <div className="builder-option-grid">
+                            <div className="field">
+                                <label htmlFor={`${id}-label`}>
                                     {t('interface.builder.option_label')}
                                 </label>
                                 <input
-                                    id={`${idBase}-label`}
+                                    id={`${id}-label`}
                                     type="text"
                                     className="input"
                                     value={opcion.label}
+                                    maxLength={MAX_LABEL}
                                     disabled={readOnly}
+                                    aria-describedby={`${id}-label-count`}
                                     onChange={(e) => update(indice, { label: e.target.value })}
+                                />
+                                <CharCount
+                                    id={`${id}-label-count`}
+                                    value={opcion.label}
+                                    max={MAX_LABEL}
                                 />
                             </div>
 
                             <div className="field">
-                                <label htmlFor={`${idBase}-value`}>
+                                <label htmlFor={`${id}-value`}>
                                     {t('interface.builder.option_value')}
                                 </label>
                                 <input
-                                    id={`${idBase}-value`}
+                                    id={`${id}-value`}
                                     type="text"
                                     className="input"
                                     value={opcion.value}
+                                    maxLength={MAX_VALUE}
                                     disabled={readOnly}
                                     aria-invalid={duplicado ? true : undefined}
-                                    aria-describedby={duplicado ? `${idBase}-error` : `${idBase}-hint`}
+                                    aria-describedby={duplicado ? `${id}-error` : `${id}-hint`}
                                     onChange={(e) => update(indice, { value: e.target.value })}
                                 />
 
                                 {duplicado ? (
-                                    <span id={`${idBase}-error`} className="error">
+                                    <span id={`${id}-error`} className="error">
                                         {t('interface.builder.option_duplicate')}
                                     </span>
                                 ) : (
-                                    <span id={`${idBase}-hint`} className="hint">
+                                    <span id={`${id}-hint`} className="hint">
                                         {t('interface.builder.option_value_hint')}
                                     </span>
                                 )}
                             </div>
 
-                            {/* La puntuacion solo aparece si el tipo puntua.
-                                Pedirla en un texto libre seria un campo que no
-                                significa nada. */}
-                            {isScored && (
+                            {isScored ? (
                                 <div className="field">
-                                    <label htmlFor={`${idBase}-score`}>
+                                    <label htmlFor={`${id}-score`}>
                                         {t('interface.builder.option_score')}
                                     </label>
                                     <input
-                                        id={`${idBase}-score`}
+                                        id={`${id}-score`}
                                         type="number"
                                         className="input"
                                         value={opcion.score ?? 0}
@@ -163,14 +157,16 @@ export default function OptionEditor({
                                         }
                                     />
                                 </div>
+                            ) : (
+                                <div />
                             )}
 
                             <div className="field">
-                                <label htmlFor={`${idBase}-display`}>
+                                <label htmlFor={`${id}-display`}>
                                     {t('interface.builder.option_display')}
                                 </label>
                                 <select
-                                    id={`${idBase}-display`}
+                                    id={`${id}-display`}
                                     className="input"
                                     value={opcion.display}
                                     disabled={readOnly}
@@ -179,24 +175,26 @@ export default function OptionEditor({
                                     <option value="text">
                                         {t('interface.builder.display_text')}
                                     </option>
-                                    <option value="image">
-                                        {t('interface.builder.display_image')}
+
+                                    {/*
+                                        Desactivadas hasta que exista la
+                                        biblioteca multimedia (Fase 5).
+
+                                        Antes se podian elegir con un aviso
+                                        pequeno debajo. Eso estaba mal: un
+                                        desplegable que ofrece algo que no
+                                        funciona es peor que uno con menos
+                                        opciones.
+                                    */}
+                                    <option value="image" disabled>
+                                        {t('interface.builder.display_image')} —{' '}
+                                        {t('interface.builder.display_pending')}
                                     </option>
-                                    <option value="image_and_text">
-                                        {t('interface.builder.display_image_and_text')}
+                                    <option value="image_and_text" disabled>
+                                        {t('interface.builder.display_image_and_text')} —{' '}
+                                        {t('interface.builder.display_pending')}
                                     </option>
                                 </select>
-
-                                {/* Las dos que necesitan imagen se pueden
-                                    elegir, pero la imagen llega en la Fase 5.
-                                    Decirlo aqui evita que alguien las
-                                    configure y no entienda por que no se ve
-                                    nada. */}
-                                {opcion.display !== 'text' && (
-                                    <span className="hint">
-                                        {t('interface.builder.display_pending')}
-                                    </span>
-                                )}
                             </div>
                         </div>
 
@@ -222,8 +220,8 @@ export default function OptionEditor({
 
                                 <button
                                     type="button"
-                                    className="btn btn-ghost"
-                                    onClick={() => remove(indice)}
+                                    className="btn btn-ghost btn-danger"
+                                    onClick={() => onChange(options.filter((_, i) => i !== indice))}
                                 >
                                     {t('interface.builder.option_remove')}
                                 </button>
@@ -234,7 +232,7 @@ export default function OptionEditor({
             })}
 
             {!readOnly && (
-                <button type="button" className="btn btn-ghost mt-2" onClick={add}>
+                <button type="button" className="btn btn-ghost mt-3" onClick={add}>
                     {t('interface.builder.option_add')}
                 </button>
             )}

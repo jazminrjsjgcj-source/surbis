@@ -736,3 +736,143 @@
     pointer-events: none;
   }
 }
+
+/* ===========================================================================
+   CONSTRUCTOR DE PREGUNTAS
+   Dos columnas: la lista manda el orden, el panel edita lo seleccionado.
+   Los dos grupos de acciones dejan de confundirse porque viven en sitios
+   distintos, no porque cambien de color.
+   =========================================================================== */
+
+@layer components {
+  .builder {
+    display: grid;
+    grid-template-columns: 19rem 1fr;
+    gap: 1rem;
+    align-items: start;
+  }
+
+  /* Por debajo de 900px se apilan. Una lista de 19rem junto a un panel de
+     edicion no cabe en una tableta en vertical, y forzarlo produce dos
+     columnas ilegibles en lugar de una legible. */
+  @media (max-width: 900px) {
+    .builder {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .builder-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .builder-item {
+    inline-size: 100%;
+    text-align: start;
+    padding: 0.625rem 0.75rem;
+    border-radius: var(--radius-control);
+    border: 1px solid transparent;
+    display: flex;
+    gap: 0.625rem;
+    align-items: flex-start;
+  }
+
+  .builder-item:hover {
+    background: var(--color-surface-sunken);
+  }
+
+  /* aria-current y no una clase: la seleccion tiene que estar en el marcado
+     para que un lector de pantalla la anuncie. */
+  .builder-item[aria-current="true"] {
+    background: var(--color-primary-soft);
+    border-color: var(--color-primary);
+  }
+
+  .builder-item-number {
+    font-variant-numeric: tabular-nums;
+    font-size: 0.75rem;
+    color: var(--color-ink-subtle);
+    min-inline-size: 1.25rem;
+    padding-block-start: 0.125rem;
+  }
+
+  /*
+     El texto se corta en dos lineas.
+
+     Sin esto, una pregunta de trescientos caracteres estira la columna y
+     empuja el panel de edicion fuera de la pantalla. Cortar oculta
+     informacion, asi que el texto entero va en el atributo title.
+  */
+  .builder-item-text {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    font-size: 0.845rem;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+
+  .builder-item-type {
+    font-size: 0.7rem;
+    color: var(--color-ink-subtle);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  /* La opcion en su propia caja: sin borde, no se ve donde empieza una y
+     acaba la siguiente. */
+  .builder-option {
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-control);
+    padding: 0.75rem;
+    margin-block-start: 0.5rem;
+  }
+
+  .builder-option-grid {
+    display: grid;
+    grid-template-columns: 2fr 2fr 5rem 9rem;
+    gap: 0.625rem;
+    align-items: start;
+  }
+
+  @media (max-width: 760px) {
+    .builder-option-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* Contador de caracteres. Discreto hasta que se acerca al limite. */
+  .char-count {
+    font-size: 0.7rem;
+    color: var(--color-ink-subtle);
+    text-align: end;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .char-count-near {
+    color: var(--color-neutral-text);
+    font-weight: 600;
+  }
+
+  /* Un textarea que crece con el contenido, sin barra interna: releer lo
+     escrito no deberia obligar a desplazarse dentro del campo. */
+  .input-grow {
+    resize: vertical;
+    min-block-size: 2.75rem;
+    field-sizing: content;
+  }
+
+  /* Acciones destructivas. El color acompana; la palabra informa. */
+  .btn-danger {
+    color: var(--color-negative-text);
+  }
+
+  .btn-danger:hover {
+    background: var(--color-negative-soft);
+  }
+}

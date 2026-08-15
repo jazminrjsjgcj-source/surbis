@@ -95,12 +95,24 @@
             @endunless
         </div>
 
-        <div class="card card-pad mt-4 max-w-140">
-            <a href="{{ route('admin.surveys.settings', $survey) }}" class="btn btn-ghost">
-                {{ __('interface.settings.link') }}
-            </a>
+        {{--
+            Las dos puertas de la encuesta.
 
-            <p class="hint mt-3">{{ __('interface.surveys.builder_pending') }}</p>
+            El constructor llevaba tres tareas construido y esta pantalla
+            seguia diciendo que llegaba "en la siguiente fase", sin enlace.
+            Solo se alcanzaba escribiendo la URL a mano. Es el tercer caso de
+            lo mismo: construir una seccion y olvidar la puerta.
+        --}}
+        <div class="card card-pad mt-4 max-w-140">
+            <div class="actions">
+                <a href="{{ route('admin.surveys.builder', $survey) }}" class="btn btn-primary">
+                    {{ __('interface.surveys.builder_link') }}
+                </a>
+
+                <a href="{{ route('admin.surveys.settings', $survey) }}" class="btn btn-ghost">
+                    {{ __('interface.settings.link') }}
+                </a>
+            </div>
         </div>
     @endif
 </x-layouts.admin>

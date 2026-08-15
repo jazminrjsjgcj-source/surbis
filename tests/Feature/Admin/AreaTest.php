@@ -8,6 +8,7 @@ use App\Domain\Identity\Models\Membership;
 use App\Domain\Organizations\Models\Area;
 use App\Domain\Organizations\Models\Branch;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia;
 use Tests\TestCase;
 
 /**
@@ -32,6 +33,14 @@ final class AreaTest extends TestCase
             'name' => 'Ventanilla de otra sede',
         ]);
 
+        /*
+         * assertSee sigue valiendo aqui: /admin/sucursales/{branch}/areas
+         * todavia es Blade. Cuando esa pantalla pase a React (TASK-024c),
+         * esta asercion tiene que cambiar a props, igual que la de
+         * sucursales: con Inertia, assertDontSee pasaria aunque la fila ajena
+         * llegara en el JSON, y entonces una fuga de aislamiento quedaria en
+         * verde.
+         */
         $this->get(route('admin.areas.index', $branch))
             ->assertOk()
             ->assertSee('Ventanilla propia')
@@ -192,13 +201,23 @@ final class AreaTest extends TestCase
 
     public function test_el_conteo_de_areas_enlaza_a_su_pantalla(): void
     {
-        // Antes era un numero que no llevaba a ningun sitio.
+        /*
+         * Antes era un numero que no llevaba a ningun sitio.
+         *
+         * La URL viaja como prop: el listado de sucursales dejo de ser Blade,
+         * asi que ya no devuelve el enlace en el HTML. Y comprobarlo con
+         * assertSee habria seguido pasando mientras la URL apareciera en el
+         * JSON por cualquier motivo, incluso si el componente dejara de
+         * pintarla.
+         */
         $membership = $this->admin();
         $branch = Branch::factory()->for($membership->organization)->create();
 
         $this->get(route('admin.branches.index'))
             ->assertOk()
-            ->assertSee(route('admin.areas.index', $branch), false);
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->where('branches.data.0.areas_url', route('admin.areas.index', $branch))
+            );
     }
 
     private function admin(): Membership

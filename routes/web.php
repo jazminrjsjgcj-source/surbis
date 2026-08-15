@@ -15,6 +15,7 @@ use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\OrganizationChoiceController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\SecondFactorController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
 use Illuminate\Support\Facades\Route;
 
@@ -110,7 +111,7 @@ Route::middleware(['auth', 'organization'])->group(function (): void {
          * secciones existian y eran inalcanzables salvo escribiendo la
          * direccion.
          */
-        Route::view('/admin', 'admin.dashboard')->name('admin.dashboard');
+        Route::get('/admin', DashboardController::class)->name('admin.dashboard');
 
         /*
          * Sucursales. RF-AO-BRA-001, 002 y 004.

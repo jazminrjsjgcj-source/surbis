@@ -7,132 +7,130 @@ namespace Tests\Feature\Admin;
 use App\Domain\Identity\Models\Membership;
 use App\Domain\Organizations\Models\Branch;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia;
 use Tests\TestCase;
 
 /**
- * El marco de administracion y las piezas que reutilizaran las demas
- * pantallas: navegacion, tabla, paginacion y estados vacios.
+ * El marco de administracion y las piezas compartidas.
+ *
+ * ATENCION: este archivo comprobaba mas de lo que comprueba ahora.
+ *
+ * Antes de Inertia afirmaba sobre el marcado que devolvia el servidor:
+ * <caption>, scope="col", aria-current="page", rel="next". Ese marcado lo
+ * genera ahora el navegador a partir de DataTable, Pagination y AdminShell,
+ * asi que una peticion HTTP ya no puede verlo.
+ *
+ * Lo que queda aqui es lo que SIGUE siendo comprobable desde el servidor: que
+ * los datos que la pantalla necesita para comportarse bien llegan como props.
+ *
+ * LO QUE SE PERDIO, y no esta resuelto:
+ *
+ *   - que la tabla tenga caption y scope="col"
+ *   - que la seccion activa lleve aria-current
+ *   - que la paginacion marque rel="next"
+ *
+ * Los componentes lo tienen. Lo que ya no existe es la red que vigila que
+ * sigan estando manana, y eso pide pruebas de navegador. Es la misma deuda
+ * que dejo la conversion del acceso, ahora extendida al panel.
  */
 final class AdminShellTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_la_navegacion_lleva_a_las_sucursales(): void
+    public function test_la_navegacion_viaja_como_prop_en_toda_pantalla_de_admin(): void
     {
-        /*
-         * Antes de esta tarea, /admin/sucursales solo se alcanzaba
-         * escribiendo la direccion: ninguna pantalla enlazaba a ella. Codigo
-         * inalcanzable, la trampa T-001 otra vez.
-         */
+        // React no conoce las rutas nombradas de Laravel. Si cada componente
+        // escribiera sus URLs, habria tantas verdades como pantallas.
         $this->admin();
 
         $this->get(route('admin.branches.index'))
             ->assertOk()
-            ->assertSee(route('admin.branches.index'), false)
-            ->assertSee(__('interface.nav.branches'), false);
-    }
-
-    public function test_la_seccion_activa_se_anuncia_en_el_marcado(): void
-    {
-        // aria-current y no solo un color: quien no ve la pantalla tambien
-        // tiene que saber donde esta. ANEXO 1 seccion 47.
-        $this->admin();
-
-        $this->get(route('admin.branches.index'))
-            ->assertOk()
-            ->assertSee('aria-current="page"', false);
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->has('nav', 4)
+                ->where('nav.1.key', 'branches')
+                ->where('nav.1.url', route('admin.branches.index'))
+            );
     }
 
     public function test_la_navegacion_no_promete_pantallas_que_no_existen(): void
     {
         /*
-         * Un menu con entradas que no llevan a ningun sitio es un mecanismo
-         * que no hace nada. Cada fase anade la suya cuando tiene algo detras.
+         * Cuatro entradas, ni una mas. La lista se amplia cuando una fase
+         * anade la suya, y fijar la cuenta obliga a mirarla en ese momento.
          *
-         * La lista se acorta segun avanzan las fases, y eso es deliberado:
-         * cuando una ruta empieza a existir, esta prueba se pone roja y
-         * obliga a retirarla de aqui a mano. Es lo que paso con
-         * /admin/encuestas al abrir la Fase 3.
-         *
-         * Podria comprobarse automaticamente contra la tabla de rutas, pero
-         * entonces no avisaria de nada: pasaria siempre.
+         * Multimedia (Fase 5), respuestas (Fase 9) y analisis (Fase 12) no
+         * estan. Un menu que promete pantallas que no existen es un mecanismo
+         * que no hace nada.
          */
         $this->admin();
 
         $respuesta = $this->get(route('admin.branches.index'))->assertOk();
 
-        // Fase 5, 9 y 12. Se retiran de aqui cuando existan.
-        foreach (['/admin/multimedia', '/admin/respuestas', '/admin/analisis'] as $ruta) {
-            $respuesta->assertDontSee($ruta, false);
-        }
+        $respuesta->assertInertia(fn (AssertableInertia $page) => $page
+            ->has('nav', 4)
+            ->where('nav.0.key', 'dashboard')
+            ->where('nav.1.key', 'branches')
+            ->where('nav.2.key', 'people')
+            ->where('nav.3.key', 'surveys')
+        );
     }
 
-    public function test_la_navegacion_lleva_a_las_encuestas(): void
+    public function test_la_tabla_recibe_las_filas_que_debe_pintar(): void
     {
-        // Contrapartida de la anterior: lo que ya existe tiene que estar.
-        $this->admin();
-
-        $this->get(route('admin.branches.index'))
-            ->assertOk()
-            ->assertSee(route('admin.surveys.index'), false)
-            ->assertSee(__('interface.nav.surveys'), false);
-    }
-
-    public function test_la_tabla_tiene_titulo_y_encabezados_de_columna(): void
-    {
-        // Sin scope="col" un lector de pantalla no relaciona cada celda con
-        // su columna, y la tabla se lee como una lista de valores sueltos.
+        // Lo comprobable desde el servidor. Que la tabla lleve caption y
+        // scope="col" solo lo ve una prueba de navegador.
         $membership = $this->admin();
-        Branch::factory()->for($membership->organization)->create();
+        Branch::factory()->for($membership->organization)->count(3)->create();
 
         $this->get(route('admin.branches.index'))
             ->assertOk()
-            ->assertSee('<caption', false)
-            ->assertSee('scope="col"', false);
+            ->assertInertia(fn (AssertableInertia $page) => $page->has('branches.data', 3));
     }
 
-    public function test_sin_sucursales_explica_que_son_y_como_crear_la_primera(): void
+    public function test_sin_sucursales_no_llega_ninguna_fila(): void
     {
         $this->admin();
 
         $this->get(route('admin.branches.index'))
             ->assertOk()
-            ->assertSee(__('interface.branches.empty_title'), false)
-            ->assertSee(route('admin.branches.create'), false);
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->has('branches.data', 0)
+                ->where('filters.q', '')
+                ->where('filters.status', '')
+            );
     }
 
-    public function test_un_filtro_sin_resultados_dice_algo_distinto(): void
+    public function test_un_filtro_sin_resultados_llega_con_el_filtro_puesto(): void
     {
-        // Son dos situaciones con causas y salidas distintas. Un mensaje
-        // unico deja al usuario creyendo que perdio sus datos.
+        /*
+         * Son dos vacios distintos, y el componente decide cual mostrar
+         * mirando `filters`. Si esa prop no llegara, la pantalla diria
+         * "todavia no hay sucursales" a alguien que acaba de buscar, y esa
+         * persona creeria que perdio sus datos.
+         */
         $membership = $this->admin();
         Branch::factory()->for($membership->organization)->create(['name' => 'Centro']);
 
         $this->get(route('admin.branches.index', ['q' => 'inexistente']))
             ->assertOk()
-            ->assertSee(__('interface.branches.empty_search_title'), false)
-            ->assertDontSee(__('interface.branches.empty_title'), false);
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->has('branches.data', 0)
+                ->where('filters.q', 'inexistente')
+            );
     }
 
-    public function test_la_paginacion_aparece_al_pasar_de_una_pagina(): void
+    public function test_la_paginacion_llega_con_sus_enlaces(): void
     {
         $membership = $this->admin();
         Branch::factory()->for($membership->organization)->count(25)->create();
 
         $this->get(route('admin.branches.index'))
             ->assertOk()
-            ->assertSee(__('interface.pagination.next'), false)
-            ->assertSee('rel="next"', false);
-    }
-
-    public function test_la_paginacion_no_aparece_con_una_sola_pagina(): void
-    {
-        $membership = $this->admin();
-        Branch::factory()->for($membership->organization)->count(3)->create();
-
-        $this->get(route('admin.branches.index'))
-            ->assertOk()
-            ->assertDontSee('rel="next"', false);
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->has('branches.data', 20)
+                ->where('branches.total', 25)
+                ->has('branches.links')
+            );
     }
 
     public function test_la_paginacion_conserva_los_filtros(): void
@@ -144,7 +142,10 @@ final class AdminShellTest extends TestCase
 
         $this->get(route('admin.branches.index', ['q' => 'Oficina']))
             ->assertOk()
-            ->assertSee('q=Oficina', false);
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->where('branches.links.2.url', fn (?string $url): bool => $url !== null
+                    && str_contains($url, 'q=Oficina'))
+            );
     }
 
     private function admin(): Membership

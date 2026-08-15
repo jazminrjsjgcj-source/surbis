@@ -13,16 +13,16 @@ use App\Domain\Organizations\Models\Branch;
 use App\Http\Controllers\Controller;
 use App\Http\Middleware\EnsureActiveOrganization;
 use App\Http\Requests\Admin\BranchRequest;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 
 final class BranchController extends Controller
 {
     private const PER_PAGE = 20;
 
-    public function index(Request $request): View
+    public function index(Request $request): InertiaResponse
     {
         $this->authorize('viewAny', Branch::class);
 
@@ -30,7 +30,6 @@ final class BranchController extends Controller
         $search = $request->string('q')->toString();
         $status = $request->string('status')->toString();
 
-        /** @var LengthAwarePaginator<int, Branch> $branches */
         $branches = Branch::query()
             ->forOrganization($membership->organization_id)
             ->search($search)
@@ -44,18 +43,41 @@ final class BranchController extends Controller
             ->paginate(self::PER_PAGE)
             ->withQueryString();
 
-        return view('admin.branches.index', [
-            'branches' => $branches,
-            'search' => $search,
-            'status' => $status,
+        return Inertia::render('Admin/Branches/Index', [
+            /*
+             * through() transforma cada fila conservando la estructura de
+             * paginacion. Sin el habria que reconstruir los enlaces a mano, y
+             * ahi es donde se pierde withQueryString y los filtros dejan de
+             * sobrevivir al cambio de pagina.
+             */
+            'branches' => $branches->through(fn (Branch $branch): array => [
+                'ulid' => $branch->ulid,
+                'name' => $branch->name,
+                'code' => $branch->code,
+                'is_active' => $branch->isActive(),
+                'areas_count' => $branch->areas_count,
+                'memberships_count' => $branch->memberships_count,
+                'edit_url' => route('admin.branches.edit', $branch),
+                'areas_url' => route('admin.areas.index', $branch),
+                'archive_url' => route('admin.branches.archive', $branch),
+                'activate_url' => route('admin.branches.activate', $branch),
+            ]),
+
+            'filters' => ['q' => $search, 'status' => $status],
+            'createUrl' => route('admin.branches.create'),
+            'indexUrl' => route('admin.branches.index'),
         ]);
     }
 
-    public function create(): View
+    public function create(): InertiaResponse
     {
         $this->authorize('create', Branch::class);
 
-        return view('admin.branches.form', ['branch' => null]);
+        return Inertia::render('Admin/Branches/Form', [
+            'branch' => null,
+            'action' => route('admin.branches.store'),
+            'cancelUrl' => route('admin.branches.index'),
+        ]);
     }
 
     public function store(BranchRequest $request, SaveBranch $save): RedirectResponse
@@ -70,11 +92,19 @@ final class BranchController extends Controller
             ->with('status', __('interface.branches.created'));
     }
 
-    public function edit(Branch $branch): View
+    public function edit(Branch $branch): InertiaResponse
     {
         $this->authorize('update', $branch);
 
-        return view('admin.branches.form', ['branch' => $branch]);
+        return Inertia::render('Admin/Branches/Form', [
+            'branch' => [
+                'ulid' => $branch->ulid,
+                'name' => $branch->name,
+                'code' => $branch->code,
+            ],
+            'action' => route('admin.branches.update', $branch),
+            'cancelUrl' => route('admin.branches.index'),
+        ]);
     }
 
     public function update(BranchRequest $request, Branch $branch, SaveBranch $save): RedirectResponse

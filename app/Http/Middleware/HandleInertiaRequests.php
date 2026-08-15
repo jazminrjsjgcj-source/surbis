@@ -22,6 +22,23 @@ final class HandleInertiaRequests extends Middleware
     protected $rootView = 'app';
 
     /**
+     * @return list<array{key: string, url: string}>
+     */
+    private function navigation(Request $request): array
+    {
+        if ($request->user() === null) {
+            return [];
+        }
+
+        return [
+            ['key' => 'dashboard', 'url' => route('admin.dashboard')],
+            ['key' => 'branches', 'url' => route('admin.branches.index')],
+            ['key' => 'people', 'url' => route('admin.people.index')],
+            ['key' => 'surveys', 'url' => route('admin.surveys.index')],
+        ];
+    }
+
+    /**
      * @return array<string, mixed>
      */
     public function share(Request $request): array
@@ -38,6 +55,19 @@ final class HandleInertiaRequests extends Middleware
                     'email' => $user->email,
                 ],
             ],
+
+            /*
+             * La navegacion se comparte desde el servidor.
+             *
+             * React no conoce las rutas nombradas de Laravel. Escribir
+             * "/admin/sucursales" en un componente crearia una segunda verdad
+             * sobre la misma direccion, y el dia que cambie la ruta el enlace
+             * quedaria roto sin que ninguna prueba lo dijera.
+             *
+             * Lista SOLO lo que existe. Un menu que promete pantallas que no
+             * estan es un mecanismo que no hace nada.
+             */
+            'nav' => $this->navigation($request),
 
             'locale' => app()->getLocale(),
             'dir' => TextDirection::current(),

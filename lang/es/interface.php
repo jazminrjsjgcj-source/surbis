@@ -164,6 +164,10 @@ return [
         'version' => 'Borrador, version :number',
         'read_only' => 'Esta version esta publicada: se muestra en solo lectura. Para cambiarla, abre un borrador nuevo.',
 
+        'list_label' => 'Preguntas de la encuesta',
+        'untitled' => 'Pregunta sin texto',
+        'question_help' => 'Texto de ayuda',
+        'question_help_hint' => 'Se muestra bajo la pregunta. Opcional.',
         'question_text' => 'Pregunta',
         'question_type' => 'Tipo',
         'required' => 'Obligatoria',
@@ -211,7 +215,7 @@ return [
         'display_text' => 'Solo texto',
         'display_image' => 'Solo imagen',
         'display_image_and_text' => 'Imagen y texto',
-        'display_pending' => 'La biblioteca de imagenes llega en la siguiente fase. Por ahora se vera el texto.',
+        'display_pending' => 'llega con la biblioteca de imagenes',
 
         'empty_title' => 'Esta encuesta no tiene preguntas',
         'empty_help' => 'Anade la primera. Todo lo que escribas se guarda solo, y puedes reordenarlas cuando quieras.',
@@ -299,7 +303,7 @@ return [
         'version_date' => 'Fecha',
         'version_author' => 'Publicada por',
 
-        'builder_pending' => 'El constructor de preguntas llega en la siguiente fase. Por ahora se puede crear la encuesta, editar sus datos y abrir borradores.',
+        'builder_link' => 'Preguntas',
 
         'empty_title' => 'Todavia no hay encuestas',
         'empty_help' => 'Una encuesta es el conjunto de preguntas que se le hace a quien atiendes. Crea la primera para empezar a definirla.',
@@ -317,9 +321,17 @@ return [
         'security' => 'Mi seguridad',
     ],
 
+    'filters' => [
+        'apply' => 'Aplicar',
+        'clear' => 'Quitar filtros',
+    ],
+
     'pagination' => [
         'label' => 'Paginacion',
         'showing' => 'Mostrando <strong>:first</strong> a <strong>:last</strong> de <strong>:total</strong>',
+
+        // Sin etiquetas HTML: React las escaparia y se verian literales.
+        'showing_plain' => 'Mostrando :first a :last de :total',
         'previous' => 'Anterior',
         'next' => 'Siguiente',
     ],
