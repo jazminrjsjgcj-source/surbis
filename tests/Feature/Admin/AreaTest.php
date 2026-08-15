@@ -34,17 +34,20 @@ final class AreaTest extends TestCase
         ]);
 
         /*
-         * assertSee sigue valiendo aqui: /admin/sucursales/{branch}/areas
-         * todavia es Blade. Cuando esa pantalla pase a React (TASK-024c),
-         * esta asercion tiene que cambiar a props, igual que la de
-         * sucursales: con Inertia, assertDontSee pasaria aunque la fila ajena
-         * llegara en el JSON, y entonces una fuga de aislamiento quedaria en
-         * verde.
+         * Comprueba PROPS, no marcado.
+         *
+         * Con Inertia, assertDontSee pasaria aunque la fila de la otra sede
+         * llegara en el JSON de props, y una fuga de aislamiento se quedaria
+         * en verde justo cuando empezara a haber un problema. Contar filas si
+         * lo detecta.
          */
         $this->get(route('admin.areas.index', $branch))
             ->assertOk()
-            ->assertSee('Ventanilla propia')
-            ->assertDontSee('Ventanilla de otra sede');
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->component('Admin/Areas/Index')
+                ->has('areas.data', 1)
+                ->where('areas.data.0.name', 'Ventanilla propia')
+            );
     }
 
     public function test_no_se_ven_areas_de_otra_organizacion(): void

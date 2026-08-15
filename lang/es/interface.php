@@ -425,6 +425,7 @@ return [
         'archive_blocked' => 'No se puede archivar todavia: hay :references. Reasignalos antes.',
         'activate_blocked' => 'No se puede activar un area dentro de una sucursal archivada. Activa antes la sucursal.',
 
+        'branch_archived' => 'Esta sucursal esta archivada. Sus areas no se pueden activar hasta que la sucursal vuelva a estarlo.',
         'empty_title' => 'Esta sucursal no tiene areas',
         'empty_help' => 'Las areas separan los puntos de atencion dentro de una sede: ventanillas, mostradores, departamentos. Sirven para saber donde se levanto cada encuesta.',
         'empty_search_title' => 'Ninguna area coincide',
