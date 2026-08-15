@@ -10,6 +10,7 @@ use App\Domain\Identity\PasswordPolicy;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
+use Inertia\Testing\AssertableInertia;
 use Tests\TestCase;
 
 /**
@@ -158,12 +159,23 @@ final class PasswordResetTest extends TestCase
 
     public function test_la_pantalla_de_acceso_ofrece_recuperar_la_contrasena(): void
     {
-        // La cadena 'interface.login.forgot' llevaba dos entregas escrita sin
-        // que ninguna pantalla la mostrara.
+        /*
+         * La cadena 'interface.login.forgot' llevo dos entregas escrita sin
+         * que ninguna pantalla la mostrara. Esta prueba existe por eso.
+         *
+         * Ahora comprueba PROPS y no marcado: con Inertia el servidor manda
+         * la URL y las traducciones, y el componente las pinta. Si la prop no
+         * llega, el enlace no puede existir.
+         *
+         * Lo que ya NO se comprueba desde aqui es que Login.tsx dibuje el
+         * enlace. Eso solo lo ve una prueba de navegador.
+         */
         $this->get('/login')
             ->assertOk()
-            ->assertSee(route('password.request'), false)
-            ->assertSee(__('interface.login.forgot'), false);
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->where('forgotUrl', route('password.request'))
+                ->where('translations.interface.login.forgot', __('interface.login.forgot'))
+            );
     }
 
     /**

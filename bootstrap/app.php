@@ -6,6 +6,7 @@ use App\Http\Middleware\EnsureActiveOrganization;
 use App\Http\Middleware\EnsureMembershipRole;
 use App\Http\Middleware\EnsurePendingSecondFactor;
 use App\Http\Middleware\EnsurePlatformAdmin;
+use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -30,6 +31,14 @@ return Application::configure(basePath: dirname(__DIR__))
          */
         $middleware->web(append: [
             AuthenticateSession::class,
+
+            /*
+             * Al final del grupo, despues de AuthenticateSession: lo que
+             * comparte —usuario, idioma, traducciones— tiene que resolverse
+             * con la sesion ya validada. Antes compartiria el usuario de una
+             * sesion que el middleware siguiente va a cerrar.
+             */
+            HandleInertiaRequests::class,
         ]);
 
         $middleware->alias([

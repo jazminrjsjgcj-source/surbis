@@ -11,73 +11,96 @@ use Tests\TestCase;
 /**
  * RNF-AUT-004 y RNF-GEN-006.
  *
- * La accesibilidad no se comprueba entera con pruebas automaticas, pero si
- * las partes que son estructura y no criterio: que cada campo tenga etiqueta
- * asociada, que el error se anuncie, que el autocompletado sea el correcto.
+ * ATENCION: este archivo comprobaba mucho mas de lo que comprueba ahora.
  *
- * Estas son justamente las que se rompen sin avisar al rediseñar una
- * pantalla, porque la pantalla sigue viendose bien.
+ * Antes de Inertia afirmaba sobre el marcado que devolvia el servidor:
+ * for="email", aria-describedby, aria-invalid, role="alert". Ese marcado lo
+ * genera ahora el navegador a partir de Login.tsx, asi que una peticion HTTP
+ * ya no puede verlo.
+ *
+ * Lo que queda aqui es lo unico que SIGUE siendo comprobable desde el
+ * servidor: que los datos que el formulario necesita para comportarse bien
+ * llegan al componente.
+ *
+ * LO QUE SE PERDIO, y no esta resuelto:
+ *
+ *   - que cada campo tenga su etiqueta asociada
+ *   - que los errores se anuncien con role="alert"
+ *   - que el campo con error lleve aria-invalid y aria-describedby
+ *   - que el autocompletado sea el correcto
+ *
+ * Login.tsx tiene las cuatro cosas. Lo que ya no existe es la red que vigila
+ * que sigan estando manana. Recuperarla pide pruebas de navegador —Dusk o
+ * Playwright— y eso es una decision y una tarea aparte, no un detalle de
+ * esta.
+ *
+ * Se deja escrito aqui, y no solo en el documento de contexto, porque quien
+ * abra este archivo dentro de seis meses vera cuatro pruebas donde habia
+ * ocho y tiene derecho a saber por que.
  */
 final class LoginAccessibilityTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_cada_campo_tiene_etiqueta_asociada(): void
-    {
-        $respuesta = $this->get('/login');
-
-        $respuesta->assertOk()
-            ->assertSee('for="email"', false)
-            ->assertSee('id="email"', false)
-            ->assertSee('for="password"', false)
-            ->assertSee('id="password"', false);
-    }
-
-    public function test_los_campos_declaran_su_autocompletado(): void
-    {
-        // Sin esto, el gestor de contrasenas del navegador no rellena y el
-        // teclado del movil no ofrece el diseno adecuado.
-        $this->get('/login')
-            ->assertSee('autocomplete="username"', false)
-            ->assertSee('autocomplete="current-password"', false);
-    }
-
-    public function test_un_error_se_anuncia_y_se_asocia_al_campo(): void
-    {
-        $respuesta = $this->from('/login')
-            ->followingRedirects()
-            ->post('/login', [
-                'email' => 'nadie@example.test',
-                'password' => 'incorrecta',
-            ]);
-
-        $respuesta->assertOk()
-            ->assertSee('role="alert"', false)
-            ->assertSee('aria-invalid="true"', false)
-            ->assertSee('aria-describedby="email-error"', false)
-            ->assertSee('id="email-error"', false);
-    }
-
     public function test_el_correo_escrito_se_conserva_tras_un_error(): void
     {
-        // Prevencion de errores: obligar a reescribir el correo despues de
-        // fallar la contrasena es trabajo que el sistema puede evitar.
+        /*
+         * Prevencion de errores: obligar a reescribir el correo despues de
+         * fallar la contrasena es trabajo que el sistema puede evitar.
+         *
+         * Con Inertia esto lo hace `old input` de la sesion, que el
+         * componente lee. Se comprueba en la sesion porque es donde el
+         * servidor lo deja.
+         */
         $membership = Membership::factory()->create();
 
         $this->from('/login')
-            ->followingRedirects()
             ->post('/login', [
                 'email' => $membership->user->email,
                 'password' => 'incorrecta',
             ])
-            ->assertOk()
-            ->assertSee($membership->user->email, false);
+            ->assertRedirect('/login')
+            ->assertSessionHasInput('email', $membership->user->email);
     }
 
-    public function test_la_eleccion_de_organizacion_agrupa_las_opciones(): void
+    public function test_la_contrasena_no_se_conserva(): void
     {
-        // Un grupo de radios sin fieldset y legend se anuncia como opciones
-        // sueltas, sin decir de que son opciones.
+        // La contrasena NO debe quedarse en la sesion ni volver al navegador.
+        // Es la otra mitad de la prueba anterior, y la que se olvida.
+        $membership = Membership::factory()->create();
+
+        $this->from('/login')
+            ->post('/login', [
+                'email' => $membership->user->email,
+                'password' => 'incorrecta',
+            ]);
+
+        $this->assertNull(session('_old_input.password'));
+    }
+
+    public function test_el_error_se_asocia_al_campo_del_correo(): void
+    {
+        /*
+         * El error va bajo la clave 'email' y no en un mensaje suelto.
+         *
+         * De esa clave depende que el componente pinte aria-invalid y
+         * aria-describedby en el campo correcto. Si el error llegara sin
+         * clave, la pantalla mostraria el aviso arriba y el campo quedaria
+         * sin marcar para quien usa lector de pantalla.
+         */
+        $this->from('/login')
+            ->post('/login', [
+                'email' => 'nadie@example.test',
+                'password' => 'incorrecta',
+            ])
+            ->assertInvalid(['email']);
+    }
+
+    public function test_la_eleccion_de_organizacion_sigue_en_blade(): void
+    {
+        // Esta pantalla no se ha convertido todavia, asi que su marcado si
+        // se puede comprobar. Cuando pase a React, esta prueba se va con
+        // ella y hay que decidir que la sustituye.
         $user = Membership::factory()->create()->user;
         Membership::factory()->for($user)->create();
 

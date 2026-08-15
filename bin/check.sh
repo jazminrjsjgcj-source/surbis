@@ -105,9 +105,38 @@ else
 fi
 
 # ---------------------------------------------------------------------------
+# 4. Paginas de Inertia fuera del directorio que el paquete busca
+#
+# Inertia resuelve los componentes en resource_path('js/pages'), en minuscula.
+# Un directorio js/Pages funciona en Windows y macOS y NO en el Linux de
+# produccion: son dos rutas distintas.
+#
+# Costo una tanda entera de diagnostico: el archivo existia, el import
+# funcionaba, y assertInertia decia que el componente no existia.
+# ---------------------------------------------------------------------------
+titulo "Paginas de Inertia en el directorio correcto"
+if [ -d resources/js ]; then
+  if [ -d resources/js/Pages ]; then
+    fallo 'existe resources/js/Pages con mayuscula. Inertia busca en js/pages.'
+  else
+    sueltas=$("${GIT[@]}" ls-files 'resources/js/**/*.tsx' \
+      | grep -vE '^resources/js/(pages|Components|Layouts|lib)/' || true)
+
+    if [ -z "$sueltas" ]; then
+      ok
+    else
+      fallo 'estos componentes no estan en pages/, Components/, Layouts/ ni lib/:'
+      printf '     %s\n' "$sueltas"
+    fi
+  fi
+else
+  printf '   no hay componentes todavia\n'
+fi
+
+# ---------------------------------------------------------------------------
 printf '\n'
 if [ "$fallos" -eq 0 ]; then
-  printf 'check.sh: 3 comprobaciones, 0 hallazgos\n'
+  printf 'check.sh: 4 comprobaciones, 0 hallazgos\n'
   exit 0
 fi
 printf 'check.sh: %s comprobacion(es) con hallazgos\n' "$fallos"

@@ -1,7 +1,0 @@
-Si creaste tests/Feature/Admin/SuspendDiagnosticTest.php para diagnosticar
-esto, ya puedes borrarlo: la causa era el lockForUpdate y esta corregida.
-
-    Remove-Item tests\Feature\Admin\SuspendDiagnosticTest.php
-
-Un diagnostico que sobrevive a su diagnostico se convierte en ruido: cuesta
-tiempo en cada ejecucion y el dia que falle no dira nada sobre el sistema.

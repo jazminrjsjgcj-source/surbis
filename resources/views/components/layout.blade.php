@@ -28,7 +28,21 @@
     --}}
     {!! Vite::fonts() !!}
 
-    @vite('resources/css/app.css')
+    {{--
+        Se pide app.tsx y no app.css.
+
+        Al pasar a Inertia, el unico punto de entrada de Vite es app.tsx, que
+        importa app.css. `resources/css/app.css` dejo de existir en el
+        manifiesto, y estas plantillas seguian pidiendolo: error 500 en cada
+        pantalla que todavia usa Blade.
+
+        Esto carga React en pantallas que no lo necesitan —208 kB de mas—
+        mientras dure la transicion. Es temporal a proposito: cada pantalla
+        convertida deja de usar este layout, y cuando no quede ninguna, el
+        archivo se borra. Que la convivencia moleste un poco es lo que empuja
+        a terminarla.
+    --}}
+    @vite('resources/js/app.tsx')
 </head>
 <body class="min-h-screen">
     {{ $slot }}

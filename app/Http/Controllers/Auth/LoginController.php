@@ -13,13 +13,24 @@ use Illuminate\Contracts\Auth\Factory as AuthFactory;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
-use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 
 final class LoginController extends Controller
 {
-    public function create(): View
+    public function create(): InertiaResponse
     {
-        return view('auth.login');
+        /*
+         * La URL viaja como prop en lugar de escribirse en el componente.
+         *
+         * React no conoce las rutas nombradas de Laravel. Escribir
+         * "/recuperar-contrasena" en el TSX crearia una segunda verdad sobre
+         * la misma direccion, y el dia que cambie la ruta el enlace quedaria
+         * roto sin que ninguna prueba lo dijera.
+         */
+        return Inertia::render('Auth/Login', [
+            'forgotUrl' => route('password.request'),
+        ]);
     }
 
     public function store(
