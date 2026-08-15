@@ -17,6 +17,7 @@ use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\SecondFactorController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\PlaceholderController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomeController::class)->name('home');
@@ -97,7 +98,7 @@ Route::middleware('auth')->group(function (): void {
  * lo que dice probar.
  */
 Route::middleware(['auth', 'platform'])->group(function (): void {
-    Route::view('/platform', 'placeholder.module', ['module' => 'Panel de plataforma'])
+    Route::get('/platform', fn () => app(PlaceholderController::class)('Panel de plataforma'))
         ->name('platform.dashboard');
 });
 
@@ -263,7 +264,7 @@ Route::middleware(['auth', 'organization'])->group(function (): void {
     });
 
     Route::middleware('role:collaborator')->group(function (): void {
-        Route::view('/kiosk/start', 'placeholder.module', ['module' => 'Preparacion de quiosco'])
+        Route::get('/kiosk/start', fn () => app(PlaceholderController::class)('Preparacion de quiosco'))
             ->name('kiosk.start');
     });
 });
