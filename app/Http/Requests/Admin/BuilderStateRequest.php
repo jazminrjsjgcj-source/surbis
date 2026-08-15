@@ -38,6 +38,17 @@ final class BuilderStateRequest extends FormRequest
             'questions.*.is_required' => ['required', 'boolean'],
             'questions.*.limits' => ['present', 'array'],
 
+            /*
+             * La condicion, si la hay. RF-AO-BLD-007.
+             *
+             * nullable en el nivel superior y required dentro: o no hay
+             * condicion, o esta completa. Una condicion a medias —con
+             * pregunta origen pero sin opcion— se guardaria y no haria nada.
+             */
+            'questions.*.condition' => ['nullable', 'array'],
+            'questions.*.condition.depends_on_ulid' => ['required_with:questions.*.condition', 'string', 'size:26'],
+            'questions.*.condition.option_ulid' => ['required_with:questions.*.condition', 'string', 'size:26'],
+
             'questions.*.options' => ['present', 'array', 'max:50'],
             'questions.*.options.*.ulid' => ['nullable', 'string', 'size:26'],
 

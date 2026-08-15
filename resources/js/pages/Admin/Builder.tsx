@@ -3,10 +3,12 @@ import { useCallback, useState } from 'react'
 
 import CharCount from '@/Components/CharCount'
 import AdminShell from '@/Layouts/AdminShell'
+import ConditionEditor from '@/Components/ConditionEditor'
 import ConflictNotice from '@/Components/ConflictNotice'
 import OptionEditor from '@/Components/OptionEditor'
 import QuestionList from '@/Components/QuestionList'
 import SaveIndicator from '@/Components/SaveIndicator'
+import { type Condition, dependentsOf, movementBreaksCondition } from '@/lib/conditions'
 import { useTranslate } from '@/lib/translate'
 import { useBuilderPersistence } from '@/lib/useBuilderPersistence'
 
@@ -27,6 +29,7 @@ interface Question {
     is_required: boolean
     limits: Record<string, unknown>
     options: Option[]
+    condition: Condition | null
 }
 
 interface QuestionTypeInfo {
@@ -96,6 +99,7 @@ export default function Builder({ survey, version, readOnly, questionTypes }: Pr
                 is_required: false,
                 limits: {},
                 options: [],
+                condition: null,
             },
         ])
 
@@ -114,9 +118,18 @@ export default function Builder({ survey, version, readOnly, questionTypes }: Pr
 
             // ulid a null: es una pregunta NUEVA. Copiar el ulid haria que el
             // servidor actualizara la original en lugar de crear otra.
+            /*
+             * La copia NO hereda la condicion.
+             *
+             * Duplicar coloca la copia justo DESPUES de la original, asi que
+             * heredar su condicion daria dos preguntas que aparecen y
+             * desaparecen juntas: casi nunca es lo que se quiere, y quitarla
+             * despues es mas facil que descubrirla.
+             */
             const copia: Question = {
                 ...original,
                 ulid: null,
+                condition: null,
                 options: original.options.map((opcion) => ({ ...opcion, ulid: null })),
             }
 
@@ -126,7 +139,23 @@ export default function Builder({ survey, version, readOnly, questionTypes }: Pr
         setSelected(selected + 1)
     }
 
+    /*
+     * No se borra una pregunta de la que algo depende.
+     *
+     * Decision del area usuaria: las condiciones NUNCA se eliminan solas.
+     * Borrar la pregunta origen y retirar en silencio la condicion de otra
+     * seria perder trabajo ajeno sin avisar.
+     *
+     * El boton se deshabilita, asi que esto no deberia llegar a ejecutarse.
+     * Esta igualmente porque deshabilitar un boton no es una proteccion.
+     */
+    const dependientes = dependentsOf(questions, actual?.ulid ?? null)
+
     function remove(): void {
+        if (dependientes.length > 0) {
+            return
+        }
+
         setQuestions((actuales) => actuales.filter((_, i) => i !== selected))
         setSelected((anterior) => Math.max(0, anterior - 1))
     }
@@ -140,6 +169,17 @@ export default function Builder({ survey, version, readOnly, questionTypes }: Pr
         const destino = indice + direccion
 
         if (destino < 0 || destino >= questions.length) {
+            return
+        }
+
+        /*
+         * Un movimiento que dejaria una condicion mirando hacia delante se
+         * rechaza. RF-AO-BLD-007 y decision del area usuaria.
+         *
+         * Quien contesta llegaria a una pregunta sin haber respondido de que
+         * depende, asi que la pregunta no podria decidir si mostrarse.
+         */
+        if (movementBreaksCondition(questions, indice, direccion)) {
             return
         }
 
@@ -212,6 +252,9 @@ export default function Builder({ survey, version, readOnly, questionTypes }: Pr
                             readOnly={readOnly}
                             onSelect={setSelected}
                             onMove={move}
+                            canMove={(indice, direccion) =>
+                                !movementBreaksCondition(questions, indice, direccion)
+                            }
                         />
 
                         {!readOnly && (
@@ -306,6 +349,26 @@ export default function Builder({ survey, version, readOnly, questionTypes }: Pr
                                 />
                             )}
 
+                            <ConditionEditor
+                                questions={questions}
+                                index={selected}
+                                readOnly={readOnly}
+                                onChange={(condition) => update({ condition })}
+                            />
+
+                            {/*
+                                Por que no se puede borrar, con las preguntas
+                                que lo impiden. "No se puede" a secas obliga a
+                                revisarlas una por una.
+                            */}
+                            {dependientes.length > 0 && (
+                                <p className="hint mt-4" role="status">
+                                    {t('interface.conditions.blocked_by', {
+                                        positions: dependientes.join(', '),
+                                    })}
+                                </p>
+                            )}
+
                             {!readOnly && (
                                 <div className="actions border-line mt-4 border-t pt-3">
                                     <button type="button" className="btn btn-ghost" onClick={duplicate}>
@@ -315,6 +378,7 @@ export default function Builder({ survey, version, readOnly, questionTypes }: Pr
                                     <button
                                         type="button"
                                         className="btn btn-ghost btn-danger"
+                                        disabled={dependientes.length > 0}
                                         onClick={remove}
                                     >
                                         {t('interface.builder.remove')}

@@ -109,7 +109,7 @@ final class BuilderController extends Controller
     /** @return array<string, mixed> */
     private function serialize(SurveyVersion $version): array
     {
-        $version->load(['questions.options']);
+        $version->load(['questions.options', 'questions.condition.dependsOn', 'questions.condition.option']);
 
         return [
             'ulid' => $version->ulid,
@@ -123,6 +123,19 @@ final class BuilderController extends Controller
                 'help' => $question->help,
                 'is_required' => $question->is_required,
                 'limits' => $question->limits->toArrayFor($question->type),
+
+                /*
+                 * La condicion viaja por ULID, no por id.
+                 *
+                 * El cliente reordena y crea preguntas antes de que existan
+                 * en la base: los ids no le sirven para referenciarlas entre
+                 * si, y exponerlos ademas revelaria cuantas preguntas hay en
+                 * el sistema.
+                 */
+                'condition' => $question->condition === null ? null : [
+                    'depends_on_ulid' => $question->condition->dependsOn->ulid,
+                    'option_ulid' => $question->condition->option->ulid,
+                ],
                 'options' => $question->options->map(fn ($option): array => [
                     'ulid' => $option->ulid,
                     'label' => $option->label,

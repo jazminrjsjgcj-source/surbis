@@ -12,6 +12,15 @@ interface Props {
     readOnly: boolean
     onSelect: (index: number) => void
     onMove: (index: number, direction: -1 | 1) => void
+
+    /*
+     * Si un movimiento esta permitido. Lo decide quien usa la lista, porque
+     * depende de las condiciones y esta pantalla no las conoce.
+     *
+     * Deshabilitar el boton NO es la proteccion: esa la da SaveBuilderState,
+     * que rechaza el orden. Esto solo evita ofrecer algo que va a fallar.
+     */
+    canMove?: (index: number, direction: -1 | 1) => boolean
 }
 
 /**
@@ -28,6 +37,7 @@ export default function QuestionList({
     readOnly,
     onSelect,
     onMove,
+    canMove = () => true,
 }: Props) {
     const t = useTranslate()
 
@@ -67,7 +77,7 @@ export default function QuestionList({
                                     type="button"
                                     className="btn btn-ghost"
                                     onClick={() => onMove(indice, -1)}
-                                    disabled={indice === 0}
+                                    disabled={indice === 0 || !canMove(indice, -1)}
                                 >
                                     {t('interface.builder.move_up')}
                                 </button>
@@ -76,7 +86,7 @@ export default function QuestionList({
                                     type="button"
                                     className="btn btn-ghost"
                                     onClick={() => onMove(indice, 1)}
-                                    disabled={indice === questions.length - 1}
+                                    disabled={indice === questions.length - 1 || !canMove(indice, 1)}
                                 >
                                     {t('interface.builder.move_down')}
                                 </button>

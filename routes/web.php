@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\AreaController;
 use App\Http\Controllers\Admin\BranchController;
 use App\Http\Controllers\Admin\BuilderController;
 use App\Http\Controllers\Admin\PersonController;
+use App\Http\Controllers\Admin\QuestionImportController;
 use App\Http\Controllers\Admin\StaffMemberController;
 use App\Http\Controllers\Admin\SurveyController;
 use App\Http\Controllers\Admin\VersionSettingsController;
@@ -219,6 +220,22 @@ Route::middleware(['auth', 'organization'])->group(function (): void {
             ->name('admin.surveys.update');
         Route::post('/admin/encuestas/{survey}/borrador', [SurveyController::class, 'draft'])
             ->name('admin.surveys.draft');
+
+        Route::post('/admin/encuestas/{survey}/publicar', [SurveyController::class, 'publish'])
+            ->name('admin.surveys.publish');
+
+        /*
+         * Importar preguntas desde texto. TASK-025.
+         *
+         * "comprobar" analiza sin guardar: ver lo que va a entrar evita
+         * descubrir despues que el tipo era otro y deshacerlo a mano.
+         */
+        Route::get('/admin/encuestas/{survey}/importar', [QuestionImportController::class, 'create'])
+            ->name('admin.surveys.import');
+        Route::post('/admin/encuestas/{survey}/importar/comprobar', [QuestionImportController::class, 'preview'])
+            ->name('admin.surveys.import.preview');
+        Route::post('/admin/encuestas/{survey}/importar', [QuestionImportController::class, 'store'])
+            ->name('admin.surveys.import.store');
         Route::post('/admin/encuestas/{survey}/archivar', [SurveyController::class, 'archive'])
             ->name('admin.surveys.archive');
         Route::post('/admin/encuestas/{survey}/activar', [SurveyController::class, 'activate'])

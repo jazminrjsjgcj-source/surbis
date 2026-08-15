@@ -452,43 +452,16 @@ return [
     'session' => [
         'logout' => 'Cerrar sesion',
     ],
-    'import' => [
-        'title' => 'Importar preguntas',
-        'subtitle' => 'Escribe las preguntas de corrido y el sistema las convierte.',
-        'label' => 'Preguntas',
-        'link' => 'Importar desde texto',
-
-        'mode' => 'Que hacer con las que ya hay',
-        'mode_append' => 'Anadir al final',
-        'mode_replace' => 'Sustituirlas',
-
-        'check' => 'Comprobar',
-        'submit' => 'Importar',
-        'done' => 'Se importo :count pregunta.|Se importaron :count preguntas.',
-
-        'preview_title' => 'Va a entrar :count pregunta|Van a entrar :count preguntas',
-        'options_count' => ':count opcion|:count opciones',
-
-        'problems_title' => 'El texto tiene problemas y no se importo nada',
-        'at_line' => 'Linea :line:',
-        'problem_unknown_type' => 'no existe el tipo ":written". Los tipos son: :known.',
-        'problem_unclosed_block' => 'falta cerrar el corchete del bloque.',
-        'problem_block_without_type' => 'el bloque no dice de que tipo son sus preguntas.',
-        'problem_block_without_options' => 'este tipo necesita al menos dos opciones, declaradas tras los dos puntos.',
-        'problem_question_without_block' => 'esta pregunta va antes del primer bloque, asi que no se sabe de que tipo es.',
-        'problem_nothing_to_import' => 'no hay nada que importar.',
-
-        'help_title' => 'Como se escribe',
-        'example' => <<<'EJEMPLO'
-            [obligatorias, una opcion: Si / Mas o menos / No]
-            ¿Te atendieron con amabilidad?
-            ¿El tiempo de espera fue razonable?
-
-            [opcionales, texto largo]
-            ¿Algo que mejorarias?
-            EJEMPLO,
-        'help_types' => 'Tipos disponibles:',
-        'help_scores' => 'Las opciones se escriben de mejor a peor. La primera recibe la puntuacion mas alta.',
+    'conditions' => [
+        'title' => 'Mostrar solo si',
+        'add' => 'Mostrar solo en algunos casos',
+        'source' => 'Depende de la pregunta',
+        'option' => 'Cuando la respuesta sea',
+        'always' => 'Se muestra siempre',
+        'choose_option' => 'Elige una respuesta',
+        'remove' => 'Quitar la condicion',
+        'no_sources' => 'Para condicionar esta pregunta necesitas una pregunta anterior con opciones.',
+        'blocked_by' => 'No se puede quitar: las preguntas :positions dependen de esta.',
     ],
 
 ];
