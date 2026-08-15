@@ -166,8 +166,11 @@ final class SurveyTest extends TestCase
 
         $this->get(route('admin.surveys.index'))
             ->assertOk()
-            ->assertSee('Encuesta propia')
-            ->assertDontSee('Encuesta ajena');
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->component('Admin/Surveys/Index')
+                ->has('surveys.data', 1)
+                ->where('surveys.data.0.name', 'Encuesta propia')
+            );
     }
 
     public function test_no_se_edita_una_encuesta_ajena(): void

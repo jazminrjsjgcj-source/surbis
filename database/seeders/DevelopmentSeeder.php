@@ -15,6 +15,13 @@ use App\Domain\Organizations\Models\Area;
 use App\Domain\Organizations\Models\Branch;
 use App\Domain\Organizations\Models\Organization;
 use App\Domain\Organizations\Models\StaffMember;
+use App\Domain\Surveys\Enums\OptionDisplay;
+use App\Domain\Surveys\Enums\QuestionType;
+use App\Domain\Surveys\Enums\SurveyStatus;
+use App\Domain\Surveys\Enums\SurveyVersionStatus;
+use App\Domain\Surveys\Models\Survey;
+use App\Domain\Surveys\Models\SurveyQuestion;
+use App\Domain\Surveys\Models\SurveyVersion;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use RuntimeException;
@@ -48,6 +55,7 @@ final class DevelopmentSeeder extends Seeder
         $this->createAreas($organization, $branches);
         $admin = $this->createAccounts($organization, $branches, $password);
         $this->createPeople($organization, $branches, $password);
+        $this->createSurveys($organization, $admin);
 
         $this->summary($password, $admin);
     }
@@ -251,6 +259,116 @@ final class DevelopmentSeeder extends Seeder
         }
     }
 
+    /**
+     * Dos encuestas: una con preguntas y otra vacia.
+     *
+     * La vacia no sobra: es la unica forma de ver el estado vacio del
+     * constructor sin borrar preguntas a mano, y ese estado tiene texto
+     * propio que alguien tiene que poder revisar.
+     */
+    private function createSurveys(Organization $organization, User $author): void
+    {
+        $survey = Survey::query()->create([
+            'organization_id' => $organization->id,
+            'name' => 'Satisfaccion en ventanilla',
+            'description' => 'La que se levanta en los modulos de atencion.',
+            'status' => SurveyStatus::Draft,
+            'created_by' => $author->id,
+        ]);
+
+        $version = SurveyVersion::query()->create([
+            'survey_id' => $survey->id,
+            'organization_id' => $organization->id,
+            'version_number' => 1,
+
+            // Explicito aunque la base lo ponga por defecto: create() devuelve
+            // un modelo con solo lo que se le paso, y shouldBeStrict convierte
+            // en excepcion leer lo que no se cargo (T-027).
+            'status' => SurveyVersionStatus::Draft,
+
+            'settings' => [
+                'identity_mode' => 'anonymous',
+                'comment_mode' => 'optional',
+                'inactivity_seconds' => 60,
+                'allow_back' => true,
+                'introduction' => 'Cuentanos como te atendimos. Son treinta segundos.',
+                'thank_you' => 'Gracias. Tu respuesta ayuda a mejorar el servicio.',
+            ],
+        ]);
+
+        $this->question($version, QuestionType::Smiley, 1, '¿Como te sentiste con la atencion?', [
+            ['Muy mal', 'muy-mal', 1],
+            ['Mal', 'mal', 2],
+            ['Normal', 'normal', 3],
+            ['Bien', 'bien', 4],
+            ['Muy bien', 'muy-bien', 5],
+        ], required: true);
+
+        $this->question($version, QuestionType::SingleChoice, 2, '¿Te resolvieron lo que venias a hacer?', [
+            ['Si, completamente', 'si', 5],
+            ['En parte', 'parcial', 3],
+            ['No', 'no', 1],
+        ], required: true);
+
+        $this->question($version, QuestionType::MultipleChoice, 3, '¿Que podriamos mejorar?', [
+            ['El tiempo de espera', 'espera', null],
+            ['El trato del personal', 'trato', null],
+            ['La informacion previa', 'informacion', null],
+            ['Las instalaciones', 'instalaciones', null],
+        ]);
+
+        $this->question($version, QuestionType::LongText, 4, '¿Algo mas que quieras contarnos?', []);
+
+        // La segunda, sin preguntas.
+        $vacia = Survey::query()->create([
+            'organization_id' => $organization->id,
+            'name' => 'Encuesta sin preguntas',
+            'description' => 'Existe para poder revisar el estado vacio del constructor.',
+            'status' => SurveyStatus::Draft,
+            'created_by' => $author->id,
+        ]);
+
+        SurveyVersion::query()->create([
+            'survey_id' => $vacia->id,
+            'organization_id' => $organization->id,
+            'version_number' => 1,
+            'status' => SurveyVersionStatus::Draft,
+        ]);
+    }
+
+    /** @param list<array{0: string, 1: string, 2: ?int}> $options */
+    private function question(
+        SurveyVersion $version,
+        QuestionType $type,
+        int $position,
+        string $text,
+        array $options,
+        bool $required = false,
+    ): void {
+        $question = SurveyQuestion::query()->create([
+            'survey_version_id' => $version->id,
+            'organization_id' => $version->organization_id,
+            'type' => $type,
+            'text' => $text,
+            'help' => null,
+            'is_required' => $required,
+            'limits' => null,
+            'position' => $position,
+        ]);
+
+        foreach ($options as $indice => [$label, $value, $score]) {
+            $question->options()->create([
+                'organization_id' => $version->organization_id,
+                'label' => $label,
+                'value' => $value,
+                'score' => $score,
+                'display' => OptionDisplay::Text,
+                'appearance' => null,
+                'position' => $indice + 1,
+            ]);
+        }
+    }
+
     private function user(string $name, string $email, string $password, bool $platformAdmin = false): User
     {
         $user = new User([
@@ -298,6 +416,9 @@ final class DevelopmentSeeder extends Seeder
 
         $this->command?->newLine();
         $this->command?->line('  Las dos ultimas NO pueden iniciar sesion: estan ahi para ver el rechazo.');
+        $this->command?->newLine();
+        $this->command?->line('  Dos encuestas: "Satisfaccion en ventanilla" con cuatro preguntas,');
+        $this->command?->line('  y "Encuesta sin preguntas" para revisar el estado vacio.');
         $this->command?->newLine();
     }
 }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Seeding;
 
 use App\Domain\Organizations\Models\Branch;
+use App\Domain\Surveys\Models\Survey;
 use Database\Seeders\DevelopmentSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use RuntimeException;
@@ -119,6 +120,41 @@ final class DevelopmentSeederTest extends TestCase
         $this->get(route('admin.areas.index', $sur))
             ->assertOk()
             ->assertSee(__('interface.areas.empty_title'), false);
+    }
+
+    public function test_hay_una_encuesta_con_preguntas_y_otra_vacia(): void
+    {
+        /*
+         * Las dos hacen falta.
+         *
+         * Sin una con preguntas, las pruebas de navegador del constructor no
+         * pueden existir y quedan en test.fixme. Sin una vacia, el estado
+         * vacio —que tiene texto propio— solo se ve borrando preguntas a
+         * mano, y nadie lo hace.
+         */
+        $this->seedWith('desarrollo-local');
+
+        $this->assertDatabaseCount('surveys', 2);
+        $this->assertDatabaseCount('survey_versions', 2);
+
+        $conPreguntas = Survey::query()->where('name', 'Satisfaccion en ventanilla')->firstOrFail();
+        $this->assertSame(4, $conPreguntas->draft->questions()->count());
+
+        $vacia = Survey::query()->where('name', 'Encuesta sin preguntas')->firstOrFail();
+        $this->assertSame(0, $vacia->draft->questions()->count());
+    }
+
+    public function test_las_preguntas_sembradas_tienen_opciones_puntuadas(): void
+    {
+        // Una escala sin puntos no sirve para la analitica de la Fase 12, y
+        // sembrarla mal daria una impresion falsa de que el sistema funciona.
+        $this->seedWith('desarrollo-local');
+
+        $survey = Survey::query()->where('name', 'Satisfaccion en ventanilla')->firstOrFail();
+        $smiley = $survey->draft->questions()->where('type', 'smiley')->firstOrFail();
+
+        $this->assertSame(5, $smiley->options()->count());
+        $this->assertSame([1, 2, 3, 4, 5], $smiley->options()->orderBy('position')->pluck('score')->all());
     }
 
     private function seedWith(string $password): void

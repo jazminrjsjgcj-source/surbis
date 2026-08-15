@@ -222,6 +222,8 @@ return [
     ],
 
     'settings' => [
+        'no_draft' => 'Esta encuesta no tiene borrador abierto.',
+        'back' => 'Volver a la encuesta',
         'title' => 'Configuracion de la encuesta',
         'subtitle' => 'Como se comporta cuando alguien la contesta.',
         'draft_notice' => 'Estos cambios se guardan en el borrador :version. La version publicada no se toca.',
@@ -304,6 +306,24 @@ return [
         'version_author' => 'Publicada por',
 
         'builder_link' => 'Preguntas',
+        'open' => 'Abrir',
+        'open_draft' => 'Abrir borrador nuevo',
+        'versions' => 'Versiones',
+        'version_draft' => 'Borrador',
+        'version_published' => 'Publicada',
+        'version_archived' => 'Retirada',
+        'published_version' => 'Publicada',
+        'draft_version' => 'Borrador',
+        'unpublished' => 'Sin publicar',
+        'no_draft' => 'Sin borrador',
+        'updated' => 'Modificada',
+        'actions' => 'Acciones',
+        'filter_all' => 'Todas',
+        'clear_filters' => 'Quitar filtros',
+        'empty_search_title' => 'Ninguna encuesta coincide',
+        'empty_search_help' => 'Prueba con otras palabras o quita los filtros.',
+        'caption' => 'Encuestas de la organizacion',
+        'description_hint' => 'Para tu equipo. No se muestra a quien contesta.',
 
         'empty_title' => 'Todavia no hay encuestas',
         'empty_help' => 'Una encuesta es el conjunto de preguntas que se le hace a quien atiendes. Crea la primera para empezar a definirla.',
@@ -321,17 +341,9 @@ return [
         'security' => 'Mi seguridad',
     ],
 
-    'filters' => [
-        'apply' => 'Aplicar',
-        'clear' => 'Quitar filtros',
-    ],
-
     'pagination' => [
         'label' => 'Paginacion',
         'showing' => 'Mostrando <strong>:first</strong> a <strong>:last</strong> de <strong>:total</strong>',
-
-        // Sin etiquetas HTML: React las escaparia y se verian literales.
-        'showing_plain' => 'Mostrando :first a :last de :total',
         'previous' => 'Anterior',
         'next' => 'Siguiente',
     ],
