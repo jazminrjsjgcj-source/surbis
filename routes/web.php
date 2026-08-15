@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\Account\SecurityController;
 use App\Http\Controllers\Admin\AreaController;
 use App\Http\Controllers\Admin\BranchController;
+use App\Http\Controllers\Admin\BuilderController;
 use App\Http\Controllers\Admin\PersonController;
 use App\Http\Controllers\Admin\StaffMemberController;
 use App\Http\Controllers\Admin\SurveyController;
@@ -198,6 +199,18 @@ Route::middleware(['auth', 'organization'])->group(function (): void {
             ->name('admin.surveys.create');
         Route::post('/admin/encuestas', [SurveyController::class, 'store'])
             ->name('admin.surveys.store');
+        /*
+         * Constructor. RF-AO-BLD-001 a 010.
+         *
+         * Va ANTES de /admin/encuestas/{survey} porque Laravel resuelve por
+         * orden de declaracion: con la ruta generica delante, "constructor"
+         * se interpretaria como el ulid de una encuesta.
+         */
+        Route::get('/admin/encuestas/{survey}/constructor', [BuilderController::class, 'edit'])
+            ->name('admin.surveys.builder');
+        Route::put('/admin/encuestas/{survey}/constructor', [BuilderController::class, 'update'])
+            ->name('admin.surveys.builder.update');
+
         Route::get('/admin/encuestas/{survey}', [SurveyController::class, 'edit'])
             ->name('admin.surveys.edit');
         Route::put('/admin/encuestas/{survey}', [SurveyController::class, 'update'])

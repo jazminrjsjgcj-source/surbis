@@ -159,6 +159,48 @@ return [
         'empty_search_help' => 'Prueba con otro nombre o correo, o quita el filtro.',
     ],
 
+    'builder' => [
+        'title' => 'Constructor',
+        'version' => 'Borrador, version :number',
+        'read_only' => 'Esta version esta publicada: se muestra en solo lectura. Para cambiarla, abre un borrador nuevo.',
+
+        'question_text' => 'Pregunta',
+        'question_type' => 'Tipo',
+        'required' => 'Obligatoria',
+        'add' => 'Anadir pregunta',
+        'duplicate' => 'Duplicar',
+        'remove' => 'Quitar',
+        'move_up' => 'Subir',
+        'move_down' => 'Bajar',
+
+        'type_smiley' => 'Caritas',
+        'type_rating' => 'Escala de estrellas',
+        'type_single_choice' => 'Una opcion',
+        'type_multiple_choice' => 'Varias opciones',
+        'type_yes_no' => 'Si o no',
+        'type_short_text' => 'Texto corto',
+        'type_long_text' => 'Texto largo',
+        'type_number' => 'Numero',
+        'type_date' => 'Fecha',
+
+        'save_now' => 'Guardar ahora',
+        'state_synced' => 'Guardado',
+        'state_pending' => 'Cambios sin guardar',
+        'state_saving' => 'Guardando...',
+        'state_local' => 'Guardado solo en este equipo. Reintentando...',
+        'state_error' => 'No se pudo guardar',
+        'state_conflict' => 'Guardado detenido: hay un conflicto',
+
+        'conflict_title' => 'Otra persona guardo este borrador',
+        'conflict_help' => 'El guardado automatico se detuvo para no sobrescribir su trabajo. Tus cambios siguen aqui y en este equipo.',
+        'conflict_discard' => 'Descartar lo mio y recargar',
+        'conflict_overwrite' => 'Conservar lo mio y guardar encima',
+        'conflict_version' => 'La version del servidor es la :number.',
+
+        'empty_title' => 'Esta encuesta no tiene preguntas',
+        'empty_help' => 'Anade la primera. Todo lo que escribas se guarda solo, y puedes reordenarlas cuando quieras.',
+    ],
+
     'settings' => [
         'title' => 'Configuracion de la encuesta',
         'subtitle' => 'Como se comporta cuando alguien la contesta.',

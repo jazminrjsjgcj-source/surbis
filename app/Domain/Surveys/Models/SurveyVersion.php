@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SurveyVersion extends Model
 {
@@ -28,6 +29,7 @@ class SurveyVersion extends Model
         'version_number',
         'status',
         'settings',
+        'lock_version',
     ];
 
     /** @return BelongsTo<Survey, $this> */
@@ -40,6 +42,21 @@ class SurveyVersion extends Model
     public function organization(): BelongsTo
     {
         return $this->belongsTo(Organization::class);
+    }
+
+    /**
+     * Las preguntas, siempre en orden.
+     *
+     * El orderBy va en la relacion y no en cada consulta: una lista de
+     * preguntas sin ordenar no es un detalle de presentacion, es una encuesta
+     * distinta. Dejarlo a criterio de quien consulta garantiza que algun sitio
+     * lo olvide.
+     *
+     * @return HasMany<SurveyQuestion, $this>
+     */
+    public function questions(): HasMany
+    {
+        return $this->hasMany(SurveyQuestion::class)->orderBy('position');
     }
 
     /** @return BelongsTo<User, $this> */
@@ -80,6 +97,7 @@ class SurveyVersion extends Model
             'status' => SurveyVersionStatus::class,
             'settings' => VersionSettingsCast::class,
             'version_number' => 'integer',
+            'lock_version' => 'integer',
             'published_at' => 'immutable_datetime',
             'archived_at' => 'immutable_datetime',
         ];
