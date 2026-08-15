@@ -33,7 +33,21 @@ interface Props {
  */
 export default function AdminShell({ children, logoutUrl = '/logout', securityUrl = '/cuenta/seguridad' }: Props) {
     const t = useTranslate()
-    const { nav, url } = usePage<PageProps>()
+
+    /*
+     * usePage() devuelve { props, url, component, version }.
+     *
+     * Las props compartidas viven DENTRO de props, no en la raiz. La primera
+     * version desestructuraba `{ nav, url }` directamente y `nav` salia
+     * undefined: el servidor las mandaba perfectas —se veian en el JSON— y el
+     * componente miraba en el sitio equivocado.
+     *
+     * El sintoma era una pantalla en blanco con "Cannot read properties of
+     * undefined (reading 'map')". Costo cuatro hipotesis descartadas, y
+     * ninguna prueba de servidor podia verlo: las props llegaban bien.
+     */
+    const { props, url } = usePage<PageProps>()
+    const nav = props.nav ?? []
 
     return (
         <div className="shell">
