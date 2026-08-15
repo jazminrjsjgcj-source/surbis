@@ -66,7 +66,7 @@ export default function Builder({ survey, version, readOnly, questionTypes, impo
     const [questions, setQuestions] = useState<Question[]>(version.questions)
     const [selected, setSelected] = useState(0)
 
-    const { state, conflict, lastSavedAt, saveNow, retryWithServerVersion } =
+    const { state, conflict, rejection, lastSavedAt, saveNow, retryWithServerVersion } =
         useBuilderPersistence({
             versionUlid: version.ulid,
             initialLock: version.lock_version,
@@ -213,7 +213,7 @@ export default function Builder({ survey, version, readOnly, questionTypes, impo
                 </div>
 
                 {!readOnly && (
-                    <SaveIndicator state={state} lastSavedAt={lastSavedAt} onSaveNow={saveNow} />
+                    <SaveIndicator state={state} rejection={rejection} lastSavedAt={lastSavedAt} onSaveNow={saveNow} />
                 )}
             </div>
 

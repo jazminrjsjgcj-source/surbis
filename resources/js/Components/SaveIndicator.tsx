@@ -3,6 +3,7 @@ import { useTranslate } from '@/lib/translate'
 
 interface Props {
     state: SaveState
+    rejection: string | null
     lastSavedAt: number | null
     onSaveNow: () => void
 }
@@ -17,7 +18,7 @@ interface Props {
  * role="status" con aria-live="polite": se anuncia sin interrumpir. Con
  * "assertive", un cambio de estado cada segundo seria insoportable.
  */
-export default function SaveIndicator({ state, lastSavedAt, onSaveNow }: Props) {
+export default function SaveIndicator({ state, rejection, lastSavedAt, onSaveNow }: Props) {
     const t = useTranslate()
 
     const etiqueta: Record<SaveState, string> = {
@@ -27,6 +28,7 @@ export default function SaveIndicator({ state, lastSavedAt, onSaveNow }: Props) 
         local: t('interface.builder.state_local'),
         error: t('interface.builder.state_error'),
         conflict: t('interface.builder.state_conflict'),
+        rejected: t('interface.builder.state_rejected'),
     }
 
     // El color acompana; el texto informa. ANEXO 1 seccion 47.
@@ -37,12 +39,20 @@ export default function SaveIndicator({ state, lastSavedAt, onSaveNow }: Props) 
         local: 'text-neutral-text',
         error: 'text-negative-text',
         conflict: 'text-negative-text',
+        rejected: 'text-negative-text',
     }
 
     return (
         <div className="flex items-center gap-3">
             <p className={`text-sm ${tono[state]}`} role="status" aria-live="polite">
                 {etiqueta[state]}
+
+                {/* El motivo del rechazo, en el propio indicador. Antes solo
+                    decia "cambios sin guardar" sin explicar por que no se
+                    guardaban, y el autoguardado reintentaba en silencio. */}
+                {state === 'rejected' && rejection && (
+                    <span className="ms-1">{rejection}</span>
+                )}
 
                 {state === 'synced' && lastSavedAt && (
                     <span className="hint ms-1">

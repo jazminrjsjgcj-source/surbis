@@ -20,6 +20,8 @@ export type SaveState =
     | 'local'
     | 'error'
     | 'conflict'
+    /** El servidor rechazo los datos. No se reintenta: no van a mejorar solos. */
+    | 'rejected'
 
 interface Conflict {
     actual: number
@@ -46,6 +48,7 @@ export function useBuilderPersistence<T>({
 }: Options<T>) {
     const [state, setState] = useState<SaveState>('synced')
     const [conflict, setConflict] = useState<Conflict | null>(null)
+    const [rejection, setRejection] = useState<string | null>(null)
     const [lastSavedAt, setLastSavedAt] = useState<number | null>(null)
 
     const lock = useRef(initialLock)
@@ -86,8 +89,46 @@ export function useBuilderPersistence<T>({
                  */
                 const datos = await response.json()
 
+                /*
+                 * El numero actual del servidor se guarda YA.
+                 *
+                 * Antes solo se aplicaba si la persona pulsaba "conservar lo
+                 * mio": si cerraba el aviso o recargaba a medias, el cliente
+                 * seguia con un numero viejo y el siguiente intento volvia a
+                 * dar conflicto. Un conflicto que no se puede abandonar deja
+                 * la pantalla inutilizable.
+                 *
+                 * Guardarlo no sobrescribe nada: el autoguardado sigue
+                 * detenido hasta que alguien decida.
+                 */
+                lock.current = datos.actual
+
                 setConflict({ actual: datos.actual, version: datos.version })
                 setState('conflict')
+
+                return
+            }
+
+            /*
+             * 422: el servidor RECHAZA lo que se manda.
+             *
+             * Es el unico estado, junto al conflicto, que detiene el
+             * autoguardado. Reintentar no sirve de nada —los datos no van a
+             * mejorar solos— y hacerlo en bucle produjo 208 peticiones en una
+             * prueba, cada una moviendo lock_version hasta provocar un
+             * conflicto falso contra uno mismo.
+             *
+             * Y el mensaje se muestra. Antes el indicador solo decia "cambios
+             * sin guardar" sin explicar por que no se guardaban.
+             */
+            if (response.status === 422) {
+                const datos = await response.json()
+                const primero = Object.values(datos.errors ?? {})[0]
+
+                setRejection(
+                    Array.isArray(primero) ? String(primero[0]) : (datos.message ?? '')
+                )
+                setState('rejected')
 
                 return
             }
@@ -98,6 +139,7 @@ export function useBuilderPersistence<T>({
 
             const datos = await response.json()
             lock.current = datos.lock_version
+            setRejection(null)
 
             /*
              * El respaldo se borra SOLO cuando el servidor confirma. Un
@@ -132,6 +174,9 @@ export function useBuilderPersistence<T>({
 
     // Cada cambio: respaldo inmediato y guardado tras un segundo de calma.
     useEffect(() => {
+        // 'rejected' NO detiene el ciclo: al corregir lo que fallaba hay que
+        // poder volver a intentarlo sin recargar. Lo que se evita es el
+        // reintento AUTOMATICO, que es distinto.
         if (readOnly || state === 'conflict') {
             return
         }
@@ -194,5 +239,5 @@ export function useBuilderPersistence<T>({
         [versionUlid],
     )
 
-    return { state, conflict, lastSavedAt, saveNow, retryWithServerVersion, hasLocalBackup }
+    return { state, conflict, rejection, lastSavedAt, saveNow, retryWithServerVersion, hasLocalBackup }
 }

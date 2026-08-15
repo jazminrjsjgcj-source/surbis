@@ -33,21 +33,23 @@ final class BuilderStateRequest extends FormRequest
             'questions' => ['present', 'array', 'max:200'],
             'questions.*.ulid' => ['nullable', 'string', 'size:26'],
             'questions.*.type' => ['required', Rule::enum(QuestionType::class)],
-            'questions.*.text' => ['required', 'string', 'max:1000'],
+            /*
+             * El texto puede estar VACIO en el borrador.
+             *
+             * Una pregunta recien anadida no tiene texto: es su estado normal
+             * durante los segundos que se tarda en escribirlo. Exigirlo aqui
+             * hacia que el autoguardado devolviera 422 en bucle —208
+             * peticiones en una prueba— y que cada intento moviera
+             * lock_version, acabando en un conflicto falso contra uno mismo.
+             *
+             * Lo que NO puede publicarse sin texto ya lo impide
+             * PublicationChecklist. La exigencia no desaparece: se mueve al
+             * momento en que tiene sentido.
+             */
+            'questions.*.text' => ['present', 'nullable', 'string', 'max:1000'],
             'questions.*.help' => ['nullable', 'string', 'max:1000'],
             'questions.*.is_required' => ['required', 'boolean'],
             'questions.*.limits' => ['present', 'array'],
-
-            /*
-             * La condicion, si la hay. RF-AO-BLD-007.
-             *
-             * nullable en el nivel superior y required dentro: o no hay
-             * condicion, o esta completa. Una condicion a medias —con
-             * pregunta origen pero sin opcion— se guardaria y no haria nada.
-             */
-            'questions.*.condition' => ['nullable', 'array'],
-            'questions.*.condition.depends_on_ulid' => ['required_with:questions.*.condition', 'string', 'size:26'],
-            'questions.*.condition.option_ulid' => ['required_with:questions.*.condition', 'string', 'size:26'],
 
             'questions.*.options' => ['present', 'array', 'max:50'],
             'questions.*.options.*.ulid' => ['nullable', 'string', 'size:26'],
@@ -55,9 +57,11 @@ final class BuilderStateRequest extends FormRequest
             // La etiqueta es obligatoria SIEMPRE, tambien cuando la opcion se
             // muestra solo como imagen: es el nombre accesible de
             // RF-AO-BLD-005.
-            'questions.*.options.*.label' => ['required', 'string', 'max:255'],
+            // Igual que el texto: una opcion recien anadida esta vacia
+            // mientras se escribe. PublicationChecklist lo exige al publicar.
+            'questions.*.options.*.label' => ['present', 'string', 'max:255'],
 
-            'questions.*.options.*.value' => ['required', 'string', 'max:255'],
+            'questions.*.options.*.value' => ['present', 'string', 'max:255'],
             'questions.*.options.*.score' => ['nullable', 'integer', 'between:-32768,32767'],
             'questions.*.options.*.display' => ['required', Rule::enum(OptionDisplay::class)],
             'questions.*.options.*.appearance' => ['nullable', 'array'],
@@ -68,8 +72,10 @@ final class BuilderStateRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'questions.*.text.required' => __('validation.question_text_required'),
-            'questions.*.options.*.label.required' => __('validation.option_label_required'),
+            // Los mensajes de 'required' se retiran con sus reglas: el
+            // borrador admite campos vacios. Un mensaje para una regla que ya
+            // no existe es codigo muerto que confunde al leerlo.
+            'questions.*.text.max' => __('validation.question_text_max'),
         ];
     }
 }

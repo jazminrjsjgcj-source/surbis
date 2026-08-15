@@ -196,6 +196,7 @@ return [
         'state_local' => 'Guardado solo en este equipo. Reintentando...',
         'state_error' => 'No se pudo guardar',
         'state_conflict' => 'Guardado detenido: hay un conflicto',
+        'state_rejected' => 'No se guardo:',
 
         'conflict_title' => 'Otra persona guardo este borrador',
         'conflict_help' => 'El guardado automatico se detuvo para no sobrescribir su trabajo. Tus cambios siguen aqui y en este equipo.',
@@ -452,16 +453,4 @@ return [
     'session' => [
         'logout' => 'Cerrar sesion',
     ],
-    'conditions' => [
-        'title' => 'Mostrar solo si',
-        'add' => 'Mostrar solo en algunos casos',
-        'source' => 'Depende de la pregunta',
-        'option' => 'Cuando la respuesta sea',
-        'always' => 'Se muestra siempre',
-        'choose_option' => 'Elige una respuesta',
-        'remove' => 'Quitar la condicion',
-        'no_sources' => 'Para condicionar esta pregunta necesitas una pregunta anterior con opciones.',
-        'blocked_by' => 'No se puede quitar: las preguntas :positions dependen de esta.',
-    ],
-
 ];

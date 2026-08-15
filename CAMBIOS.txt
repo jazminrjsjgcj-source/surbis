@@ -1,0 +1,22 @@
+Corrige el bucle de 422 al escribir en el constructor.
+
+Ademas de los archivos de este tar, hay que pasar `rejection` al indicador.
+En resources/js/pages/Admin/Builder.tsx:
+
+1) En la desestructuracion del hook, anade rejection:
+
+       const { state, conflict, rejection, lastSavedAt, saveNow, retryWithServerVersion } =
+
+2) Y al componente:
+
+       <SaveIndicator state={state} rejection={rejection} lastSavedAt={lastSavedAt} onSaveNow={saveNow} />
+
+Despues:
+
+    docker compose run --rm node npm run build
+    docker compose exec app vendor/bin/pint
+    docker compose exec app composer check
+
+Y anade a lang/es/validation.php, si no esta:
+
+    'question_text_max' => 'El texto de la pregunta es demasiado largo.',
