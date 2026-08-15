@@ -53,6 +53,9 @@ final class BuilderController extends Controller
             // controles que el servidor va a rechazar. Ocultarlos no es
             // autorizar —eso lo hace BuilderGuard— pero ofrecer un boton que
             // siempre falla es una promesa falsa.
+            // Importar preguntas desde texto. TASK-025.
+            'importUrl' => route('admin.surveys.import', $survey),
+
             'readOnly' => ! $version->isEditable(),
 
             'questionTypes' => $this->questionTypes(),

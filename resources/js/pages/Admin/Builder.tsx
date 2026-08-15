@@ -1,4 +1,4 @@
-import { Head } from '@inertiajs/react'
+import { Head, Link } from '@inertiajs/react'
 import { useCallback, useState } from 'react'
 
 import CharCount from '@/Components/CharCount'
@@ -44,6 +44,7 @@ interface Props {
     version: { ulid: string; number: number; lock_version: number; questions: Question[] }
     readOnly: boolean
     questionTypes: QuestionTypeInfo[]
+    importUrl: string
 }
 
 const MAX_TEXT = 1000
@@ -60,7 +61,7 @@ const MAX_HELP = 1000
  * grupos dejan de confundirse porque estan en columnas distintas, no porque
  * cambien de color.
  */
-export default function Builder({ survey, version, readOnly, questionTypes }: Props) {
+export default function Builder({ survey, version, readOnly, questionTypes, importUrl }: Props) {
     const t = useTranslate()
     const [questions, setQuestions] = useState<Question[]>(version.questions)
     const [selected, setSelected] = useState(0)
@@ -237,9 +238,19 @@ export default function Builder({ survey, version, readOnly, questionTypes }: Pr
                         <p>{t('interface.builder.empty_help')}</p>
 
                         {!readOnly && (
-                            <button type="button" className="btn btn-primary" onClick={add}>
-                                {t('interface.builder.add')}
-                            </button>
+                            <div className="actions justify-center">
+                                <button type="button" className="btn btn-primary" onClick={add}>
+                                    {t('interface.builder.add')}
+                                </button>
+
+                                {/* Escribir doce preguntas de una vez es mucho
+                                    mas rapido que anadirlas de una en una, y
+                                    aqui es donde se nota: la encuesta esta
+                                    vacia. */}
+                                <Link href={importUrl} className="btn btn-ghost">
+                                    {t('interface.import.link')}
+                                </Link>
+                            </div>
                         )}
                     </div>
                 </div>
