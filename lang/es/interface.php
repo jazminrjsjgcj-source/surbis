@@ -308,22 +308,6 @@ return [
         'version_author' => 'Publicada por',
 
         'builder_link' => 'Preguntas',
-
-        'publish_title' => 'Publicar',
-        'publish_help' => 'Al publicar, este borrador pasa a ser la version que contesta la gente. Deja de poder editarse: para cambiar algo se abre un borrador nuevo.',
-        'publish' => 'Publicar esta version',
-        'publish_warning' => 'La version publicada anterior se archiva. Las respuestas que ya la contestaron se conservan.',
-        'published' => 'Version :number publicada.',
-        'publish_blocked' => 'No se publico: falta resolver :count cosa.|No se publico: faltan resolver :count cosas.',
-        'no_draft_to_publish' => 'Esta encuesta no tiene borrador que publicar.',
-
-        'problems_title' => 'Antes de publicar hay que resolver esto',
-        'problem_at' => 'Pregunta :position:',
-        'problem_no_questions' => 'La encuesta no tiene preguntas. Anade al menos una desde el constructor.',
-        'problem_question_without_text' => 'falta el texto de la pregunta.',
-        'problem_too_few_options' => 'tiene :count opcion y necesita al menos :min.|tiene :count opciones y necesita al menos :min.',
-        'problem_option_without_label' => 'hay una opcion sin nombre. El nombre es lo que lee quien usa lector de pantalla.',
-
         'open' => 'Abrir',
         'open_draft' => 'Abrir borrador nuevo',
         'versions' => 'Versiones',
@@ -468,4 +452,43 @@ return [
     'session' => [
         'logout' => 'Cerrar sesion',
     ],
+    'import' => [
+        'title' => 'Importar preguntas',
+        'subtitle' => 'Escribe las preguntas de corrido y el sistema las convierte.',
+        'label' => 'Preguntas',
+        'link' => 'Importar desde texto',
+
+        'mode' => 'Que hacer con las que ya hay',
+        'mode_append' => 'Anadir al final',
+        'mode_replace' => 'Sustituirlas',
+
+        'check' => 'Comprobar',
+        'submit' => 'Importar',
+        'done' => 'Se importo :count pregunta.|Se importaron :count preguntas.',
+
+        'preview_title' => 'Va a entrar :count pregunta|Van a entrar :count preguntas',
+        'options_count' => ':count opcion|:count opciones',
+
+        'problems_title' => 'El texto tiene problemas y no se importo nada',
+        'at_line' => 'Linea :line:',
+        'problem_unknown_type' => 'no existe el tipo ":written". Los tipos son: :known.',
+        'problem_unclosed_block' => 'falta cerrar el corchete del bloque.',
+        'problem_block_without_type' => 'el bloque no dice de que tipo son sus preguntas.',
+        'problem_block_without_options' => 'este tipo necesita al menos dos opciones, declaradas tras los dos puntos.',
+        'problem_question_without_block' => 'esta pregunta va antes del primer bloque, asi que no se sabe de que tipo es.',
+        'problem_nothing_to_import' => 'no hay nada que importar.',
+
+        'help_title' => 'Como se escribe',
+        'example' => <<<'EJEMPLO'
+            [obligatorias, una opcion: Si / Mas o menos / No]
+            ¿Te atendieron con amabilidad?
+            ¿El tiempo de espera fue razonable?
+
+            [opcionales, texto largo]
+            ¿Algo que mejorarias?
+            EJEMPLO,
+        'help_types' => 'Tipos disponibles:',
+        'help_scores' => 'Las opciones se escriben de mejor a peor. La primera recibe la puntuacion mas alta.',
+    ],
+
 ];
