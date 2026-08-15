@@ -197,6 +197,22 @@ return [
         'conflict_overwrite' => 'Conservar lo mio y guardar encima',
         'conflict_version' => 'La version del servidor es la :number.',
 
+        'options' => 'Opciones',
+        'options_empty' => 'Esta pregunta todavia no tiene opciones. Sin al menos una, no se puede contestar.',
+        'option_label' => 'Lo que se lee',
+        'option_value' => 'Valor guardado',
+        'option_value_hint' => 'Queda en la respuesta. Unico dentro de esta pregunta.',
+        'option_duplicate' => 'Ese valor ya lo usa otra opcion de esta pregunta.',
+        'option_score' => 'Puntos',
+        'option_display' => 'Como se muestra',
+        'option_add' => 'Anadir opcion',
+        'option_remove' => 'Quitar',
+
+        'display_text' => 'Solo texto',
+        'display_image' => 'Solo imagen',
+        'display_image_and_text' => 'Imagen y texto',
+        'display_pending' => 'La biblioteca de imagenes llega en la siguiente fase. Por ahora se vera el texto.',
+
         'empty_title' => 'Esta encuesta no tiene preguntas',
         'empty_help' => 'Anade la primera. Todo lo que escribas se guarda solo, y puedes reordenarlas cuando quieras.',
     ],

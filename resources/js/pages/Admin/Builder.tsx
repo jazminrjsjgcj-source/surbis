@@ -2,6 +2,7 @@ import { Head } from '@inertiajs/react'
 import { useCallback, useState } from 'react'
 
 import ConflictNotice from '@/Components/ConflictNotice'
+import OptionEditor from '@/Components/OptionEditor'
 import SaveIndicator from '@/Components/SaveIndicator'
 import { useTranslate } from '@/lib/translate'
 import { useBuilderPersistence } from '@/lib/useBuilderPersistence'
@@ -233,6 +234,21 @@ export default function Builder({ survey, version, readOnly, questionTypes }: Pr
                                     />
                                     {t('interface.builder.required')}
                                 </label>
+
+                                {/* Las opciones solo aparecen si el tipo las
+                                    admite. Que tipos son lo dice el servidor,
+                                    no una lista escrita aqui: si divergieran,
+                                    el constructor ofreceria opciones que el
+                                    servidor descarta al guardar. */}
+                                {tipoDe(pregunta.type)?.has_options && (
+                                    <OptionEditor
+                                        questionIndex={indice}
+                                        options={pregunta.options}
+                                        isScored={tipoDe(pregunta.type)?.is_scored ?? false}
+                                        readOnly={readOnly}
+                                        onChange={(options) => updateQuestion(indice, { options })}
+                                    />
+                                )}
 
                                 {!readOnly && (
                                     <div className="actions">
