@@ -8,6 +8,11 @@
 #
 # Ninguna credencial vive en este archivo. Las variables salen de .env y, si
 # faltan, los servicios no arrancan.
+#
+# Ningun servicio declara `networks`. Compose crea una red por proyecto y mete
+# a todos dentro, asi que se llaman entre si por su nombre de servicio: `web`,
+# `pgsql`, `redis`. Declarar una red a mano solo hace falta para conectar
+# proyectos distintos, y aqui no es el caso.
 
 services:
   app:
@@ -77,6 +82,42 @@ services:
     # Solo se levanta cuando se pide: `docker compose run --rm node npm install`
     profiles:
       - tools
+
+  playwright:
+    build:
+      context: ./docker/playwright
+    # Corre como el usuario del host en lugar de modificar el de la imagen.
+    # La imagen ya tiene ocupados el uid 1000 y el gid 1000 por su usuario
+    # `node`, asi que usermod no puede reasignarlos a pwuser. Correr como
+    # 1000:1000 resuelve los permisos sobre ./e2e sin tocar la imagen.
+    user: "${UID:-1000}:${GID:-1000}"
+    working_dir: /e2e
+    volumes:
+      - ./e2e:/e2e
+    environment:
+      # La MISMA url que APP_URL, no el nombre del servicio.
+      #
+      # Con http://web las pruebas cargaban la pantalla, el POST /login
+      # devolvia 302 correctamente... y ahi se paraba todo. El motivo:
+      # redirect()->route() construye la URL absoluta con APP_URL, asi que
+      # el 302 apuntaba a http://localhost:8080/admin. Desde dentro del
+      # contenedor de Playwright, localhost es el propio contenedor: la
+      # redireccion iba a una direccion que no existe, el navegador no la
+      # seguia, y la URL se quedaba en /login.
+      #
+      # Costo cinco hipotesis. La evidencia que lo resolvio fue la pestana
+      # Network del visor de trazas: POST 302 y NINGUN GET /admin despues.
+      E2E_BASE_URL: http://web
+    # localhost dentro del contenedor apunta al host, donde el 8080 esta
+    # publicado por el servicio web. Sin esto, localhost seria el propio
+    # contenedor de Playwright y no habria nada escuchando.
+    depends_on:
+      - web
+    # Como node: no arranca con `docker compose up`. Se invoca con
+    # `docker compose run --rm playwright npm test`. Recuerda T-028: con
+    # perfil, `exec` no lo encuentra.
+    profiles:
+      - e2e
 
 volumes:
   pgsql-data:

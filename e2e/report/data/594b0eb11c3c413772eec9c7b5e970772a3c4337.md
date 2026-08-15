@@ -1,0 +1,63 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - dialog [active] [ref=e2]:
+    - iframe [ref=e3]:
+      - generic [ref=f1e2]:
+        - navigation "Secciones" [ref=f1e3]:
+          - paragraph [ref=f1e4]:
+            - generic [ref=f1e5]: P
+            - generic [ref=f1e6]: Pulso
+          - generic [ref=f1e7]:
+            - paragraph [ref=f1e8]: Organizacion
+            - link "Panel" [ref=f1e9] [cursor=pointer]:
+              - /url: http://web/admin
+            - link "Sucursales" [ref=f1e10] [cursor=pointer]:
+              - /url: http://web/admin/sucursales
+            - link "Personas" [ref=f1e11] [cursor=pointer]:
+              - /url: http://web/admin/personas
+            - link "Encuestas" [ref=f1e12] [cursor=pointer]:
+              - /url: http://web/admin/encuestas
+        - generic [ref=f1e13]:
+          - banner [ref=f1e14]:
+            - link "Mi seguridad" [ref=f1e15] [cursor=pointer]:
+              - /url: http://web/cuenta/seguridad
+            - button "Cerrar sesion" [ref=f1e17] [cursor=pointer]
+          - main [ref=f1e18]:
+            - generic [ref=f1e19]:
+              - heading "Panel" [level=1] [ref=f1e20]
+              - paragraph [ref=f1e21]: Punto de entrada a tu organizacion.
+            - generic [ref=f1e22]:
+              - heading "Lo que ya puedes hacer" [level=2] [ref=f1e23]
+              - paragraph [ref=f1e24]: Da de alta tus sedes y las personas que van a usar el sistema o ser evaluadas.
+              - generic [ref=f1e25]:
+                - link "Sucursales" [ref=f1e26] [cursor=pointer]:
+                  - /url: http://web/admin/sucursales
+                - link "Personas" [ref=f1e27] [cursor=pointer]:
+                  - /url: http://web/admin/personas
+            - generic [ref=f1e28]:
+              - heading "Lo que llega despues" [level=2] [ref=f1e29]
+              - paragraph [ref=f1e30]: "Los indicadores de satisfaccion, las respuestas y el analisis aparecen cuando existan encuestas publicadas y respuestas que mostrar. Hasta entonces, este panel se queda como esta a proposito: un panel con cifras inventadas es peor que un panel sin cifras."
+  - generic [ref=e6]:
+    - banner [ref=e7]:
+      - paragraph [ref=e8]: PULSO Sí
+      - paragraph [ref=e9]: Encuestas de satisfaccion
+    - generic [ref=e10]:
+      - heading "Inicia sesion" [level=1] [ref=e11]
+      - paragraph [ref=e12]: Escribe el correo y la contrasena de tu cuenta.
+      - generic [ref=e13]:
+        - generic [ref=e14]:
+          - generic [ref=e15]: Correo electronico
+          - textbox "Correo electronico" [ref=e16]: admin@example.test
+        - generic [ref=e17]:
+          - generic [ref=e18]: Contrasena
+          - textbox "Contrasena" [ref=e19]
+        - generic [ref=e20]:
+          - generic [ref=e21]:
+            - checkbox "Mantener la sesion iniciada" [ref=e22]
+            - text: Mantener la sesion iniciada
+          - link "Olvide mi contrasena" [ref=e23] [cursor=pointer]:
+            - /url: http://web/recuperar-contrasena
+        - button "Entrar" [ref=e24] [cursor=pointer]
+```
