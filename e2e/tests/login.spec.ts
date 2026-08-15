@@ -17,8 +17,7 @@ import { expect, test } from '@playwright/test'
  * con su propio .env, y es tarea aparte.
  */
 
-const CORREO = 'admin@example.test'
-const CLAVE = process.env.SEED_PASSWORD ?? 'desarrollo-local'
+import { entrar } from './helpers'
 
 test.describe('pantalla de acceso', () => {
     test.beforeEach(async ({ page }) => {
@@ -89,11 +88,17 @@ test.describe('pantalla de acceso', () => {
         await expect(page.getByLabel('Contrasena')).toHaveValue('')
     })
 
-    test.fixme('el acceso correcto lleva al panel', async ({ page }) => {
-        await page.getByLabel('Correo electronico').fill(CORREO)
-        await page.getByLabel('Contrasena').fill(CLAVE)
-        await page.getByRole('button', { name: /entrar|iniciar/i }).click()
+    test('el acceso correcto lleva al panel', async ({ page }) => {
+        await entrar(page)
 
+        /*
+         * Esta prueba estuvo dos dias en test.fixme y ocho hipotesis
+         * descartadas. La causa era la conversion a medias: /login ya era
+         * React y /admin seguia siendo Blade, asi que Inertia recibia HTML
+         * donde esperaba JSON y montaba la pagina en un iframe.
+         *
+         * No era el navegador, ni CORS, ni una extension.
+         */
         await expect(page).toHaveURL(/\/admin$/)
     })
 
