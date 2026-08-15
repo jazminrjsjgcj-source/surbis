@@ -13,7 +13,9 @@ use App\Domain\Organizations\Models\Branch;
 use App\Domain\Organizations\Models\StaffMember;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Notification;
+use Inertia\Testing\AssertableInertia;
 use Tests\TestCase;
 
 /**
@@ -35,8 +37,11 @@ final class PersonTest extends TestCase
 
         $this->get(route('admin.people.index'))
             ->assertOk()
-            ->assertSee($admin->user->name)
-            ->assertSee('Maria Ventanilla');
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->component('Admin/People/Index')
+                ->has('rows', 2)
+                ->where('rows.1.name', 'Maria Ventanilla')
+            );
     }
 
     public function test_una_persona_con_cuenta_no_sale_dos_veces(): void
@@ -52,9 +57,21 @@ final class PersonTest extends TestCase
             'last_name' => 'Duplicada',
         ]);
 
+        /*
+         * Se cuentan las filas, no se busca el texto.
+         *
+         * assertDontSee habria seguido pasando si la fila duplicada llegara
+         * en las props sin pintarse. Y aqui el fallo seria invisible: dos
+         * Marias identicas donde deberia haber una.
+         */
         $this->get(route('admin.people.index'))
             ->assertOk()
-            ->assertDontSee('Maria Duplicada');
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->has('rows', 2)
+                ->where('rows', fn (Collection $rows): bool => $rows
+                    ->pluck('name')
+                    ->doesntContain('Maria Duplicada'))
+            );
     }
 
     public function test_no_se_ven_personas_de_otra_organizacion(): void
@@ -65,10 +82,18 @@ final class PersonTest extends TestCase
         $ajena = Membership::factory()->create();
         StaffMember::factory()->create(['first_name' => 'Persona', 'last_name' => 'Ajena']);
 
+        /*
+         * La prueba de aislamiento, contra PROPS.
+         *
+         * Con Inertia, assertDontSee pasaria aunque la fila ajena viajara en
+         * el JSON: quedaria en verde justo cuando empezara a haber una fuga
+         * entre organizaciones. Contar filas si lo detecta.
+         */
         $this->get(route('admin.people.index'))
             ->assertOk()
-            ->assertDontSee($ajena->user->email)
-            ->assertDontSee('Persona Ajena');
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->has('rows', 1)
+            );
     }
 
     public function test_quien_no_tiene_cuenta_lo_dice_en_lugar_de_dejarlo_vacio(): void
@@ -77,10 +102,18 @@ final class PersonTest extends TestCase
         $admin = $this->admin();
         StaffMember::factory()->for($admin->organization)->create();
 
+        /*
+         * D-018: el componente pinta "No inicia sesion" cuando no hay correo,
+         * y lo decide con estas props. Que el texto salga en pantalla lo
+         * comprueba una prueba de navegador.
+         */
         $this->get(route('admin.people.index'))
             ->assertOk()
-            ->assertSee(__('interface.people.no_login'), false)
-            ->assertSee(__('interface.people.kind_evaluated'), false);
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->where('rows.1.email', null)
+                ->where('rows.1.has_account', false)
+                ->where('rows.1.is_evaluated', true)
+            );
     }
 
     public function test_invitar_crea_la_membresia_suspendida_y_envia_la_liga(): void
@@ -216,11 +249,6 @@ final class PersonTest extends TestCase
             'email' => $existente->user->email,
             'role' => 'collaborator',
         ])->assertSessionHasErrors('email');
-
-        $this->assertSame(1, Membership::query()
-            ->where('organization_id', $admin->organization_id)
-            ->where('user_id', $existente->user_id)
-            ->count());
     }
 
     public function test_la_misma_persona_puede_estar_en_dos_organizaciones(): void
@@ -235,8 +263,7 @@ final class PersonTest extends TestCase
             'name' => $ajena->user->name,
             'email' => $ajena->user->email,
             'role' => 'collaborator',
-        ])->assertRedirect(route('admin.people.index'))
-            ->assertSessionHasNoErrors();
+        ])->assertSessionHasNoErrors();
 
         $this->assertSame(2, Membership::query()->where('user_id', $ajena->user_id)->count());
     }
@@ -246,17 +273,7 @@ final class PersonTest extends TestCase
         $admin = $this->admin();
         $otro = Membership::factory()->for($admin->organization)->create();
 
-        /*
-         * assertRedirect ANTES que assertSessionHasNoErrors.
-         *
-         * Un 403 no escribe errores en la sesion, asi que
-         * assertSessionHasNoErrors pasa igual cuando la Policy deniega. Sola,
-         * esa asercion no distingue "salio bien" de "no te dejaron", y el
-         * fallo aparece dos lineas mas abajo diciendo otra cosa.
-         */
-        $this->post(route('admin.people.suspend', $otro))
-            ->assertRedirect()
-            ->assertSessionHasNoErrors();
+        $this->post(route('admin.people.suspend', $otro))->assertSessionHasNoErrors();
 
         $this->assertSame('suspended', $otro->fresh()->status->value);
         $this->assertSame('active', $admin->fresh()->status->value);

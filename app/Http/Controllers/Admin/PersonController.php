@@ -19,7 +19,8 @@ use App\Http\Requests\Admin\InviteMemberRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
-use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 
 /**
  * Usuarios y colaboradores. RF-AO-COL-001 a 006.
@@ -35,7 +36,7 @@ use Illuminate\View\View;
  */
 final class PersonController extends Controller
 {
-    public function index(Request $request): View
+    public function index(Request $request): InertiaResponse
     {
         $this->authorize('viewAny', Membership::class);
 
@@ -45,31 +46,31 @@ final class PersonController extends Controller
 
         $rows = $this->rows($membership->organization_id, $search, $filter);
 
-        return view('admin.people.index', [
-            'rows' => $rows,
-            'search' => $search,
-            'filter' => $filter,
-            'branches' => Branch::query()
-                ->forOrganization($membership->organization_id)
-                ->active()
-                ->orderBy('name')
-                ->get(),
+        return Inertia::render('Admin/People/Index', [
+            'rows' => $rows->map(fn (PersonRow $row): array => $this->serialize($row))->all(),
+
+            'filters' => ['q' => $search, 'type' => $filter],
+
+            // Para el desplegable de asignacion, que vive en la propia fila.
+            'branches' => $this->branchesWithAreas($membership->organization_id),
+
+            'inviteUrl' => route('admin.people.create'),
+            'personUrl' => route('admin.people.person.create'),
+            'indexUrl' => route('admin.people.index'),
         ]);
     }
 
-    public function create(Request $request): View
+    public function create(Request $request): InertiaResponse
     {
         $this->authorize('create', Membership::class);
 
         $membership = $this->activeMembership($request);
 
-        return view('admin.people.invite', [
-            'branches' => Branch::query()
-                ->forOrganization($membership->organization_id)
-                ->active()
-                ->with('areas')
-                ->orderBy('name')
-                ->get(),
+        return Inertia::render('Admin/People/Invite', [
+            'branches' => $this->branchesWithAreas($membership->organization_id),
+            'roles' => array_map(fn (MembershipRole $r): string => $r->value, MembershipRole::cases()),
+            'action' => route('admin.people.store'),
+            'cancelUrl' => route('admin.people.index'),
         ]);
     }
 
@@ -98,6 +99,8 @@ final class PersonController extends Controller
         try {
             $manage->suspend($membership);
         } catch (LastAdministrator) {
+            // P-017 y D-020: no se puede dejar la organizacion sin nadie que
+            // la administre.
             return back()->withErrors(['membership' => __('interface.people.last_admin')]);
         }
 
@@ -126,6 +129,75 @@ final class PersonController extends Controller
         ]);
 
         return back()->with('status', __('interface.people.assigned'));
+    }
+
+    /**
+     * Una fila de la lista, lista para pintar.
+     *
+     * Aqui se decide QUE puede hacerse con cada persona, y no en el
+     * componente: si React dedujera por su cuenta que una persona sin cuenta
+     * puede recibir una, su criterio y el de las Policies divergirian, y la
+     * pantalla ofreceria acciones que el servidor rechaza.
+     *
+     * @return array<string, mixed>
+     */
+    private function serialize(PersonRow $row): array
+    {
+        $membership = $row->membership;
+        $staff = $row->staffMember;
+
+        return [
+            'key' => $row->key,
+            'name' => $row->name,
+            'email' => $row->email,
+            'branch' => $row->branchName,
+            'area' => $row->areaName,
+
+            'has_account' => $row->hasAccount(),
+            'is_evaluated' => $row->isEvaluated(),
+
+            'role' => $membership?->role->value,
+            'membership_status' => $membership?->status->value,
+            'staff_status' => $staff?->status->value,
+
+            'branch_id' => $membership?->branch_id ?? $staff?->branch_id,
+            'area_id' => $membership?->area_id ?? $staff?->area_id,
+
+            'suspend_url' => $membership === null ? null : route('admin.people.suspend', $membership),
+            'activate_url' => $membership === null ? null : route('admin.people.activate', $membership),
+            'assign_url' => $membership === null ? null : route('admin.people.assign', $membership),
+
+            'edit_url' => $staff === null ? null : route('admin.people.person.edit', $staff),
+            'account_url' => $staff === null || $row->hasAccount()
+                ? null
+                : route('admin.people.person.account', $staff),
+        ];
+    }
+
+    /**
+     * Sucursales activas con sus areas, para los desplegables encadenados.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function branchesWithAreas(int $organizationId): array
+    {
+        return Branch::query()
+            ->forOrganization($organizationId)
+            ->active()
+            // with() y no una consulta por sucursal dentro del bucle.
+            // RNF-GEN-010.
+            ->with(['areas' => fn ($query) => $query->active()->orderBy('name')])
+            ->orderBy('name')
+            ->get()
+            ->map(fn (Branch $branch): array => [
+                'id' => $branch->id,
+                'name' => $branch->name,
+                'areas' => $branch->areas->map(fn ($area): array => [
+                    'id' => $area->id,
+                    'name' => $area->name,
+                ])->all(),
+            ])
+            ->all();
     }
 
     /** @return Collection<int, PersonRow> */

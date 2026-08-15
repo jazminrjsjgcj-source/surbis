@@ -104,6 +104,8 @@ return [
 
         'state_active' => 'Activa',
         'state_suspended' => 'Suspendida',
+        'state_archived' => 'Archivada',
+        'archive' => 'Archivar',
         'state_invited' => 'Invitacion pendiente',
 
         'suspend' => 'Suspender',

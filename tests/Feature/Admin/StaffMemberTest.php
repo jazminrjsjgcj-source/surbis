@@ -10,6 +10,7 @@ use App\Domain\Organizations\Models\StaffMember;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
+use Inertia\Testing\AssertableInertia;
 use Tests\TestCase;
 
 /**
@@ -196,8 +197,23 @@ final class StaffMemberTest extends TestCase
 
         $this->get(route('admin.people.index'))
             ->assertOk()
-            ->assertSee(route('admin.people.person.create'), false)
-            ->assertSee(route('admin.people.person.account', $persona), false);
+            /*
+             * Se comprueban las PROPS, no el marcado.
+             *
+             * Con Inertia estas URLs siguen apareciendo dentro del JSON, asi
+             * que assertSee pasaria aunque el componente dejara de pintar los
+             * enlaces: verde por el motivo equivocado.
+             *
+             * account_url llega a null cuando la persona YA tiene cuenta, y
+             * eso lo decide el servidor: si React lo dedujera, su criterio y
+             * el de la Policy podrian divergir.
+             */
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->component('Admin/People/Index')
+                ->where('personUrl', route('admin.people.person.create'))
+                ->where('rows', fn ($rows): bool => collect($rows)
+                    ->contains('account_url', route('admin.people.person.account', $persona)))
+            );
     }
 
     private function admin(): Membership

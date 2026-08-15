@@ -15,20 +15,27 @@ use App\Http\Controllers\Controller;
 use App\Http\Middleware\EnsureActiveOrganization;
 use App\Http\Requests\Admin\GrantAccountRequest;
 use App\Http\Requests\Admin\StaffMemberRequest;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 
+/**
+ * Personas evaluables: las que se evaluan y no usan el sistema.
+ *
+ * RF-AO-COL-007 a 010 y D-018.
+ */
 final class StaffMemberController extends Controller
 {
-    public function create(Request $request): View
+    public function create(Request $request): InertiaResponse
     {
         $this->authorize('create', StaffMember::class);
 
-        return view('admin.people.person', [
+        return Inertia::render('Admin/People/Person', [
             'person' => null,
-            'branches' => $this->branches($request),
+            'branches' => $this->branchesWithAreas($request),
+            'action' => route('admin.people.person.store'),
+            'cancelUrl' => route('admin.people.index'),
         ]);
     }
 
@@ -45,13 +52,25 @@ final class StaffMemberController extends Controller
             ->with('status', __('interface.people.person_created'));
     }
 
-    public function edit(Request $request, StaffMember $staffMember): View
+    public function edit(Request $request, StaffMember $staffMember): InertiaResponse
     {
         $this->authorize('update', $staffMember);
 
-        return view('admin.people.person', [
-            'person' => $staffMember,
-            'branches' => $this->branches($request),
+        return Inertia::render('Admin/People/Person', [
+            'person' => [
+                'ulid' => $staffMember->ulid,
+                'first_name' => $staffMember->first_name,
+                'last_name' => $staffMember->last_name,
+                'employee_code' => $staffMember->employee_code,
+                'branch_id' => $staffMember->branch_id,
+                'area_id' => $staffMember->area_id,
+                'is_active' => $staffMember->isActive(),
+                'archive_url' => route('admin.people.person.archive', $staffMember),
+                'activate_url' => route('admin.people.person.activate', $staffMember),
+            ],
+            'branches' => $this->branchesWithAreas($request),
+            'action' => route('admin.people.person.update', $staffMember),
+            'cancelUrl' => route('admin.people.index'),
         ]);
     }
 
@@ -86,11 +105,19 @@ final class StaffMemberController extends Controller
         return back()->with('status', __('interface.people.person_activated'));
     }
 
-    public function accountForm(StaffMember $staffMember): View
+    public function accountForm(StaffMember $staffMember): InertiaResponse
     {
         $this->authorize('grantAccount', $staffMember);
 
-        return view('admin.people.grant-account', ['person' => $staffMember]);
+        return Inertia::render('Admin/People/GrantAccount', [
+            'person' => [
+                'ulid' => $staffMember->ulid,
+                'name' => trim($staffMember->first_name.' '.$staffMember->last_name),
+            ],
+            'roles' => array_map(fn (MembershipRole $r): string => $r->value, MembershipRole::cases()),
+            'action' => route('admin.people.person.account.store', $staffMember),
+            'cancelUrl' => route('admin.people.index'),
+        ]);
     }
 
     public function grantAccount(
@@ -100,6 +127,8 @@ final class StaffMemberController extends Controller
     ): RedirectResponse {
         $this->authorize('grantAccount', $staffMember);
 
+        // D-021: vincula membership_id a la persona existente. NO crea un
+        // registro nuevo, asi que sus evaluaciones anteriores se conservan.
         $grant->execute($staffMember, [
             'email' => (string) $request->string('email'),
             'role' => MembershipRole::from((string) $request->string('role')),
@@ -109,14 +138,24 @@ final class StaffMemberController extends Controller
             ->with('status', __('interface.people.account_granted'));
     }
 
-    /** @return Collection<int, Branch> */
-    private function branches(Request $request)
+    /** @return list<array<string, mixed>> */
+    private function branchesWithAreas(Request $request): array
     {
         return Branch::query()
             ->forOrganization($this->activeMembership($request)->organization_id)
             ->active()
+            ->with(['areas' => fn ($query) => $query->active()->orderBy('name')])
             ->orderBy('name')
-            ->get();
+            ->get()
+            ->map(fn (Branch $branch): array => [
+                'id' => $branch->id,
+                'name' => $branch->name,
+                'areas' => $branch->areas->map(fn ($area): array => [
+                    'id' => $area->id,
+                    'name' => $area->name,
+                ])->all(),
+            ])
+            ->all();
     }
 
     private function activeMembership(Request $request): Membership
