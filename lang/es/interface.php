@@ -195,15 +195,6 @@ return [
         'type_number' => 'Numero',
         'type_date' => 'Fecha',
 
-        'save_now' => 'Guardar ahora',
-        'state_synced' => 'Guardado',
-        'state_pending' => 'Cambios sin guardar',
-        'state_saving' => 'Guardando...',
-        'state_local' => 'Guardado solo en este equipo. Reintentando...',
-        'state_error' => 'No se pudo guardar',
-        'state_conflict' => 'Guardado detenido: hay un conflicto',
-        'state_rejected' => 'No se guardo:',
-
         'conflict_title' => 'Otra persona guardo este borrador',
         'conflict_help' => 'El guardado automatico se detuvo para no sobrescribir su trabajo. Tus cambios siguen aqui y en este equipo.',
         'conflict_discard' => 'Descartar lo mio y recargar',
