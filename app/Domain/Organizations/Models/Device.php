@@ -29,6 +29,9 @@ class Device extends Model
         'name',
         'code',
         'status',
+        'station_key_hash',
+        'station_key_set_at',
+        'station_key_revoked_at',
     ];
 
     /** @return BelongsTo<Organization, $this> */
@@ -62,6 +65,15 @@ class Device extends Model
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('status', 'active');
+    }
+
+    /** @return array<string, string> */
+    protected function casts(): array
+    {
+        return [
+            'station_key_set_at' => 'datetime',
+            'station_key_revoked_at' => 'datetime',
+        ];
     }
 
     public function isActive(): bool

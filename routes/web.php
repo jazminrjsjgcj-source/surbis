@@ -5,9 +5,11 @@ declare(strict_types=1);
 use App\Http\Controllers\Account\SecurityController;
 use App\Http\Controllers\Admin\AreaController;
 use App\Http\Controllers\Admin\BranchController;
+use App\Http\Controllers\Admin\BranchKioskController;
 use App\Http\Controllers\Admin\BuilderController;
 use App\Http\Controllers\Admin\DeploymentController;
 use App\Http\Controllers\Admin\DeploymentQrController;
+use App\Http\Controllers\Admin\DeviceKeyController;
 use App\Http\Controllers\Admin\PersonController;
 use App\Http\Controllers\Admin\QuestionImportController;
 use App\Http\Controllers\Admin\ResponseController;
@@ -143,6 +145,18 @@ Route::middleware(['auth', 'organization'])->group(function (): void {
             ->name('admin.branches.archive');
         Route::post('/admin/sucursales/{branch}/activar', [BranchController::class, 'activate'])
             ->name('admin.branches.activate');
+
+        Route::get('/admin/sucursales/{branch}/quioscos', [BranchKioskController::class, 'show'])
+            ->name('admin.branches.kiosks');
+        Route::post('/admin/sucursales/{branch}/quioscos/activar', [BranchKioskController::class, 'activate'])
+            ->name('admin.branches.kiosks.activate');
+        Route::post('/admin/sucursales/{branch}/quioscos/suspender', [BranchKioskController::class, 'suspend'])
+            ->name('admin.branches.kiosks.suspend');
+
+        Route::post('/admin/dispositivos/{device}/clave', [DeviceKeyController::class, 'generate'])
+            ->name('admin.devices.key.generate');
+        Route::post('/admin/dispositivos/{device}/clave/revocar', [DeviceKeyController::class, 'revoke'])
+            ->name('admin.devices.key.revoke');
 
         /*
          * Usuarios y colaboradores. RF-AO-COL-001 a 006.
