@@ -22,6 +22,7 @@ interface Deployment {
     activate_url: string
     suspend_url: string
     close_url: string
+    qr_url: string | null
 }
 
 interface Props {
@@ -99,6 +100,12 @@ export default function Index({ deployments, surveysUrl }: Props) {
             header: t('interface.deployments.actions'),
             cell: (d) => (
                 <div className="flex flex-wrap items-center gap-2">
+                    {d.qr_url && (
+                        <Link href={d.qr_url} className="text-primary text-sm">
+                            {t('interface.qr.title')}
+                        </Link>
+                    )}
+
                     {d.status === 'active' && (
                         <button
                             type="button"

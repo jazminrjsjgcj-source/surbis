@@ -222,6 +222,12 @@ final class DeploymentController extends Controller
             'activate_url' => route('admin.deployments.activate', $deployment),
             'suspend_url' => route('admin.deployments.suspend', $deployment),
             'close_url' => route('admin.deployments.close', $deployment),
+
+            // Solo los canales con token publico tienen QR: el quiosco se
+            // identifica con su clave de estacion, que es otro mecanismo.
+            'qr_url' => $deployment->channel->usesPublicToken()
+                ? route('admin.deployments.qr', $deployment)
+                : null,
         ];
     }
 
