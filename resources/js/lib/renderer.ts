@@ -23,6 +23,7 @@ export interface RenderableSurvey {
     thankYou: string | null
     allowBack: boolean
     commentMode: string
+    identityMode: string
     inactivitySeconds: number
     questions: RenderQuestion[]
 }

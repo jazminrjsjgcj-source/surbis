@@ -48,6 +48,16 @@ final class RenderableSurvey
             'commentMode' => $settings->commentMode->value,
 
             /*
+             * El modo de identidad, para saber si se piden datos.
+             *
+             * RF-COL-022: la identificacion SOLO se muestra en identificado u
+             * opcional. Que la pantalla no la pida no basta —el servidor
+             * ademas los rechaza si llegan (RF-COL-023)— pero pedirlos en
+             * anonimo seria una peticion que nunca se puede cumplir.
+             */
+            'identityMode' => $settings->identityMode->value,
+
+            /*
              * Los segundos de inactividad viajan porque el quiosco los
              * necesita para reiniciar (RF-COL-012). En un enlace publico no
              * se usan: quien contesta desde su casa no comparte pantalla con

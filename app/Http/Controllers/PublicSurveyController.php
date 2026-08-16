@@ -45,6 +45,7 @@ final class PublicSurveyController extends Controller
             return Inertia::render('Public/Survey', [
                 'available' => false,
                 'survey' => null,
+                'submitUrl' => null,
             ]);
         }
 
@@ -60,6 +61,7 @@ final class PublicSurveyController extends Controller
         return Inertia::render('Public/Survey', [
             'available' => true,
             'survey' => (new RenderableSurvey($deployment->version, $layout))->toArray(),
+            'submitUrl' => route('public.survey.submit', $token),
         ]);
     }
 }
