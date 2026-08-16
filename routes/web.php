@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\AreaController;
 use App\Http\Controllers\Admin\BranchController;
 use App\Http\Controllers\Admin\BuilderController;
 use App\Http\Controllers\Admin\DeploymentController;
+use App\Http\Controllers\Admin\DeploymentQrController;
 use App\Http\Controllers\Admin\PersonController;
 use App\Http\Controllers\Admin\QuestionImportController;
 use App\Http\Controllers\Admin\StaffMemberController;
@@ -20,6 +21,7 @@ use App\Http\Controllers\Auth\SecondFactorController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PlaceholderController;
+use App\Http\Controllers\PublicSurveyController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomeController::class)->name('home');
@@ -244,6 +246,13 @@ Route::middleware(['auth', 'organization'])->group(function (): void {
         Route::post('/admin/aplicaciones/{deployment}/cerrar', [DeploymentController::class, 'close'])
             ->name('admin.deployments.close');
 
+        Route::get('/admin/aplicaciones/{deployment}/qr', [DeploymentQrController::class, 'show'])
+            ->name('admin.deployments.qr');
+        Route::get('/admin/aplicaciones/{deployment}/qr.svg', [DeploymentQrController::class, 'svg'])
+            ->name('admin.deployments.qr.svg');
+        Route::post('/admin/aplicaciones/{deployment}/qr/regenerar', [DeploymentQrController::class, 'regenerate'])
+            ->name('admin.deployments.qr.regenerate');
+
         /*
          * Importar preguntas desde texto. TASK-025.
          *
@@ -305,3 +314,11 @@ Route::middleware(['auth', 'organization'])->group(function (): void {
             ->name('kiosk.start');
     });
 });
+
+/*
+ * La puerta publica de una encuesta.
+ *
+ * Sin sesion, sin organizacion activa y sin rol: quien escanea un cartel no
+ * ha iniciado sesion en nada.
+ */
+Route::get('/e/{token}', PublicSurveyController::class)->name('public.survey');
