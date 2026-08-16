@@ -103,6 +103,19 @@ class StaffMember extends Model
         });
     }
 
+    /**
+     * El nombre completo, en un solo sitio.
+     *
+     * Se armaba a mano con trim($first.' '.$last) en varios controladores.
+     * Repetirlo garantiza que un dia uno de ellos ponga el apellido delante,
+     * o se olvide del trim y deje un espacio suelto cuando falta uno de los
+     * dos.
+     */
+    public function fullName(): string
+    {
+        return trim($this->first_name.' '.$this->last_name);
+    }
+
     public function hasUserAccount(): bool
     {
         return $this->membership_id !== null;
