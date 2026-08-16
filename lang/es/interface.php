@@ -228,6 +228,11 @@ return [
         'no_draft' => 'Esta encuesta no tiene borrador abierto.',
         'back' => 'Volver a la encuesta',
         'title' => 'Configuracion de la encuesta',
+        'affects_draft' => 'Los cambios se guardan en el borrador :draft. La version :published sigue publicada hasta que publiques de nuevo.',
+        'identity_hint' => 'Decide si se pide identificarse antes de contestar.',
+        'no_draft' => 'Esta encuesta no tiene borrador abierto.',
+        'back' => 'Volver a la encuesta',
+        'link' => 'Configuracion',
         'subtitle' => 'Como se comporta cuando alguien la contesta.',
         'draft_notice' => 'Estos cambios se guardan en el borrador :version. La version publicada no se toca.',
 
@@ -309,6 +314,21 @@ return [
         'version_author' => 'Publicada por',
 
         'builder_link' => 'Preguntas',
+
+        'publish_title' => 'Publicar',
+        'publish_help' => 'Al publicar, este borrador pasa a ser la version que contesta la gente. Deja de poder editarse: para cambiar algo se abre un borrador nuevo.',
+        'publish' => 'Publicar esta version',
+        'publish_warning' => 'La version publicada anterior se archiva. Las respuestas que ya la contestaron se conservan.',
+        'published' => 'Version :number publicada.',
+        'publish_blocked' => 'No se publico: falta resolver :count cosa.|No se publico: faltan resolver :count cosas.',
+        'no_draft_to_publish' => 'Esta encuesta no tiene borrador que publicar.',
+        'problems_title' => 'Antes de publicar hay que resolver esto',
+        'problem_at' => 'Pregunta :position:',
+        'problem_no_questions' => 'La encuesta no tiene preguntas. Anade al menos una desde el constructor.',
+        'problem_question_without_text' => 'falta el texto de la pregunta.',
+        'problem_too_few_options' => 'tiene :count opcion y necesita al menos :min.|tiene :count opciones y necesita al menos :min.',
+        'problem_option_without_label' => 'hay una opcion sin nombre. El nombre es lo que lee quien usa lector de pantalla.',
+        'problem_option_without_image' => 'hay una opcion que se muestra como imagen y no tiene ninguna.',
         'open' => 'Abrir',
         'open_draft' => 'Abrir borrador nuevo',
         'versions' => 'Versiones',
@@ -346,6 +366,7 @@ return [
 
     'pagination' => [
         'label' => 'Paginacion',
+        'showing_plain' => 'Mostrando :from a :to de :total.',
         'showing' => 'Mostrando <strong>:first</strong> a <strong>:last</strong> de <strong>:total</strong>',
         'previous' => 'Anterior',
         'next' => 'Siguiente',
@@ -471,6 +492,159 @@ return [
         'coming_soon' => 'Esta encuesta se podra contestar en cuanto el sistema de respuestas este listo.',
         'unavailable_title' => 'Este enlace no esta disponible',
         'unavailable_body' => 'Puede que haya caducado o que ya no se use. Si te lo dieron en una oficina, pregunta alli.',
+    ],
+
+    'conditions' => [
+        'title' => 'Mostrar solo si',
+        'add' => 'Mostrar solo en algunos casos',
+        'source' => 'Depende de la pregunta',
+        'option' => 'Cuando la respuesta sea',
+        'always' => 'Se muestra siempre',
+        'choose_option' => 'Elige una respuesta',
+        'remove' => 'Quitar la condicion',
+        'no_sources' => 'Para condicionar esta pregunta necesitas una pregunta anterior con opciones.',
+        'blocked_by' => 'No se puede quitar: las preguntas :positions dependen de esta.',
+    ],
+
+    'confirm' => [
+        'cancel' => 'Cancelar',
+        'remove_question_title' => 'Quitar esta pregunta',
+        'remove_question_body' => 'Se va a quitar ":text" con sus opciones. Podras deshacerlo mientras no guardes, pero el guardado es automatico.',
+    ],
+
+    'media' => [
+        'pick_title' => 'Elegir una imagen',
+        'search' => 'Buscar por nombre',
+        'empty' => 'No hay imagenes que coincidan.',
+        'system' => 'Del sistema',
+        'choose' => 'Elegir imagen',
+        'change' => 'Cambiar imagen',
+        'remove' => 'Quitar la imagen',
+        'missing' => 'Esta opcion se muestra como imagen y no tiene ninguna.',
+        'wrong_type' => 'Solo se admiten imagenes JPEG, PNG o WebP.',
+        'too_big' => 'La imagen no puede pesar mas de 2 MB.',
+    ],
+
+    'import' => [
+        'title' => 'Importar preguntas',
+        'subtitle' => 'Escribe las preguntas de corrido y el sistema las convierte.',
+        'label' => 'Preguntas',
+        'link' => 'Importar desde texto',
+
+        'mode' => 'Que hacer con las que ya hay',
+        'mode_append' => 'Anadir al final',
+        'mode_replace' => 'Sustituirlas',
+
+        'check' => 'Comprobar',
+        'submit' => 'Importar',
+        'done' => 'Se importo :count pregunta.|Se importaron :count preguntas.',
+
+        'preview_title' => 'Va a entrar :count pregunta|Van a entrar :count preguntas',
+        'options_count' => ':count opcion|:count opciones',
+
+        'problems_title' => 'El texto tiene problemas y no se importo nada',
+        'at_line' => 'Linea :line:',
+        'problem_unknown_type' => 'no existe el tipo ":written". Los tipos son: :known.',
+        'problem_unclosed_block' => 'falta cerrar el corchete del bloque.',
+        'problem_block_without_type' => 'el bloque no dice de que tipo son sus preguntas.',
+        'problem_block_without_options' => 'este tipo necesita al menos dos opciones, declaradas tras los dos puntos.',
+        'problem_question_without_block' => 'esta pregunta va antes del primer bloque, asi que no se sabe de que tipo es.',
+        'problem_nothing_to_import' => 'no hay nada que importar.',
+
+        'help_title' => 'Como se escribe',
+        'example' => <<<'EJEMPLO'
+            [obligatorias, una opcion: Si / Mas o menos / No]
+            ¿Te atendieron con amabilidad?
+            ¿El tiempo de espera fue razonable?
+
+            [opcionales, texto largo]
+            ¿Algo que mejorarias?
+            EJEMPLO,
+        'help_types' => 'Tipos disponibles:',
+        'help_scores' => 'Las opciones se escriben de mejor a peor. La primera recibe la puntuacion mas alta.',
+    ],
+
+    'deployments' => [
+        'title' => 'Aplicaciones',
+        'subtitle' => 'Donde y como se esta aplicando cada encuesta.',
+        'new' => 'Nueva aplicacion',
+        'create' => 'Crear la aplicacion',
+        'cancel' => 'Cancelar',
+        'created' => 'Aplicacion creada.',
+        'caption' => 'Aplicaciones de la organizacion',
+
+        'survey' => 'Encuesta',
+        'version' => 'Version :number',
+        'using_version' => 'Se aplicara la version :number, que es la publicada.',
+        'channel' => 'Canal',
+        'scope' => 'Donde aplica',
+        'validity' => 'Vigencia',
+        'status' => 'Estado',
+        'actions' => 'Acciones',
+        'branch' => 'Sucursal',
+        'area' => 'Area',
+        'device' => 'Dispositivo',
+        'starts_at' => 'Desde',
+        'ends_at' => 'Hasta',
+        'always' => 'Sin fecha de fin',
+
+        'step_channel' => 'Por donde se contesta',
+        'step_scope' => 'Donde aplica',
+        'step_validity' => 'Desde cuando y hasta cuando',
+        'validity_help' => 'Las dos fechas son opcionales. Sin fecha de inicio empieza ya; sin fecha de fin no caduca.',
+        'scope_fixed' => 'Este canal aplica siempre a un :scope.',
+
+        'choose_scope' => 'Elige donde aplica',
+        'choose_branch' => 'Elige la sucursal',
+        'choose_area' => 'Elige el area',
+        'choose_device' => 'Elige el dispositivo',
+        'no_devices' => 'No hay dispositivos registrados en esta organizacion.',
+
+        'channel_kiosk' => 'Quiosco',
+        'channel_qr' => 'Codigo QR',
+        'channel_public_link' => 'Enlace publico',
+        'channel_widget' => 'Widget',
+        'channel_help_kiosk' => 'Una tableta en ventanilla. Necesita un dispositivo concreto.',
+        'channel_help_qr' => 'Un codigo impreso que la gente escanea.',
+        'channel_help_public_link' => 'Una liga que se comparte por correo o mensaje.',
+        'channel_help_widget' => 'Incrustado en otra pagina web.',
+
+        'scope_organization' => 'Toda la organizacion',
+        'scope_branch' => 'Una sucursal',
+        'scope_area' => 'Un area',
+        'scope_device' => 'Un dispositivo',
+
+        'applying' => 'Aplicando',
+        'state_active' => 'Activa',
+        'state_suspended' => 'Suspendida',
+        'state_closed' => 'Cerrada',
+        'reason_closed' => 'Se cerro y no se reabre.',
+        'reason_suspended' => 'Pausada temporalmente.',
+        'reason_not_started' => 'Todavia no empieza.',
+        'reason_expired' => 'Su vigencia termino.',
+
+        'activate' => 'Activar',
+        'suspend' => 'Suspender',
+        'close' => 'Cerrar',
+        'activated' => 'Aplicacion activada.',
+        'suspended' => 'Aplicacion suspendida.',
+        'closed' => 'Aplicacion cerrada. No se puede reabrir.',
+
+        'empty_title' => 'Todavia no hay aplicaciones',
+        'empty_help' => 'Una aplicacion se crea desde una encuesta publicada.',
+        'go_to_surveys' => 'Ir a encuestas',
+        'back_to_survey' => 'Volver a la encuesta',
+        'no_published_version' => 'Esta encuesta no tiene ninguna version publicada. Publica una antes de aplicarla.',
+
+        'rejected' => [
+            'version_not_published' => 'Solo se pueden aplicar versiones publicadas.',
+            'kiosk_needs_device' => 'El canal de quiosco necesita un dispositivo.',
+            'foreign_entity' => 'El :entity elegido no pertenece a esta organizacion.',
+            'has_history' => 'Esta aplicacion ya tiene :responses respuesta.|Esta aplicacion ya tiene :responses respuestas.',
+            'already_closed' => 'Esta aplicacion esta cerrada y no admite cambios.',
+            'dates_out_of_order' => 'La fecha de inicio no puede ser posterior a la de fin.',
+            'scope_mismatch' => 'Lo elegido no coincide con el alcance :scope.',
+        ],
     ],
 
 ];

@@ -5,6 +5,7 @@ import CharCount from '@/Components/CharCount'
 import AdminShell from '@/Layouts/AdminShell'
 import ConditionEditor from '@/Components/ConditionEditor'
 import ConfirmDialog from '@/Components/ConfirmDialog'
+import { type MediaOption } from '@/Components/MediaPicker'
 import ConflictNotice from '@/Components/ConflictNotice'
 import OptionEditor from '@/Components/OptionEditor'
 import QuestionList from '@/Components/QuestionList'
@@ -19,6 +20,7 @@ interface Option {
     value: string
     score: number | null
     display: string
+    media_ulid: string | null
     appearance: Record<string, unknown> | null
 }
 
@@ -46,6 +48,7 @@ interface Props {
     readOnly: boolean
     questionTypes: QuestionTypeInfo[]
     importUrl: string
+    media: MediaOption[]
 }
 
 const MAX_TEXT = 1000
@@ -62,7 +65,7 @@ const MAX_HELP = 1000
  * grupos dejan de confundirse porque estan en columnas distintas, no porque
  * cambien de color.
  */
-export default function Builder({ survey, version, readOnly, questionTypes, importUrl }: Props) {
+export default function Builder({ survey, version, readOnly, questionTypes, importUrl, media }: Props) {
     const t = useTranslate()
     const [questions, setQuestions] = useState<Question[]>(version.questions)
     const [selected, setSelected] = useState(0)
@@ -379,6 +382,7 @@ export default function Builder({ survey, version, readOnly, questionTypes, impo
                                     options={actual.options}
                                     isScored={tipoDe(actual.type)?.is_scored ?? false}
                                     readOnly={readOnly}
+                                    media={media}
                                     onChange={(options) => update({ options })}
                                 />
                             )}
