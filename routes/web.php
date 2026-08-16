@@ -20,6 +20,7 @@ use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\SecondFactorController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\MediaController;
 use App\Http\Controllers\PlaceholderController;
 use App\Http\Controllers\PublicResponseController;
 use App\Http\Controllers\PublicSurveyController;
@@ -230,6 +231,18 @@ Route::middleware(['auth', 'organization'])->group(function (): void {
 
         Route::get('/admin/aplicaciones', [DeploymentController::class, 'index'])
             ->name('admin.deployments.index');
+
+        /*
+         * Las imagenes que sube una organizacion.
+         *
+         * NO estan en un disco publico: son fotos suyas, y publicarlas
+         * dejaria que cualquiera las viera adivinando la ruta. Aqui se
+         * comprueba la organizacion antes de servirlas.
+         *
+         * Las del SISTEMA no pasan por aqui: van directas desde el disco
+         * publico porque son del producto.
+         */
+        Route::get('/media/{ulid}', MediaController::class)->name('media.show');
 
         /*
          * Crear parte SIEMPRE de una encuesta: la version publicada es

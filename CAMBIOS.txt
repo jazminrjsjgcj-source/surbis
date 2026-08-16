@@ -1,0 +1,100 @@
+Sustituir el autoguardado por un boton "Guardar como borrador".
+
+## Por que
+
+El autoguardado causo, en una sola jornada: conflictos contra uno mismo,
+bucles de 422 al escribir una pregunta sin texto, y 118 peticiones seguidas
+por un ciclo de renderizado.
+
+Lo que SI protegia —perder veinte preguntas al cerrar la pestaña— se conserva
+con un aviso del navegador al salir con cambios.
+
+Y se conserva el bloqueo optimista: dos personas editando la misma encuesta
+es un caso real, y sobrescribir el trabajo ajeno en silencio es peor que un
+aviso molesto.
+
+## 1. Los dos archivos del tar se anaden
+
+    resources/js/lib/useDraftSaving.ts
+    resources/js/Components/SaveDraftButton.tsx
+
+## 2. El CSS
+
+Esta en CSS-A-ANADIR.txt.
+
+## 3. Builder.tsx
+
+SUSTITUYE el hook y el indicador. En resources/js/pages/Admin/Builder.tsx:
+
+   a) El import:
+
+        import { useBuilderPersistence } from '@/lib/useBuilderPersistence'
+      POR
+        import { useDraftSaving } from '@/lib/useDraftSaving'
+
+      Y anade:
+        import SaveDraftButton from '@/Components/SaveDraftButton'
+
+   b) La llamada al hook. Busca `useBuilderPersistence({` y sustituye toda
+      la desestructuracion por:
+
+        const { state, dirty, conflict, rejection, lastSavedAt, save, retryWithServerVersion } =
+            useDraftSaving({
+                url: version.update_url,
+                value: questions,
+                initialLock: version.lock_version,
+                readOnly,
+            })
+
+      OJO: el nombre de la prop de la URL puede ser otro. Mira que le pasabas
+      antes a useBuilderPersistence y usa el mismo.
+
+   c) El indicador. Sustituye <SaveIndicator ... /> por:
+
+        <SaveDraftButton
+            state={state}
+            dirty={dirty}
+            rejection={rejection}
+            lastSavedAt={lastSavedAt}
+            onSave={save}
+        />
+
+   d) ConflictNotice se queda igual: sigue recibiendo conflict y
+      retryWithServerVersion.
+
+Pegame el trozo actual de Builder.tsx donde se llama al hook si prefieres que
+te de el cambio exacto en vez de instrucciones.
+
+## 4. Idioma
+
+cd ~/encuestas
+python3 - <<'PY'
+p = 'lang/es/interface.php'
+s = open(p).read()
+
+if "'save_draft' =>" in s:
+    print("ya estaba")
+else:
+    i = s.index("'builder' => [")
+    j = s.index("'title' =>", i)
+    fin = s.index('\n', j) + 1
+    open(p, 'w').write(s[:fin] + """        'save_draft' => 'Guardar como borrador',
+        'saving' => 'Guardando...',
+        'saved' => 'Guardado',
+        'unsaved' => 'Cambios sin guardar',
+        'save_failed' => 'No se pudo guardar. Intentalo otra vez.',
+        'saved_at' => 'Ultimo guardado a las :time',
+""" + s[fin:])
+    print("anadido")
+PY
+
+## 5. Lo que se puede borrar DESPUES de comprobar
+
+    resources/js/lib/useBuilderPersistence.ts
+    resources/js/Components/SaveIndicator.tsx
+    resources/js/lib/idb.ts
+
+Y sus claves de idioma sobrantes: la prueba TranslationKeysTest te dira
+cuales.
+
+NO los borres hasta que composer check y npm run build pasen.

@@ -37,7 +37,18 @@ final class SystemMediaSeeder extends Seeder
     public function run(): void
     {
         $origen = resource_path('media/system/smiley');
-        $disk = config('filesystems.default');
+
+        /*
+         * Disco PUBLICO, no el de por defecto.
+         *
+         * Las caritas son recursos del producto: iguales para todas las
+         * organizaciones y sin nada que proteger. Servirlas directas evita
+         * una peticion a PHP por cada imagen de cada pregunta.
+         *
+         * Lo que sube cada organizacion va al disco privado y se sirve por
+         * MediaController, que comprueba permisos.
+         */
+        $disk = 'public';
 
         foreach (self::SMILEYS as $nombre => $alt) {
             $archivo = "{$origen}/{$nombre}.svg";

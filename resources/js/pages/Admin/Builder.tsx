@@ -9,10 +9,10 @@ import { type MediaOption } from '@/Components/MediaPicker'
 import ConflictNotice from '@/Components/ConflictNotice'
 import OptionEditor from '@/Components/OptionEditor'
 import QuestionList from '@/Components/QuestionList'
-import SaveIndicator from '@/Components/SaveIndicator'
+import SaveDraftButton from '@/Components/SaveDraftButton'
 import { type Condition, dependentsOf, movementBreaksCondition } from '@/lib/conditions'
 import { useTranslate } from '@/lib/translate'
-import { useBuilderPersistence } from '@/lib/useBuilderPersistence'
+import { useDraftSaving } from '@/lib/useDraftSaving'
 
 interface Option {
     ulid: string | null
@@ -71,13 +71,12 @@ export default function Builder({ survey, version, readOnly, questionTypes, impo
     const [selected, setSelected] = useState(0)
     const [confirmandoQuitar, setConfirmandoQuitar] = useState(false)
 
-    const { state, conflict, rejection, lastSavedAt, saveNow, retryWithServerVersion } =
-        useBuilderPersistence({
-            versionUlid: version.ulid,
-            initialLock: version.lock_version,
-            endpoint: `/admin/encuestas/${survey.ulid}/constructor`,
-            readOnly,
+    const { state, dirty, conflict, rejection, lastSavedAt, save, retryWithServerVersion } =
+        useDraftSaving({
+            url: `/admin/encuestas/${survey.ulid}/constructor`,
             value: questions,
+            initialLock: version.lock_version,
+            readOnly,
         })
 
     const tipoDe = useCallback(
@@ -239,7 +238,13 @@ export default function Builder({ survey, version, readOnly, questionTypes, impo
                 </div>
 
                 {!readOnly && (
-                    <SaveIndicator state={state} rejection={rejection} lastSavedAt={lastSavedAt} onSaveNow={saveNow} />
+                    <SaveDraftButton
+                    state={state}
+                    dirty={dirty}
+                    rejection={rejection}
+                    lastSavedAt={lastSavedAt}
+                    onSave={save}
+                />
                 )}
             </div>
 

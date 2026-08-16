@@ -163,6 +163,12 @@ return [
 
     'builder' => [
         'title' => 'Constructor',
+        'save_draft' => 'Guardar como borrador',
+        'saving' => 'Guardando...',
+        'saved' => 'Guardado',
+        'unsaved' => 'Cambios sin guardar',
+        'save_failed' => 'No se pudo guardar. Intentalo otra vez.',
+        'saved_at' => 'Ultimo guardado a las :time',
         'version' => 'Borrador, version :number',
         'read_only' => 'Esta version esta publicada: se muestra en solo lectura. Para cambiarla, abre un borrador nuevo.',
 

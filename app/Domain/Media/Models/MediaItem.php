@@ -78,9 +78,25 @@ class MediaItem extends Model
         return $this->organization_id === null;
     }
 
+    /**
+     * La URL desde la que se ve esta imagen.
+     *
+     * Los recursos de SISTEMA van en el disco publico y se sirven directos:
+     * son del producto, iguales para todas las organizaciones, y no hay nada
+     * que proteger.
+     *
+     * Lo que sube cada organizacion NO. Esas son fotos suyas, y publicarlas
+     * en un disco accesible dejaria que cualquiera las viera adivinando la
+     * ruta. Se sirven por una ruta que comprueba a que organizacion
+     * pertenece quien mira.
+     */
     public function url(): string
     {
-        return Storage::disk($this->disk)->url($this->path);
+        if ($this->isSystem()) {
+            return Storage::disk($this->disk)->url($this->path);
+        }
+
+        return route('media.show', $this->ulid);
     }
 
     /**

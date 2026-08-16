@@ -39,7 +39,14 @@ final class StoreMediaItem
         $extension = strtolower($file->extension() ?: 'bin');
         $path = "media/{$organization->id}/".substr($hash, 0, 2)."/{$hash}.{$extension}";
 
-        $disk = config('filesystems.default');
+        /*
+         * Disco PRIVADO para lo que sube una organizacion.
+         *
+         * Son fotos suyas: en un disco publico cualquiera podria verlas
+         * adivinando la ruta, y el hash del nombre no es una proteccion —es
+         * un identificador, no un secreto—. Se sirven por MediaController.
+         */
+        $disk = 'local';
 
         return DB::transaction(function () use (
             $organization, $uploader, $file, $altText, $path, $disk, $hash
