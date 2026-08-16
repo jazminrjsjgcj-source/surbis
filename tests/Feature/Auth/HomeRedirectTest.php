@@ -48,7 +48,7 @@ final class HomeRedirectTest extends TestCase
             'password' => 'password',
         ]);
 
-        $this->get('/')->assertRedirect(route('kiosk.start'));
+        $this->get('/')->assertRedirect(route('kiosk.welcome'));
     }
 
     public function test_el_administrador_de_plataforma_llega_a_platform(): void

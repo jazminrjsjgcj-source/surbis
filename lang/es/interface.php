@@ -784,4 +784,27 @@ return [
         'key_expired' => 'La clave caduco. Genera otra si hay que vincular la tableta de nuevo.',
     ],
 
+    'kiosk' => [
+        'link_title' => 'Vincular esta tableta',
+        'link_help' => 'Escribe la clave que te dio quien administra el sistema.',
+        'key' => 'Clave de la estacion',
+        'link' => 'Vincular',
+        'unknown_device' => 'Esa clave no es valida o ya se uso.',
+        'device_inactive' => 'Esta tableta esta dada de baja.',
+        'prepare_title' => 'Preparar la estacion',
+        'who' => 'A quien se evalua en este turno',
+        'who_help' => 'Elige a la persona que va a atender. Si nadie en concreto, dejalo sin marcar.',
+        'no_staff' => 'No hay personal registrado en esta sucursal. Se puede empezar igual.',
+        'replaces' => 'Al empezar se cierra el turno anterior de esta tableta.',
+        'start' => 'Empezar el turno',
+        'not_ready_title' => 'La estacion no esta lista',
+        'no_deployment' => 'A esta tableta todavia no se le ha asignado ninguna encuesta.',
+        'deployment_not_applying' => 'La encuesta asignada no esta recibiendo respuestas ahora mismo.',
+        'tell_admin' => 'Avisa a quien administra el sistema e indicale que es la tableta :device de :branch.',
+        'retry' => 'Volver a intentar',
+        'begin' => 'Empezar',
+        'thanks' => 'Gracias',
+        'thanks_body' => 'Tu respuesta ayuda a mejorar el servicio.',
+    ],
+
 ];

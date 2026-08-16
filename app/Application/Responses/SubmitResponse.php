@@ -6,6 +6,7 @@ namespace App\Application\Responses;
 
 use App\Application\Responses\Exceptions\ResponseRejected;
 use App\Domain\Deployments\Models\Deployment;
+use App\Domain\Kiosk\Models\KioskSession;
 use App\Domain\Responses\BlindIndex;
 use App\Domain\Responses\Models\Response;
 use App\Domain\Surveys\Enums\IdentityMode;
@@ -42,6 +43,15 @@ final class SubmitResponse
         string $idempotencyKey,
         ?string $comment = null,
         array $identity = [],
+
+        /*
+         * La sesion de quiosco, cuando la hay.
+         *
+         * Un enlace publico no evalua a nadie en concreto; una tableta si. De
+         * aqui sale la persona evaluada, y viene del SERVIDOR —el navegador
+         * no la decide (RNF-COL-013)—.
+         */
+        ?KioskSession $session = null,
     ): Response {
         /*
          * Idempotencia ANTES de nada. RNF-AO-RES-*.
@@ -69,11 +79,12 @@ final class SubmitResponse
         $this->validateIdentity($version->settings->identityMode, $identity);
 
         return DB::transaction(function () use (
-            $deployment, $version, $visibles, $answers, $idempotencyKey, $comment, $identity
+            $deployment, $version, $visibles, $answers, $idempotencyKey, $comment, $identity, $session
         ): Response {
             $response = Response::query()->create([
                 ...$this->references($deployment),
                 ...$this->snapshots($deployment, $version),
+                ...$this->sessionColumns($session),
                 ...$this->identityColumns($version->settings->identityMode, $identity),
 
                 'comment' => $comment,
@@ -201,6 +212,28 @@ final class SubmitResponse
         if (($identity['consent'] ?? false) !== true) {
             throw ResponseRejected::consentMissing();
         }
+    }
+
+    /**
+     * Lo que aporta la sesion de quiosco.
+     *
+     * El nombre va como SNAPSHOT: si esa persona cambia de nombre o se va de
+     * la organizacion, la respuesta sigue diciendo a quien se evaluo aquel
+     * dia.
+     *
+     * @return array<string, mixed>
+     */
+    private function sessionColumns(?KioskSession $session): array
+    {
+        if ($session === null) {
+            return [];
+        }
+
+        return [
+            'kiosk_session_id' => $session->id,
+            'staff_member_id' => $session->staff_member_id,
+            'staff_member_name' => $session->staffMember?->fullName(),
+        ];
     }
 
     /** @return array<string, mixed> */

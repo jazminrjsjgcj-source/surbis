@@ -1,47 +1,54 @@
 Anade al final de resources/css/app.css, dentro de @layer components:
 
-  /*
-     El boton de guardar, flotante.
+  /* ---------------------------------------------------------------------
+     El quiosco.
 
-     Fijo abajo porque el constructor se desplaza: con veinte preguntas, un
-     boton en la cabecera obliga a subir cada vez que se quiere guardar.
+     Pantalla completa, sin navegacion, con todo mas grande. Quien lo usa
+     esta de pie, con prisa, y a veces sin sus gafas.
+     --------------------------------------------------------------------- */
+  .kiosk {
+    min-block-size: 100dvh;
+    padding: 2rem 1.5rem;
+    background: var(--color-surface-sunken);
+  }
 
-     inset-inline-end y no right: la interfaz tiene que funcionar en arabe
-     (ANEXO 1 seccion 50).
-  */
-  .save-dock {
-    position: fixed;
-    inset-block-end: 1.5rem;
-    inset-inline-end: 1.5rem;
-    z-index: 20;
+  /* dvh y no vh: en un movil, vh cuenta la barra del navegador y deja la
+     accion principal justo debajo del borde visible. */
+  .kiosk-centered {
+    display: grid;
+    place-items: center;
+  }
 
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-
-    padding: 0.75rem 1rem;
-    border: 1px solid var(--color-line);
+  .kiosk-panel {
+    inline-size: 100%;
+    max-inline-size: 36rem;
+    padding: 2rem;
     border-radius: var(--radius-card);
     background: var(--color-surface);
-
-    /* La sombra lo separa del contenido que pasa por debajo. */
-    box-shadow: 0 4px 16px color-mix(in oklab, var(--color-ink) 12%, transparent);
-  }
-
-  .save-dock-state {
-    font-size: 0.875rem;
-    color: var(--color-ink-muted);
   }
 
   /*
-     En pantallas estrechas ocupa todo el ancho.
+     El boton de empezar. RNF-COL-006: la accion principal debe ser evidente
+     y usable sin capacitacion.
 
-     Un boton flotante pequeno en un movil tapa contenido y se pulsa mal.
+     Muy por encima de los 44 px minimos: este boton lo pulsa alguien que
+     pasa de largo si no lo ve.
   */
-  @media (max-width: 40rem) {
-    .save-dock {
-      inset-inline: 1rem;
-      inset-block-end: 1rem;
-      justify-content: space-between;
-    }
+  .btn-kiosk {
+    inline-size: 100%;
+    min-block-size: 5rem;
+    font-size: 1.5rem;
+  }
+
+  /*
+     El campo de la clave de estacion.
+
+     Monoespaciado y espaciado: se teclea mirando un papel, y distinguir
+     caracteres cuenta mas que la estetica.
+  */
+  .input-key {
+    font-family: var(--font-mono);
+    font-size: 1.5rem;
+    letter-spacing: 0.1em;
+    text-align: center;
   }

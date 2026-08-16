@@ -75,7 +75,7 @@ final class EstablishAuthenticatedContext
     {
         return match ($membership->role) {
             MembershipRole::Admin => 'admin.dashboard',
-            MembershipRole::Collaborator => 'kiosk.start',
+            MembershipRole::Collaborator => 'kiosk.welcome',
         };
     }
 }

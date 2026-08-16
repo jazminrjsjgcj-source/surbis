@@ -32,7 +32,7 @@ final class LoginTest extends TestCase
         $membership = Membership::factory()->collaborator()->create();
 
         $this->post('/login', $this->credencialesDe($membership->user))
-            ->assertRedirect(route('kiosk.start'));
+            ->assertRedirect(route('kiosk.welcome'));
     }
 
     public function test_el_administrador_de_plataforma_llega_a_platform(): void

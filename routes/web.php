@@ -23,10 +23,14 @@ use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\SecondFactorController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\Kiosk\KioskController;
+use App\Http\Controllers\Kiosk\KioskResponseController;
+use App\Http\Controllers\Kiosk\LinkController;
 use App\Http\Controllers\MediaController;
 use App\Http\Controllers\PlaceholderController;
 use App\Http\Controllers\PublicResponseController;
 use App\Http\Controllers\PublicSurveyController;
+use App\Http\Middleware\ResolveKioskStation;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomeController::class)->name('home');
@@ -345,10 +349,7 @@ Route::middleware(['auth', 'organization'])->group(function (): void {
             });
     });
 
-    Route::middleware('role:collaborator')->group(function (): void {
-        Route::get('/kiosk/start', fn () => app(PlaceholderController::class)('Preparacion de quiosco'))
-            ->name('kiosk.start');
-    });
+    Route::middleware('role:collaborator')->group(function (): void {});
 });
 
 /*
@@ -364,3 +365,18 @@ Route::get('/e/{token}', PublicSurveyController::class)->name('public.survey');
  * token del enlace, no una sesion.
  */
 Route::post('/e/{token}', PublicResponseController::class)->name('public.survey.submit');
+
+/*
+ * El quiosco. SIN sesion de usuario: la tableta se identifica con su
+ * credencial en cookie, que ResolveKioskStation comprueba en CADA peticion.
+ */
+Route::middleware(ResolveKioskStation::class)->group(function (): void {
+    Route::get('/kiosk/vincular', [LinkController::class, 'show'])->name('kiosk.link');
+    Route::post('/kiosk/vincular', [LinkController::class, 'store'])->name('kiosk.link.store');
+
+    Route::get('/kiosk/preparar', [KioskController::class, 'prepare'])->name('kiosk.prepare');
+    Route::post('/kiosk/preparar', [KioskController::class, 'open'])->name('kiosk.prepare.store');
+
+    Route::get('/kiosk', [KioskController::class, 'welcome'])->name('kiosk.welcome');
+    Route::post('/kiosk/responder', KioskResponseController::class)->name('kiosk.submit');
+});

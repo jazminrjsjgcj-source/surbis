@@ -30,6 +30,21 @@ final class HandleInertiaRequests extends Middleware
             return [];
         }
 
+        /*
+         * El quiosco NO recibe el menu. RF-COL-011.
+         *
+         * Quien esta delante es un ciudadano de pie en una ventanilla, no
+         * quien administra. Y no basta con que la pantalla no lo pinte: las
+         * props viajan dentro del HTML, asi que el menu completo estaria ahi
+         * para quien mirara el codigo fuente.
+         *
+         * Pasa porque la tableta puede estar usando la sesion del
+         * colaborador que la preparo.
+         */
+        if ($request->routeIs('kiosk.*')) {
+            return [];
+        }
+
         return [
             ['key' => 'dashboard', 'url' => route('admin.dashboard')],
             ['key' => 'branches', 'url' => route('admin.branches.index')],

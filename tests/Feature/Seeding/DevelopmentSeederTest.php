@@ -75,7 +75,7 @@ final class DevelopmentSeederTest extends TestCase
         $this->post('/login', [
             'email' => 'colaborador@example.test',
             'password' => 'desarrollo-local',
-        ])->assertRedirect(route('kiosk.start'));
+        ])->assertRedirect(route('kiosk.welcome'));
 
         $this->get(route('admin.branches.index'))->assertForbidden();
     }

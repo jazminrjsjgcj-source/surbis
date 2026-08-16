@@ -1,142 +1,93 @@
-TASK-040 · El panel del quiosco: interruptor y claves.
+TASK-041 · El quiosco. Ultima pieza de la Fase 8.
 
-## 1. Rutas, Policy y modelo
+## 1. Migracion, rutas y middleware
 
 cd ~/encuestas
+docker compose exec app php artisan migrate
+
 python3 - <<'PY'
 import re
 
-# Las columnas de la clave, que TASK-039 dejo fuera del modelo
-p0 = 'app/Domain/Organizations/Models/Device.php'
-s0 = open(p0).read()
-
-if 'station_key_hash' in s0:
-    print("modelo: ya estaba")
-else:
-    s0 = s0.replace("        'status',\n", """        'status',
-        'station_key_hash',
-        'station_key_set_at',
-        'station_key_revoked_at',
-""", 1)
-    s0 = s0.replace("""    public function isActive(): bool""", """    /** @return array<string, string> */
-    protected function casts(): array
-    {
-        return [
-            'station_key_set_at' => 'datetime',
-            'station_key_revoked_at' => 'datetime',
-        ];
-    }
-
-    public function isActive(): bool""", 1)
-    open(p0, 'w').write(s0)
-    print("modelo actualizado")
-
-# Rutas
 p = 'routes/web.php'
 s = open(p).read()
 
-if 'admin.branches.kiosks' in s:
+if 'kiosk.link' in s:
     print("rutas: ya estaban")
 else:
-    ancla = "            ->name('admin.branches.activate');"
-    nuevas = ancla + """
+    nuevas = """
 
-        /*
-         * Los quioscos de una sucursal. El interruptor es una operacion en
-         * LOTE sobre los deployments de sus dispositivos, no un deployment
-         * de sucursal.
-         */
-        Route::get('/admin/sucursales/{branch}/quioscos', [BranchKioskController::class, 'show'])
-            ->name('admin.branches.kiosks');
-        Route::post('/admin/sucursales/{branch}/quioscos/activar', [BranchKioskController::class, 'activate'])
-            ->name('admin.branches.kiosks.activate');
-        Route::post('/admin/sucursales/{branch}/quioscos/suspender', [BranchKioskController::class, 'suspend'])
-            ->name('admin.branches.kiosks.suspend');
+/*
+ * El quiosco. SIN sesion de usuario: la tableta se identifica con su
+ * credencial en cookie, que ResolveKioskStation comprueba en CADA peticion
+ * —asi revocarla apaga la tableta en el momento siguiente—.
+ */
+Route::middleware(ResolveKioskStation::class)->group(function (): void {
+    Route::get('/kiosk/vincular', [LinkController::class, 'show'])->name('kiosk.link');
+    Route::post('/kiosk/vincular', [LinkController::class, 'store'])->name('kiosk.link.store');
 
-        Route::post('/admin/dispositivos/{device}/clave', [DeviceKeyController::class, 'generate'])
-            ->name('admin.devices.key.generate');
-        Route::post('/admin/dispositivos/{device}/clave/revocar', [DeviceKeyController::class, 'revoke'])
-            ->name('admin.devices.key.revoke');"""
+    Route::get('/kiosk/preparar', [KioskController::class, 'prepare'])->name('kiosk.prepare');
+    Route::post('/kiosk/preparar', [KioskController::class, 'open'])->name('kiosk.prepare.store');
 
-    if ancla not in s:
-        print("NO encontrado el ancla de rutas")
-    else:
-        s = s.replace(ancla, nuevas, 1)
-        for imp in ["use App\\Http\\Controllers\\Admin\\BranchKioskController;",
-                    "use App\\Http\\Controllers\\Admin\\DeviceKeyController;"]:
-            if imp not in s:
-                s = s.replace("use App\\Http\\Controllers\\Admin\\BranchController;",
-                              "use App\\Http\\Controllers\\Admin\\BranchController;\n" + imp, 1)
-        m = list(re.finditer(r'^use\s+[\w\\]+;$', s, re.M))
-        a, b = m[0].start(), m[-1].end()
-        s = s[:a] + '\n'.join(sorted([x.group(0) for x in m], key=lambda l: l[4:].lower())) + s[b:]
-        open(p, 'w').write(s)
-        print("rutas anadidas")
+    Route::get('/kiosk', [KioskController::class, 'welcome'])->name('kiosk.welcome');
+    Route::post('/kiosk/responder', KioskResponseController::class)->name('kiosk.submit');
+});
+"""
 
-# Policy
-p2 = 'app/Providers/AppServiceProvider.php'
-t = open(p2).read()
+    for imp in ["use App\\Http\\Controllers\\Kiosk\\KioskController;",
+                "use App\\Http\\Controllers\\Kiosk\\KioskResponseController;",
+                "use App\\Http\\Controllers\\Kiosk\\LinkController;",
+                "use App\\Http\\Middleware\\ResolveKioskStation;"]:
+        if imp not in s:
+            s = s.replace("use App\\Http\\Controllers\\HomeController;",
+                          "use App\\Http\\Controllers\\HomeController;\n" + imp, 1)
 
-if 'DevicePolicy' in t:
-    print("policy: ya estaba")
-else:
-    ancla2 = "        Gate::policy(Area::class, AreaPolicy::class);"
-    t = t.replace(ancla2, ancla2 + "\n        Gate::policy(Device::class, DevicePolicy::class);", 1)
-    for imp in ["use App\\Domain\\Organizations\\Models\\Device;", "use App\\Policies\\DevicePolicy;"]:
-        if imp not in t:
-            t = t.replace("use App\\Policies\\AreaPolicy;", imp + "\nuse App\\Policies\\AreaPolicy;", 1)
-    m = list(re.finditer(r'^use\s+[\w\\]+;$', t, re.M))
+    m = list(re.finditer(r'^use\s+[\w\\]+;$', s, re.M))
     a, b = m[0].start(), m[-1].end()
-    t = t[:a] + '\n'.join(sorted([x.group(0) for x in m], key=lambda l: l[4:].lower())) + t[b:]
-    open(p2, 'w').write(t)
-    print("policy registrada")
+    s = s[:a] + '\n'.join(sorted([x.group(0) for x in m], key=lambda l: l[4:].lower())) + s[b:]
+
+    open(p, 'w').write(s.rstrip() + nuevas)
+    print("rutas anadidas")
 PY
 
-## 2. Idioma
+OJO: habia un marcador `kiosk.start` de PlaceholderController. Si el grep
+dice que sigue, retiralo:
+
+    grep -n "kiosk.start" routes/web.php
+
+## 2. El CSS
+
+Esta en CSS-A-ANADIR.txt.
+
+## 3. Idioma
 
 python3 - <<'PY'
 p = 'lang/es/interface.php'
 s = open(p).read()
 
-if "'kiosks' => [" in s:
+if "'kiosk' => [" in s:
     print("ya estaba")
 else:
-    bloque = """    'kiosks' => [
-        'title' => 'Quioscos de la sucursal',
-        'subtitle' => 'Cada tableta tiene su propia aplicacion, su clave y su historial. El interruptor de abajo actua sobre todas a la vez.',
-        'switch' => 'Todas las tabletas',
-        'devices' => 'Tableta por tableta',
-        'version' => 'Que encuesta se aplica',
-        'version_number' => 'version :number',
-        'activate_all' => 'Activar en toda la sucursal',
-        'suspend_all' => 'Suspender toda la sucursal',
-        'activate_one' => 'Activar esta',
-        'suspend_one' => 'Suspender esta',
-        'state_active' => 'Las :total tabletas estan recibiendo respuestas.',
-        'state_inactive' => 'Ninguna tableta esta recibiendo respuestas.',
-        'state_partial' => ':active de :total tabletas estan recibiendo respuestas.',
-        'state_no_devices' => 'Esta sucursal no tiene tabletas registradas.',
-        'applying' => 'Recibiendo',
-        'not_applying' => 'Detenida',
-        'no_deployment' => 'Sin encuesta asignada.',
-        'no_devices' => 'Registra al menos una tableta antes de activar el quiosco.',
-        'no_versions' => 'No hay ninguna encuesta publicada que aplicar.',
-        'version_not_found' => 'Esa version no existe o no es de esta organizacion.',
-        'activated' => 'Listo: :created tabletas activadas, :replaced reemplazadas.',
-        'suspended' => 'Se suspendieron :count tabletas.',
-        'confirm_title' => 'Activar en toda la sucursal',
-        'confirm_body' => 'Las tabletas que tengan otra encuesta cerraran su aplicacion actual y empezaran con la nueva. Las respuestas ya recibidas se conservan.',
-        'generate_key' => 'Generar clave',
-        'regenerate_key' => 'Generar una clave nueva',
-        'revoke_key' => 'Revocar la clave',
-        'key_generated' => 'Clave generada.',
-        'key_revoked' => 'Clave revocada. La tableta dejara de funcionar.',
-        'key_title' => 'Clave de la estacion',
-        'key_once' => 'Anotala ahora: no se vuelve a mostrar. Sirve 24 horas y solo para vincular la tableta una vez.',
-        'key_never_set' => 'Sin clave. Genera una para vincular la tableta.',
-        'key_usable' => 'Clave activa, pendiente de usar.',
-        'key_expired' => 'La clave caduco. Genera otra si hay que vincular la tableta de nuevo.',
-        'key_revoked_state' => 'Clave revocada.',
+    bloque = """    'kiosk' => [
+        'link_title' => 'Vincular esta tableta',
+        'link_help' => 'Escribe la clave que te dio quien administra el sistema.',
+        'key' => 'Clave de la estacion',
+        'link' => 'Vincular',
+        'unknown_device' => 'Esa clave no es valida o ya se uso.',
+        'device_inactive' => 'Esta tableta esta dada de baja.',
+        'prepare_title' => 'Preparar la estacion',
+        'who' => 'A quien se evalua en este turno',
+        'who_help' => 'Elige a la persona que va a atender. Si nadie en concreto, dejalo sin marcar.',
+        'no_staff' => 'No hay personal registrado en esta sucursal. Se puede empezar igual.',
+        'replaces' => 'Al empezar se cierra el turno anterior de esta tableta.',
+        'start' => 'Empezar el turno',
+        'not_ready_title' => 'La estacion no esta lista',
+        'no_deployment' => 'A esta tableta todavia no se le ha asignado ninguna encuesta.',
+        'deployment_not_applying' => 'La encuesta asignada no esta recibiendo respuestas ahora mismo.',
+        'tell_admin' => 'Avisa a quien administra el sistema e indicale que es la tableta :device de :branch.',
+        'retry' => 'Volver a intentar',
+        'begin' => 'Empezar',
+        'thanks' => 'Gracias',
+        'thanks_body' => 'Tu respuesta ayuda a mejorar el servicio.',
     ],
 
 """
@@ -145,23 +96,18 @@ else:
     print("anadido")
 PY
 
-OJO: la clave 'key_revoked' se usa dos veces con sentidos distintos —el aviso
-y el estado—. Si TranslationKeysTest se queja, renombra el estado a
-'key_revoked_state' en Kiosks.tsx.
-
-## 3. Un enlace desde la sucursal
-
-En Admin/Branches/Form.tsx, junto a los otros botones:
-
-    <Link href={kiosksUrl} className="btn btn-ghost">
-        {t('interface.kiosks.title')}
-    </Link>
-
-Con 'kiosksUrl' => route('admin.branches.kiosks', $branch) en
-BranchController::edit().
-
 ## 4. Comprueba
 
     docker compose run --rm node npm run build
     docker compose exec app vendor/bin/pint
     docker compose exec app composer check
+
+## Lo que queda preparado para la Fase 10
+
+El envio del quiosco tiene UN solo punto —la funcion `enviar` de Welcome.tsx—
+y el UUID se genera al empezar CADA respuesta, no al cargar la pantalla. Una
+tableta no se recarga en todo el dia: si el UUID fuera de la pantalla, la
+segunda persona reutilizaria el de la primera y su respuesta se descartaria
+por idempotente.
+
+La cola local de la Fase 10 sustituye esa funcion sin tocar las pantallas.
