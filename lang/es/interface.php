@@ -492,7 +492,9 @@ return [
 
     'public' => [
         'title' => 'Encuesta',
-        'coming_soon' => 'Esta encuesta se podra contestar en cuanto el sistema de respuestas este listo.',
+        'done_title' => 'Gracias por contestar',
+        'done_body' => 'Tu respuesta ayuda a mejorar el servicio.',
+        'not_saved_yet' => 'Aviso: el sistema de respuestas llega en la siguiente fase, asi que esto todavia no se guarda.',
         'unavailable_title' => 'Este enlace no esta disponible',
         'unavailable_body' => 'Puede que haya caducado o que ya no se use. Si te lo dieron en una oficina, pregunta alli.',
     ],
@@ -652,6 +654,38 @@ return [
 
     'filters' => [
         'apply' => 'Aplicar',
+    ],
+
+    'renderer' => [
+        'progress' => 'Pregunta :current de :total',
+        'next' => 'Siguiente',
+        'back' => 'Anterior',
+        'finish' => 'Terminar',
+        'no_questions' => 'Esta encuesta no tiene preguntas que mostrar.',
+        'characters' => ':count de :max caracteres',
+
+        'problem_required' => 'Esta pregunta es obligatoria.',
+        'problem_min_selections' => 'Elige al menos :min.',
+        'problem_max_selections' => 'No puedes elegir mas de :max.',
+        'problem_min_length' => 'Escribe al menos :min caracteres.',
+        'problem_max_length' => 'No puedes escribir mas de :max caracteres.',
+        'problem_not_a_number' => 'Escribe un numero.',
+        'problem_min' => 'El minimo es :min.',
+        'problem_max' => 'El maximo es :max.',
+        'problem_min_date' => 'La fecha no puede ser anterior a :min.',
+        'problem_max_date' => 'La fecha no puede ser posterior a :max.',
+    ],
+
+    'preview' => [
+        'title' => 'Vista previa',
+        'layout' => 'Como se vera',
+        'layout_stepped' => 'Quiosco o telefono, una pregunta cada vez',
+        'layout_full' => 'Enlace o widget, todas las preguntas',
+        'showing_draft' => 'Estas viendo el borrador, version :number.',
+        'showing_published' => 'Estas viendo la version publicada :number.',
+        'nothing' => 'Esta encuesta todavia no tiene preguntas que mostrar.',
+        'restart' => 'Empezar de nuevo',
+        'not_real' => 'Nada de lo que contestes aqui se guarda.',
     ],
 
 ];

@@ -1,0 +1,76 @@
+TASK-034 · La vista previa y la encuesta publica, con el renderizador.
+
+## 1. Los cuatro archivos del tar se sustituyen o anaden
+
+PublicSurveyController.php SUSTITUYE al que ya existe: antes solo mostraba un
+marcador, ahora pinta la encuesta.
+
+## 2. El CSS
+
+Esta en CSS-A-ANADIR.txt. Es donde RNF-COL-007 (44 px) y RNF-COL-010
+(object-fit: contain) se cumplen de verdad: en el marcado solo estan los
+botones.
+
+## 3. Una ruta y un enlace
+
+En routes/web.php, dentro del grupo de administrador:
+
+    Route::get('/admin/encuestas/{survey}/vista-previa', SurveyPreviewController::class)
+        ->name('admin.surveys.preview');
+
+Con su import:
+
+    use App\Http\Controllers\Admin\SurveyPreviewController;
+
+Y en SurveyController::edit(), junto a builderUrl y settingsUrl:
+
+    'previewUrl' => route('admin.surveys.preview', $survey),
+
+Con el enlace en Admin/Surveys/Form.tsx, junto a los otros dos botones:
+
+    {previewUrl && (
+        <Link href={previewUrl} className="btn btn-ghost">
+            {t('interface.preview.title')}
+        </Link>
+    )}
+
+Anadiendo previewUrl a su interfaz Props y a la desestructuracion.
+
+## 4. El bloque de idioma
+
+cd ~/encuestas
+python3 - <<'PY'
+p = 'lang/es/interface.php'
+s = open(p).read()
+
+if "'preview' => [" in s:
+    print("ya estaba")
+else:
+    bloque = """    'preview' => [
+        'title' => 'Vista previa',
+        'layout' => 'Como se vera',
+        'layout_stepped' => 'Quiosco o telefono, una pregunta cada vez',
+        'layout_full' => 'Enlace o widget, todas las preguntas',
+        'showing_draft' => 'Estas viendo el borrador, version :number.',
+        'showing_published' => 'Estas viendo la version publicada :number.',
+        'nothing' => 'Esta encuesta todavia no tiene preguntas que mostrar.',
+        'restart' => 'Empezar de nuevo',
+        'not_real' => 'Nada de lo que contestes aqui se guarda.',
+    ],
+
+"""
+    i = s.rindex('];')
+    open(p, 'w').write(s[:i] + bloque + s[i:])
+    print("preview anadido")
+PY
+
+Y en el bloque 'public' que ya existe, anade estas tres:
+
+        'done_title' => 'Gracias por contestar',
+        'done_body' => 'Tu respuesta ayuda a mejorar el servicio.',
+        'not_saved_yet' => 'Aviso: el sistema de respuestas llega en la siguiente fase, asi que esto todavia no se guarda.',
+
+## 5. Comprueba
+
+    docker compose run --rm node npm run build
+    docker compose exec app composer check

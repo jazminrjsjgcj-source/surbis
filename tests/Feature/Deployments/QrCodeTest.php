@@ -68,12 +68,19 @@ final class QrCodeTest extends TestCase
         $respuestaCaducado = $this->get(route('public.survey', $caducado));
         $respuestaInexistente = $this->get(route('public.survey', $tokens->generate()));
 
+        /*
+         * Se comprueba 'survey', no 'surveyName'.
+         *
+         * La pantalla dejo de ser un marcador: ahora recibe la encuesta
+         * entera para pintarla. Cuando no esta disponible llega null, y eso
+         * es lo que importa: ni el nombre ni las preguntas viajan.
+         */
         $respuestaCaducado->assertOk()->assertInertia(
-            fn (AssertableInertia $p) => $p->where('available', false)->where('surveyName', null)
+            fn (AssertableInertia $p) => $p->where('available', false)->where('survey', null)
         );
 
         $respuestaInexistente->assertOk()->assertInertia(
-            fn (AssertableInertia $p) => $p->where('available', false)->where('surveyName', null)
+            fn (AssertableInertia $p) => $p->where('available', false)->where('survey', null)
         );
     }
 

@@ -1,0 +1,138 @@
+Anade al final de resources/css/app.css, dentro de @layer components.
+
+  /* ---------------------------------------------------------------------
+     El renderizador de encuestas.
+
+     Aqui es donde RNF-COL-007 y RNF-COL-010 se cumplen de verdad: en el
+     marcado solo estan los botones, el tamano y el comportamiento son esto.
+     --------------------------------------------------------------------- */
+  .renderer {
+    display: grid;
+    gap: 1.5rem;
+  }
+
+  .renderer-progress {
+    font-size: 0.875rem;
+    color: var(--color-ink-muted);
+  }
+
+  .renderer-field {
+    border: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .renderer-legend {
+    font-size: 1.25rem;
+    font-weight: 600;
+    line-height: 1.3;
+    padding: 0;
+  }
+
+  .renderer-choices {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+    gap: 0.75rem;
+  }
+
+  /*
+     Las escalas van en fila y no se parten.
+
+     Una escala de caritas de peor a mejor pierde su sentido si se envuelve:
+     la ultima cara acabaria debajo de la primera, y el orden es informacion.
+  */
+  .renderer-choices-smiley,
+  .renderer-choices-rating {
+    grid-template-columns: repeat(auto-fit, minmax(4rem, 1fr));
+  }
+
+  /*
+     44 px de lado como MINIMO. RNF-COL-007.
+
+     No es un detalle de estilo: en una tableta de ventanilla un boton
+     pequeno se falla con el dedo, y quien contesta con prisa se va sin
+     terminar. min-block-size y no height para que crezca con el contenido.
+  */
+  .renderer-choice {
+    min-block-size: 44px;
+    min-inline-size: 44px;
+    padding: 0.75rem;
+    border: 2px solid var(--color-line);
+    border-radius: var(--radius-control);
+    background: var(--color-surface);
+    color: var(--color-ink);
+    display: grid;
+    gap: 0.5rem;
+    justify-items: center;
+    align-content: center;
+    font-size: 1rem;
+    line-height: 1.3;
+    cursor: pointer;
+  }
+
+  .renderer-choice:hover {
+    border-color: var(--color-line-strong);
+  }
+
+  /*
+     La elegida se marca con borde, fondo Y aria-pressed en el marcado.
+
+     RNF-COL-007 prohibe que el color sea el unico portador: quien no
+     distingue el vino del gris tiene que poder saber cual eligio.
+  */
+  .renderer-choice[aria-pressed="true"] {
+    border-color: var(--color-primary);
+    background: var(--color-primary-soft);
+    font-weight: 600;
+  }
+
+  /*
+     object-fit: contain por defecto. RNF-COL-010.
+
+     Una carita estirada deja de leerse como una cara. Y no se amplia por
+     encima de su tamano util: max-inline-size la limita.
+  */
+  .renderer-image {
+    inline-size: 100%;
+    max-inline-size: 5rem;
+    block-size: auto;
+    aspect-ratio: 1;
+    object-fit: contain;
+  }
+
+  .renderer-actions {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    margin-block-start: 0.5rem;
+  }
+
+  .renderer-empty {
+    color: var(--color-ink-muted);
+  }
+
+  /* ---------------------------------------------------------------------
+     El marco de la vista previa.
+
+     Simula el ancho del dispositivo. No es decoracion: una pregunta con
+     cinco caritas se ve distinta en 360 px que a pantalla completa, y eso
+     es justo lo que hay que poder comprobar antes de publicar.
+     --------------------------------------------------------------------- */
+  .preview-frame {
+    margin-block-start: 1rem;
+    padding: 1.5rem;
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-card);
+    background: var(--color-surface);
+  }
+
+  /* Por pasos: quiosco y movil. Ancho de telefono. */
+  .preview-frame-stepped {
+    max-inline-size: 24rem;
+  }
+
+  /* Completa: enlace y widget. Ancho de lectura comoda. */
+  .preview-frame-full {
+    max-inline-size: 40rem;
+  }
