@@ -218,7 +218,6 @@ return [
         'display_text' => 'Solo texto',
         'display_image' => 'Solo imagen',
         'display_image_and_text' => 'Imagen y texto',
-        'display_pending' => 'llega con la biblioteca de imagenes',
 
         'empty_title' => 'Esta encuesta no tiene preguntas',
         'empty_help' => 'Anade la primera. Todo lo que escribas se guarda solo, y puedes reordenarlas cuando quieras.',
@@ -367,7 +366,6 @@ return [
     'pagination' => [
         'label' => 'Paginacion',
         'showing_plain' => 'Mostrando :from a :to de :total.',
-        'showing' => 'Mostrando <strong>:first</strong> a <strong>:last</strong> de <strong>:total</strong>',
         'previous' => 'Anterior',
         'next' => 'Siguiente',
     ],
@@ -438,6 +436,11 @@ return [
         'search' => 'Buscar por nombre o codigo',
         'apply' => 'Aplicar',
         'clear_filters' => 'Quitar filtros',
+        'state_active' => 'Activa',
+        'state_archived' => 'Archivada',
+        'filter_all' => 'Todas',
+        'filter_active' => 'Solo activas',
+        'filter_archived' => 'Solo archivadas',
         'back' => 'Volver a sucursales',
         'caption' => 'Areas de esta sucursal, con los colaboradores asignados a cada una.',
 
@@ -645,6 +648,10 @@ return [
             'dates_out_of_order' => 'La fecha de inicio no puede ser posterior a la de fin.',
             'scope_mismatch' => 'Lo elegido no coincide con el alcance :scope.',
         ],
+    ],
+
+    'filters' => [
+        'apply' => 'Aplicar',
     ],
 
 ];
