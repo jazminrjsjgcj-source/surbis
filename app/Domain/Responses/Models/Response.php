@@ -34,6 +34,7 @@ class Response extends Model
         'respondent_name', 'respondent_email', 'respondent_phone',
         'respondent_email_index', 'respondent_phone_index',
         'identity_mode', 'consent_given_at', 'idempotency_key', 'submitted_at',
+        'invalidated_at', 'invalidated_by', 'invalidation_reason',
     ];
 
     /** @return HasMany<ResponseAnswer, $this> */
@@ -111,6 +112,27 @@ class Response extends Model
     }
 
     /**
+     * Si esta respuesta cuenta para los indicadores. RF-AO-RES-006.
+     *
+     * Una invalidada NO se borra —sigue siendo lo que alguien contesto— pero
+     * deja de sumar. La distincion importa: borrarla haria imposible revisar
+     * despues por que se descarto.
+     */
+    public function isValid(): bool
+    {
+        return $this->invalidated_at === null;
+    }
+
+    /**
+     * @param  Builder<Response>  $query
+     * @return Builder<Response>
+     */
+    public function scopeValid(Builder $query): Builder
+    {
+        return $query->whereNull('invalidated_at');
+    }
+
+    /**
      * @param  Builder<Response>  $query
      * @return Builder<Response>
      */
@@ -136,6 +158,7 @@ class Response extends Model
             'identity_mode' => IdentityMode::class,
             'consent_given_at' => 'datetime',
             'submitted_at' => 'datetime',
+            'invalidated_at' => 'datetime',
             'score' => 'integer',
             'max_score' => 'integer',
             'survey_version_number' => 'integer',

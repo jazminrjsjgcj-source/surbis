@@ -9,10 +9,12 @@ use App\Domain\Identity\PasswordPolicy;
 use App\Domain\Organizations\Models\Area;
 use App\Domain\Organizations\Models\Branch;
 use App\Domain\Organizations\Models\StaffMember;
+use App\Domain\Responses\Models\Response;
 use App\Domain\Surveys\Models\Survey;
 use App\Policies\AreaPolicy;
 use App\Policies\BranchPolicy;
 use App\Policies\MembershipPolicy;
+use App\Policies\ResponsePolicy;
 use App\Policies\StaffMemberPolicy;
 use App\Policies\SurveyPolicy;
 use Carbon\CarbonImmutable;
@@ -106,6 +108,7 @@ class AppServiceProvider extends ServiceProvider
     private function configurePolicies(): void
     {
         Gate::policy(Area::class, AreaPolicy::class);
+        Gate::policy(Response::class, ResponsePolicy::class);
         Gate::policy(Branch::class, BranchPolicy::class);
         Gate::policy(Membership::class, MembershipPolicy::class);
         Gate::policy(StaffMember::class, StaffMemberPolicy::class);

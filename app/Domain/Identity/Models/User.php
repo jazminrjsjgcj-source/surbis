@@ -43,6 +43,21 @@ class User extends Authenticatable
         return $this->hasMany(Membership::class);
     }
 
+    /**
+     * Las autorizaciones para ver identidades confidenciales.
+     *
+     * RF-AUT-016. Quien la pide no es quien la aprueba, caduca sola y queda
+     * auditada: `granted_by` es distinto de `user_id`, y esa separacion es
+     * la proteccion —una sola persona no puede autorizarse a si misma a ver
+     * quien escribio una queja anonima—.
+     *
+     * @return HasMany<ConfidentialAccessGrant, $this>
+     */
+    public function confidentialAccessGrants(): HasMany
+    {
+        return $this->hasMany(ConfidentialAccessGrant::class);
+    }
+
     /** @return HasMany<MfaRecoveryCode, $this> */
     public function mfaRecoveryCodes(): HasMany
     {

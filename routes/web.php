@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\DeploymentController;
 use App\Http\Controllers\Admin\DeploymentQrController;
 use App\Http\Controllers\Admin\PersonController;
 use App\Http\Controllers\Admin\QuestionImportController;
+use App\Http\Controllers\Admin\ResponseController;
 use App\Http\Controllers\Admin\StaffMemberController;
 use App\Http\Controllers\Admin\SurveyController;
 use App\Http\Controllers\Admin\VersionSettingsController;
@@ -231,6 +232,13 @@ Route::middleware(['auth', 'organization'])->group(function (): void {
 
         Route::get('/admin/aplicaciones', [DeploymentController::class, 'index'])
             ->name('admin.deployments.index');
+
+        Route::get('/admin/respuestas', [ResponseController::class, 'index'])
+            ->name('admin.responses.index');
+        Route::get('/admin/respuestas/{response}', [ResponseController::class, 'show'])
+            ->name('admin.responses.show');
+        Route::post('/admin/respuestas/{response}/invalidar', [ResponseController::class, 'invalidate'])
+            ->name('admin.responses.invalidate');
 
         /*
          * Las imagenes que sube una organizacion.

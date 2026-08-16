@@ -46,7 +46,7 @@ final class AdminShellTest extends TestCase
         $this->get(route('admin.branches.index'))
             ->assertOk()
             ->assertInertia(fn (AssertableInertia $page) => $page
-                ->has('nav', 5)
+                ->has('nav', 6)
                 ->where('nav.1.key', 'branches')
                 ->where('nav.1.url', route('admin.branches.index'))
             );
@@ -67,7 +67,7 @@ final class AdminShellTest extends TestCase
         $respuesta = $this->get(route('admin.branches.index'))->assertOk();
 
         $respuesta->assertInertia(fn (AssertableInertia $page) => $page
-            ->has('nav', 5)
+            ->has('nav', 6)
             ->where('nav.0.key', 'dashboard')
             ->where('nav.1.key', 'branches')
             ->where('nav.2.key', 'people')
