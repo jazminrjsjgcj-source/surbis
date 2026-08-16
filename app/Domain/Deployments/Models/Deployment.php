@@ -12,6 +12,7 @@ use App\Domain\Organizations\Models\Area;
 use App\Domain\Organizations\Models\Branch;
 use App\Domain\Organizations\Models\Device;
 use App\Domain\Organizations\Models\Organization;
+use App\Domain\Responses\Models\Response;
 use App\Domain\Shared\Concerns\HasPublicUlid;
 use App\Domain\Surveys\Models\SurveyVersion;
 use Carbon\CarbonImmutable;
@@ -21,6 +22,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * Donde y como se aplica una version publicada. RF-AO-DEP-001 a 010.
@@ -47,6 +49,20 @@ class Deployment extends Model
         'created_by',
         'closed_at',
     ];
+
+    /**
+     * Las respuestas que se dieron por esta aplicacion.
+     *
+     * Existe para que DeploymentGuard pueda comprobar de verdad la regla de
+     * "no borrar ni reasignar lo que ya tiene historial": hasta que existio
+     * la tabla, ese metodo devolvia cero siempre.
+     *
+     * @return HasMany<Response, $this>
+     */
+    public function responses(): HasMany
+    {
+        return $this->hasMany(Response::class);
+    }
 
     /** @return BelongsTo<SurveyVersion, $this> */
     public function version(): BelongsTo

@@ -67,6 +67,87 @@ final class QuestionLimits
      *
      * @return array<string, mixed>
      */
+    /**
+     * Que le falta a una respuesta para cumplir estos limites.
+     *
+     * Devuelve una CLAVE —"min_length", "max"— o null si esta bien. La clave
+     * viaja a la excepcion y de ahi a la traduccion: el dominio no habla
+     * espanol, para que la API futura pueda interpretarla.
+     *
+     * Vive aqui y no en el caso de uso porque los limites saben validarse a
+     * si mismos: quien los use no tiene que recordar que un numero mira min y
+     * max y un texto mira longitudes.
+     *
+     * @param  string|list<string>  $answer
+     */
+    public function problemWith(QuestionType $type, string|array $answer): ?string
+    {
+        if (is_array($answer)) {
+            $cuantas = count($answer);
+
+            if ($this->minSelections !== null && $cuantas < $this->minSelections) {
+                return 'min_selections';
+            }
+
+            if ($this->maxSelections !== null && $cuantas > $this->maxSelections) {
+                return 'max_selections';
+            }
+
+            return null;
+        }
+
+        if ($type === QuestionType::ShortText || $type === QuestionType::LongText) {
+            /*
+             * mb_strlen y no strlen: con acentos y ñ, strlen cuenta BYTES.
+             * "Mañana" mediria 7 y no 6, y un limite de 6 rechazaria un texto
+             * valido. En espanol y en arabe eso no es un caso raro.
+             */
+            $largo = mb_strlen($answer);
+
+            if ($this->minLength !== null && $largo < $this->minLength) {
+                return 'min_length';
+            }
+
+            if ($this->maxLength !== null && $largo > $this->maxLength) {
+                return 'max_length';
+            }
+
+            return null;
+        }
+
+        if ($type === QuestionType::Number) {
+            if (! is_numeric($answer)) {
+                return 'not_a_number';
+            }
+
+            $numero = (float) $answer;
+
+            if ($this->min !== null && $numero < $this->min) {
+                return 'min';
+            }
+
+            if ($this->max !== null && $numero > $this->max) {
+                return 'max';
+            }
+
+            return null;
+        }
+
+        if ($type === QuestionType::Date) {
+            // Comparacion de cadenas ISO: "2026-08-17" ordena bien como texto,
+            // asi que no hace falta convertir a fecha para comparar.
+            if ($this->minDate !== null && $answer < $this->minDate) {
+                return 'min_date';
+            }
+
+            if ($this->maxDate !== null && $answer > $this->maxDate) {
+                return 'max_date';
+            }
+        }
+
+        return null;
+    }
+
     public function toArrayFor(QuestionType $type): array
     {
         $todos = [

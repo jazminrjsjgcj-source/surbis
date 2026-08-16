@@ -109,20 +109,14 @@ final class DeploymentGuard
     private function countResponses(Deployment $deployment): int
     {
         /*
-         * PENDIENTE: contar de verdad cuando exista la tabla `responses`
-         * (Fase 9).
+         * Desde la Fase 9 cuenta de verdad.
          *
-         *     return $deployment->responses()->count();
-         *
-         * Hoy devuelve cero porque no hay donde guardar respuestas, asi que
-         * la regla no puede fallar. Pero un metodo que siempre devuelve cero
-         * es indistinguible de uno roto, y quien lo lea en la Fase 9 puede
-         * darlo por bueno.
-         *
-         * Por eso DeploymentGuardTest tiene una prueba que se pondra ROJA en
-         * cuanto la tabla exista: es la unica forma de que nadie se olvide.
+         * Hasta que existio la tabla `responses`, este metodo devolvia cero
+         * siempre. Eso era correcto —no habia donde guardar respuestas— pero
+         * un metodo que siempre devuelve cero es indistinguible de uno roto,
+         * y ninguna prueba lo habria notado.
          */
-        return 0;
+        return $deployment->responses()->count();
     }
 
     /** @param array{branch?: ?Branch, area?: ?Area, device?: ?Device} $targets */
