@@ -4,21 +4,29 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
-        "dev": "vite"
+        "dev": "vite",
+        "test": "vitest run",
+        "test:watch": "vitest"
     },
     "devDependencies": {
         "@inertiajs/react": "^3.6.1",
         "@tailwindcss/vite": "^4.0.0",
+        "@testing-library/jest-dom": "^7.0.1",
+        "@testing-library/react": "^16.3.2",
+        "@testing-library/user-event": "^14.6.4",
         "@types/react": "^19.2.18",
         "@types/react-dom": "^19.2.4",
         "@vitejs/plugin-react": "^6.0.5",
         "concurrently": "^10.0.3",
+        "fake-indexeddb": "^6.2.5",
+        "jsdom": "^30.0.1",
         "laravel-vite-plugin": "^3.1",
         "react": "^19.2.8",
         "react-dom": "^19.2.8",
         "tailwindcss": "^4.0.0",
         "typescript": "^7.0.2",
-        "vite": "^8.0.0"
+        "vite": "^8.0.0",
+        "vitest": "^4.1.10"
     },
     "optionalDependencies": {
         "@laravel/multiplex": "^0.4.1"
