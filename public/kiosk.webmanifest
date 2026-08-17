@@ -1,0 +1,20 @@
+{
+    "name": "Quiosco de encuestas",
+    "short_name": "Quiosco",
+    "description": "Pantalla de encuestas para ventanilla",
+    "start_url": "/kiosk",
+    "scope": "/kiosk",
+    "display": "fullscreen",
+    "orientation": "any",
+    "background_color": "#ffffff",
+    "theme_color": "#7a1f3d",
+    "lang": "es",
+    "dir": "ltr",
+    "icons": [
+        {
+            "src": "/favicon.ico",
+            "sizes": "48x48",
+            "type": "image/x-icon"
+        }
+    ]
+}

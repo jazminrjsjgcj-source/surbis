@@ -1,79 +1,81 @@
-TASK-042 · Trabajo sin conexion. Fase 10.
+TASK-043 · Service worker y manifiesto. Cierra la Fase 10.
 
-## Lo que cambia de fondo
+## Que resuelve
 
-El "gracias" ya NO depende del servidor: aparece cuando IndexedDB confirma
-la escritura. Decision del area usuaria, 18 ago 2026.
+Hoy la cola vive mientras la pestana este abierta. Con esto, reiniciar la
+tableta SIN RED sigue mostrando el quiosco en vez de la pantalla de error del
+navegador.
 
-Es lo contrario de lo que hace casi todo el mundo, y es lo correcto: sin
-conexion, esperar al servidor dejaria a alguien mirando una pantalla que no
-avanza, y decir "gracias" antes de guardar confirmaria una respuesta que
-puede perderse.
+Solo cubre /kiosk. Decision del area usuaria: cachear el panel daria una
+falsa sensacion de que funciona sin conexion, cuando crear encuestas,
+publicar y consultar respuestas exigen servidor.
 
-Si la escritura falla, NO se dice gracias y no se deja empezar otra.
+## 1. Los dos archivos de public/ se copian tal cual
 
-## 1. Idioma
+    public/kiosk-sw.js
+    public/kiosk.webmanifest
 
-cd ~/encuestas
-python3 - <<'PY'
-p = 'lang/es/interface.php'
-s = open(p).read()
+Y resources/js/lib/kioskWorker.ts.
 
-if "'queue' => [" in s:
-    print("ya estaba")
-else:
-    bloque = """    'queue' => [
-        'ok' => 'Respuestas pendientes de enviar',
-        'warning' => 'La memoria de la tableta se esta llenando',
-        'blocked' => 'No se pueden recoger mas respuestas',
-        'blocked_help' => 'Hay que recuperar la conexion antes de seguir. Avisa a quien administra el sistema.',
-        'pending' => 'Sin enviar: :count',
-        'oldest' => 'La mas antigua lleva :days dias esperando',
-        'last_sync' => 'Ultimo envio: :time',
-        'never_synced' => 'Todavia no se ha enviado ninguna',
-        'capacity' => 'Queda espacio para un :percent% mas',
-    ],
+## 2. Registrar el worker
 
-"""
-    i = s.rindex('];')
-    open(p, 'w').write(s[:i] + bloque + s[i:])
-    print("queue anadido")
-PY
+En resources/js/app.tsx, al final del archivo:
 
-Y dos claves en el bloque 'kiosk' que ya existe:
+    import { registerKioskWorker } from '@/lib/kioskWorker'
 
-python3 - <<'PY'
-p = 'lang/es/interface.php'
-s = open(p).read()
+    // El quiosco necesita arrancar sin red tras un reinicio. El resto del
+    // sistema no: sin conexion no hay nada que administrar.
+    if (window.location.pathname.startsWith('/kiosk')) {
+        registerKioskWorker()
+    }
 
-if "'not_saved_title'" in s:
-    print("ya estaban")
-else:
-    i = s.index("'kiosk' => [")
-    j = s.index("'thanks' =>", i)
-    fin = s.index('\n', j) + 1
-    open(p, 'w').write(s[:fin] + """        'not_saved_title' => 'No se pudo registrar tu respuesta',
-        'not_saved_body' => 'Avisa al personal de la ventanilla. No se ha guardado nada.',
-""" + s[fin:])
-    print("anadidas")
-PY
+## 3. El manifiesto, SOLO en el quiosco
 
-## 2. Comprueba
+En resources/views/app.blade.php, dentro de <head>:
+
+    {{--
+        El manifiesto solo en el quiosco: es lo unico instalable. Ofrecer
+        "instalar" en el panel daria un icono que abre una web que no
+        funciona sin conexion.
+    --}}
+    @if (request()->is('kiosk*'))
+        <link rel="manifest" href="/kiosk.webmanifest">
+        <meta name="theme-color" content="#7a1f3d">
+        <meta name="mobile-web-app-capable" content="yes">
+    @endif
+
+## 4. La cabecera que amplia el scope
+
+Un service worker en /kiosk-sw.js solo puede controlar la raiz si el servidor
+lo autoriza. En docker/nginx/default.conf, dentro del server:
+
+    # El service worker del quiosco declara scope /kiosk aunque el archivo
+    # este en la raiz. Sin esta cabecera el navegador lo rechaza.
+    location = /kiosk-sw.js {
+        add_header Service-Worker-Allowed "/kiosk";
+        try_files $uri =404;
+    }
+
+Si tu nginx.conf esta en otra ruta, ajustala. Y despues:
+
+    docker compose restart nginx
+
+## 5. Comprueba
 
     docker compose run --rm node npm run build
-    docker compose exec app vendor/bin/pint
     docker compose exec app composer check
 
-## Lo que NO va aqui
+Y en el navegador, con /kiosk abierto:
 
-    el service worker y el manifiesto — la PWA instalable
-    Van en una segunda tarea: la cola funciona sin ellos mientras la pestana
-    este abierta, que es el caso de una tableta de ventanilla encendida todo
-    el dia. El service worker anade que sobreviva a recargas sin red.
+    Application → Service Workers → debe aparecer activado
+    Application → Manifest → debe leerse sin errores
 
-## Sin pruebas de navegador todavia
+    Luego: Network → Offline, recarga la pagina.
+    El quiosco debe seguir apareciendo.
 
-IndexedDB no existe en PHPUnit, asi que la cola solo tiene las pruebas de
-LIMITES (servidor). El comportamiento de kioskQueue.ts y kioskSync.ts
-necesita Playwright, y eso entra en la deuda ya anotada de "el renderizador
-no tiene pruebas de navegador".
+## Lo que sigue sin estar
+
+Las pruebas de kioskQueue.ts, kioskSync.ts y este service worker necesitan
+Playwright: IndexedDB y los service workers no existen en PHPUnit. Es la
+deuda ya anotada de "el renderizador no tiene pruebas de navegador", y ahora
+pesa mas.

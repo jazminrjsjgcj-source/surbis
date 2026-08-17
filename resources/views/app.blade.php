@@ -31,6 +31,17 @@
     {{-- Los @font-face antes de la hoja que los usa. Ver T-030. --}}
     {!! Vite::fonts() !!}
 
+    {{--
+        El manifiesto SOLO en el quiosco: es lo unico instalable. Ofrecerlo
+        en el panel daria un icono que abre una web que no funciona sin
+        conexion.
+    --}}
+    @if (request()->is('kiosk*'))
+        <link rel="manifest" href="/kiosk.webmanifest">
+        <meta name="theme-color" content="#7a1f3d">
+        <meta name="mobile-web-app-capable" content="yes">
+    @endif
+
     @vite('resources/js/app.tsx')
     @inertiaHead()
 </head>

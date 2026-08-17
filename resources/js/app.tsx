@@ -1,5 +1,6 @@
 import '../css/app.css'
 
+import { registerKioskWorker } from '@/lib/kioskWorker'
 import { createInertiaApp } from '@inertiajs/react'
 import { createRoot } from 'react-dom/client'
 
@@ -36,3 +37,12 @@ createInertiaApp({
         createRoot(el).render(<App {...props} />)
     },
 })
+
+/*
+ * El quiosco necesita arrancar sin red tras un reinicio. El resto del
+ * sistema no: sin conexion no hay nada que administrar, y cachearlo daria
+ * una falsa sensacion de que funciona.
+ */
+if (window.location.pathname.startsWith('/kiosk')) {
+    registerKioskWorker()
+}
