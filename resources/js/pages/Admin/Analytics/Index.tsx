@@ -1,13 +1,6 @@
 import { Head, Link } from '@inertiajs/react'
-import {
-    CartesianGrid,
-    Line,
-    LineChart,
-    ResponsiveContainer,
-    Tooltip,
-    XAxis,
-    YAxis,
-} from 'recharts'
+import { Suspense, lazy } from 'react'
+const MetricsChart = lazy(() => import('@/Components/MetricsChart'))
 
 import DataTable, { type Column } from '@/Components/DataTable'
 import FilterBar from '@/Components/FilterBar'
@@ -223,27 +216,10 @@ export default function Index({
                         </p>
                     )}
 
-                    <div className="mt-3 h-64">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={puntos}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="day" />
-                                <YAxis />
-                                <Tooltip />
-                                {/*
-                                    Sin `dot` en series largas y con
-                                    connectNulls desactivado: unir dos puntos
-                                    separados por días ocultos dibujaría una
-                                    tendencia que no existe.
-                                */}
-                                <Line
-                                    type="monotone"
-                                    dataKey="percentage"
-                                    stroke="var(--color-primary)"
-                                    connectNulls={false}
-                                />
-                            </LineChart>
-                        </ResponsiveContainer>
+                    <div className="mt-3">
+                        <Suspense fallback={<div className="h-64" />}>
+                            <MetricsChart points={puntos} />
+                        </Suspense>
                     </div>
                 </div>
             )}
