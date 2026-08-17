@@ -357,6 +357,9 @@ return [
         'branches' => 'Sucursales',
         'people' => 'Personas',
         'surveys' => 'Encuestas',
+        'deployments' => 'Aplicaciones',
+        'responses' => 'Respuestas',
+        'analytics' => 'Analisis',
         'security' => 'Mi seguridad',
     ],
 
@@ -819,6 +822,28 @@ return [
         'last_sync' => 'Ultimo envio: :time',
         'never_synced' => 'Todavia no se ha enviado ninguna',
         'capacity' => 'Queda espacio para un :percent% mas',
+    ],
+
+    'analytics' => [
+        'title' => 'Analisis',
+        'responses' => 'Respuestas',
+        'average' => 'Promedio',
+        'percentage' => 'Satisfaccion',
+        'over_time' => 'Como ha ido',
+        'branch' => 'Sucursal',
+        'area' => 'Area',
+        'staff' => 'Persona evaluada',
+        'channel' => 'Canal',
+        'from' => 'Desde',
+        'to' => 'Hasta',
+        'all' => 'Todo',
+        'unassigned' => 'Sin asignar',
+        'insufficient' => 'Datos insuficientes',
+        'insufficient_help' => 'Hacen falta mas respuestas para mostrar esto sin identificar a nadie.',
+        'excluded' => 'Se excluyo :count respuesta invalidada.|Se excluyeron :count respuestas invalidadas.',
+        'days_hidden' => 'Se oculta :count dia por tener menos de :threshold respuestas.|Se ocultan :count dias por tener menos de :threshold respuestas.',
+        'updated_at' => 'Calculado por ultima vez el :time',
+        'never_updated' => 'Todavia no se ha calculado nada.',
     ],
 
 ];

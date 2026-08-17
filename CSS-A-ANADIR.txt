@@ -1,54 +1,14 @@
 Anade al final de resources/css/app.css, dentro de @layer components:
 
-  /* ---------------------------------------------------------------------
-     El quiosco.
+  /*
+     La rejilla de tarjetas de indicador.
 
-     Pantalla completa, sin navegacion, con todo mas grande. Quien lo usa
-     esta de pie, con prisa, y a veces sin sus gafas.
-     --------------------------------------------------------------------- */
-  .kiosk {
-    min-block-size: 100dvh;
-    padding: 2rem 1.5rem;
-    background: var(--color-surface-sunken);
-  }
-
-  /* dvh y no vh: en un movil, vh cuenta la barra del navegador y deja la
-     accion principal justo debajo del borde visible. */
-  .kiosk-centered {
+     auto-fit con minmax y no columnas fijas: con tres tarjetas en un movil
+     una rejilla de tres columnas las deja ilegibles.
+  */
+  .metric-grid {
     display: grid;
-    place-items: center;
-  }
-
-  .kiosk-panel {
-    inline-size: 100%;
-    max-inline-size: 36rem;
-    padding: 2rem;
-    border-radius: var(--radius-card);
-    background: var(--color-surface);
-  }
-
-  /*
-     El boton de empezar. RNF-COL-006: la accion principal debe ser evidente
-     y usable sin capacitacion.
-
-     Muy por encima de los 44 px minimos: este boton lo pulsa alguien que
-     pasa de largo si no lo ve.
-  */
-  .btn-kiosk {
-    inline-size: 100%;
-    min-block-size: 5rem;
-    font-size: 1.5rem;
-  }
-
-  /*
-     El campo de la clave de estacion.
-
-     Monoespaciado y espaciado: se teclea mirando un papel, y distinguir
-     caracteres cuenta mas que la estetica.
-  */
-  .input-key {
-    font-family: var(--font-mono);
-    font-size: 1.5rem;
-    letter-spacing: 0.1em;
-    text-align: center;
+    grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+    gap: 1rem;
+    margin-block-start: 1rem;
   }

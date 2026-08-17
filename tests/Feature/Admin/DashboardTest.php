@@ -60,7 +60,7 @@ final class DashboardTest extends TestCase
         $this->get(route('admin.dashboard'))
             ->assertOk()
             ->assertInertia(fn (AssertableInertia $page) => $page
-                ->has('nav', 6)
+                ->has('nav', 7)
                 ->where('nav.0.key', 'dashboard')
                 ->where('nav.3.key', 'surveys')
             );

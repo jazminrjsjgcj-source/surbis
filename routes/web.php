@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Account\SecurityController;
+use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\AreaController;
 use App\Http\Controllers\Admin\BranchController;
 use App\Http\Controllers\Admin\BranchKioskController;
@@ -253,6 +254,8 @@ Route::middleware(['auth', 'organization'])->group(function (): void {
 
         Route::get('/admin/respuestas', [ResponseController::class, 'index'])
             ->name('admin.responses.index');
+
+        Route::get('/admin/analisis', AnalyticsController::class)->name('admin.analytics');
         Route::get('/admin/respuestas/{response}', [ResponseController::class, 'show'])
             ->name('admin.responses.show');
         Route::post('/admin/respuestas/{response}/invalidar', [ResponseController::class, 'invalidate'])
