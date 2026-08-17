@@ -1,0 +1,104 @@
+# Despliegue al servidor del ayuntamiento.
+#
+# La imagen se construye AQUI, no en el servidor: asi lo que se despliega es
+# exactamente lo que paso las pruebas, y el servidor no necesita Node ni
+# Composer instalados.
+
+name: Desplegar
+
+on:
+    push:
+        branches: [main]
+    workflow_dispatch:
+
+jobs:
+    pruebas:
+        runs-on: ubuntu-latest
+
+        services:
+            postgres:
+                image: postgres:17-alpine
+                env:
+                    POSTGRES_DB: encuestas_test
+                    POSTGRES_USER: encuestas
+                    POSTGRES_PASSWORD: secreto
+                options: >-
+                    --health-cmd pg_isready
+                    --health-interval 5s
+                    --health-timeout 5s
+                    --health-retries 10
+                ports:
+                    - 5432:5432
+
+        steps:
+            - uses: actions/checkout@v4
+
+            - uses: shivammathur/setup-php@v2
+              with:
+                  php-version: '8.4'
+                  extensions: pdo_pgsql, redis, intl, zip, bcmath, gd, exif
+
+            - run: composer install --no-interaction --prefer-dist
+
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: '22'
+                  cache: npm
+
+            - run: npm ci
+            - run: npm run build
+
+            - name: Preparar entorno
+              run: |
+                  cp .env.example .env
+                  php artisan key:generate
+
+            # Las pruebas ANTES de construir la imagen. Sin esto, un fallo se
+            # descubriria despues de haber desplegado.
+            - run: composer check
+              env:
+                  DB_HOST: 127.0.0.1
+                  DB_PORT: 5432
+                  DB_DATABASE: encuestas_test
+                  DB_USERNAME: encuestas
+                  DB_PASSWORD: secreto
+
+    desplegar:
+        needs: pruebas
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Construir la imagen
+              run: |
+                  docker build \
+                      -f docker/php/Dockerfile.production \
+                      -t encuestas:${{ github.sha }} \
+                      -t encuestas:latest \
+                      .
+
+            # Se guarda comprimida y se manda por SSH. Sin registro de
+            # imagenes propio, esto es lo mas simple que funciona.
+            - name: Enviar al servidor
+              env:
+                  SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+                  SSH_HOST: ${{ secrets.DEPLOY_HOST }}
+                  SSH_USER: ${{ secrets.DEPLOY_USER }}
+              run: |
+                  mkdir -p ~/.ssh
+                  echo "$SSH_KEY" > ~/.ssh/id_ed25519
+                  chmod 600 ~/.ssh/id_ed25519
+                  ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts
+
+                  docker save encuestas:latest | gzip | \
+                      ssh "$SSH_USER@$SSH_HOST" 'gunzip | docker load'
+
+                  # Migrar ANTES de reiniciar: una version nueva contra un
+                  # esquema viejo falla en la primera peticion.
+                  ssh "$SSH_USER@$SSH_HOST" '
+                      cd /opt/encuestas &&
+                      docker compose -f docker-compose.production.yml run --rm app php artisan migrate --force &&
+                      docker compose -f docker-compose.production.yml up -d &&
+                      docker compose -f docker-compose.production.yml exec -T app php artisan optimize
+                  '

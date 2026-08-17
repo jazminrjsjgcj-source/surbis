@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Account;
 
 use App\Application\Identity\ManageSecondFactor;
 use App\Domain\Identity\Models\User;
+use App\Domain\Identity\SecondFactorAvailability;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -25,7 +26,7 @@ use Inertia\Response as InertiaResponse;
  */
 final class SecurityController extends Controller
 {
-    public function show(Request $request): InertiaResponse
+    public function show(Request $request, SecondFactorAvailability $availability): InertiaResponse
     {
         /** @var User $user */
         $user = $request->user();
@@ -44,6 +45,16 @@ final class SecurityController extends Controller
              */
             'recoveryCodes' => fn () => $request->session()->get('recovery_codes'),
 
+            /*
+             * Si el segundo factor se puede activar. P-013.
+             *
+             * Con el correo sin configurar, activarlo dejaria a esa persona
+             * fuera de su propia cuenta: la pantalla le pediria un codigo que
+             * nunca va a recibir.
+             */
+            'available' => $availability->isAvailable(),
+            'unavailableReason' => $availability->unavailableReason(),
+
             'enableUrl' => route('account.security.enable'),
             'disableUrl' => route('account.security.disable'),
             'codesUrl' => route('account.security.codes'),
@@ -51,8 +62,23 @@ final class SecurityController extends Controller
         ]);
     }
 
-    public function enable(Request $request, ManageSecondFactor $manage): RedirectResponse
-    {
+    public function enable(
+        Request $request,
+        ManageSecondFactor $manage,
+        SecondFactorAvailability $availability,
+    ): RedirectResponse {
+        /*
+         * Se comprueba AQUI, no solo en la pantalla.
+         *
+         * Que el boton no aparezca no impide enviar la peticion a mano, y el
+         * resultado seria una cuenta bloqueada de verdad.
+         */
+        if (! $availability->isAvailable()) {
+            return back()->withErrors([
+                'mfa' => __('interface.security.unavailable_mail'),
+            ]);
+        }
+
         /** @var User $user */
         $user = $request->user();
 

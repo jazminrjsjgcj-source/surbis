@@ -50,6 +50,9 @@ return [
     ],
 
     'security' => [
+        'unavailable_title' => 'El segundo factor no esta disponible',
+        'unavailable_mail_not_configured' => 'Falta configurar el envio de correo. Sin el, el codigo de verificacion no llegaria a nadie.',
+        'unavailable_mail' => 'No se puede activar: falta configurar el envio de correo.',
         'title' => 'Seguridad de la cuenta',
         'mfa_heading' => 'Verificacion en dos pasos',
         'mfa_off' => 'Esta desactivada. Al activarla, cada vez que inicies sesion te pediremos un codigo enviado a tu correo.',

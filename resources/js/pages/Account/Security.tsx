@@ -7,6 +7,8 @@ import { useTranslate } from '@/lib/translate'
 interface Props {
     mfaEnabled: boolean
     recoveryCodes: string[] | null
+    available: boolean
+    unavailableReason: string | null
     enableUrl: string
     disableUrl: string
     codesUrl: string
@@ -21,6 +23,8 @@ interface Props {
  * pasos, codigo inalcanzable.
  */
 export default function Security({
+    available,
+    unavailableReason,
     mfaEnabled,
     recoveryCodes,
     enableUrl,
@@ -39,6 +43,19 @@ export default function Security({
             </div>
 
             <StatusMessage />
+
+            {/*
+                Sin correo configurado NO se puede activar. P-013.
+
+                Activarlo dejaria a esta persona fuera de su propia cuenta: la
+                pantalla le pediria un codigo que nunca va a recibir.
+            */}
+            {!available && (
+                <div className="alert alert-neutral mb-4 max-w-140" role="status">
+                    <p className="alert-title">{t('interface.security.unavailable_title')}</p>
+                    <p>{t(`interface.security.unavailable_${unavailableReason}`)}</p>
+                </div>
+            )}
 
             {/*
                 Los codigos se muestran UNA sola vez: en la base solo queda su

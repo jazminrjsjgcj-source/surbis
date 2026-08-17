@@ -1,0 +1,81 @@
+# Imagen de PRODUCCION.
+#
+# La diferencia de fondo con la de desarrollo: aqui el codigo va DENTRO de la
+# imagen, no montado como volumen. Una imagen que se despliega es un artefacto
+# fijo —lo que se probo es exactamente lo que corre— mientras que un volumen
+# depende de lo que haya en el disco del servidor en ese momento.
+FROM php:8.4-fpm AS base
+
+COPY --from=mlocati/php-extension-installer:2 /usr/bin/install-php-extensions /usr/local/bin/
+
+RUN install-php-extensions \
+        pdo_pgsql \
+        redis \
+        intl \
+        zip \
+        bcmath \
+        gd \
+        exif \
+        pcntl \
+        opcache
+
+# ---------------------------------------------------------------------------
+# Dependencias PHP, en su propia capa.
+#
+# Copiar solo composer.json y composer.lock antes del codigo hace que Docker
+# reutilice esta capa mientras esas dos no cambien: un despliegue que solo
+# toca codigo no vuelve a descargar vendor entero.
+# ---------------------------------------------------------------------------
+FROM base AS vendor
+
+COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
+
+WORKDIR /app
+COPY composer.json composer.lock ./
+
+# --no-dev: en produccion no hacen falta PHPUnit ni Pint, y su ausencia es
+# tambien una linea de defensa —no se pueden ejecutar si no estan—.
+RUN composer install \
+        --no-dev \
+        --no-scripts \
+        --no-interaction \
+        --prefer-dist \
+        --optimize-autoloader
+
+# ---------------------------------------------------------------------------
+# Assets del cliente.
+# ---------------------------------------------------------------------------
+FROM node:22-alpine AS assets
+
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+
+COPY . .
+RUN npm run build
+
+# ---------------------------------------------------------------------------
+# La imagen final.
+# ---------------------------------------------------------------------------
+FROM base AS production
+
+WORKDIR /var/www/html
+
+COPY . .
+COPY --from=vendor /app/vendor ./vendor
+COPY --from=assets /app/public/build ./public/build
+
+# opcache con validate_timestamps a 0.
+#
+# En produccion el codigo no cambia sin reconstruir la imagen, asi que
+# comprobar la fecha de cada archivo en cada peticion es trabajo perdido. En
+# desarrollo seria justo lo contrario.
+COPY docker/php/opcache.ini /usr/local/etc/php/conf.d/opcache.ini
+COPY docker/php/php.ini /usr/local/etc/php/conf.d/99-app.ini
+
+RUN chown -R www-data:www-data storage bootstrap/cache
+
+USER www-data
+
+EXPOSE 9000
+CMD ["php-fpm"]
