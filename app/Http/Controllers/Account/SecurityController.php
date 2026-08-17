@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Account;
 
+use App\Application\Identity\ChangePassword;
 use App\Application\Identity\ManageSecondFactor;
 use App\Domain\Identity\Models\User;
 use App\Domain\Identity\SecondFactorAvailability;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Account\ChangePasswordRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -46,12 +48,22 @@ final class SecurityController extends Controller
             'recoveryCodes' => fn () => $request->session()->get('recovery_codes'),
 
             /*
-             * Si el segundo factor se puede activar. P-013.
+             * getAttributeValue y no la propiedad directa.
              *
-             * Con el correo sin configurar, activarlo dejaria a esa persona
-             * fuera de su propia cuenta: la pantalla le pediria un codigo que
-             * nunca va a recibir.
+             * Acceder con -> lanza cuando el modelo se cargo sin esa columna
+             * —un User creado por factory, o una consulta con select
+             * parcial—. getAttributeValue devuelve null, que es lo correcto:
+             * si no se sabe, no se avisa.
+             *
+             * Si la contrasena la puso quien creo la cuenta.
+             *
+             * Se avisa, no se obliga: el cambio es voluntario (decision del
+             * area usuaria). Pero mientras no ocurra, esa contrasena la
+             * conocen dos personas.
              */
+            'passwordSetByOther' => ($request->user()?->getAttributes()['password_set_by_other_at'] ?? null) !== null,
+
+            'passwordUrl' => route('account.password'),
             'available' => $availability->isAvailable(),
             'unavailableReason' => $availability->unavailableReason(),
 
@@ -62,21 +74,36 @@ final class SecurityController extends Controller
         ]);
     }
 
+    public function updatePassword(
+        ChangePasswordRequest $request,
+        ChangePassword $change,
+    ): RedirectResponse {
+        /** @var User $user */
+        $user = $request->user();
+
+        $change->execute($user, $request->string('password')->toString());
+
+        /*
+         * La sesion se renueva tras el cambio.
+         *
+         * Sin esto, el identificador de sesion sigue siendo el mismo de
+         * antes: si alguien lo tenia, la contrasena nueva no le habria
+         * quitado nada.
+         */
+        $request->session()->regenerate();
+
+        return back()->with('status', __('interface.security.password_changed'));
+    }
+
     public function enable(
         Request $request,
         ManageSecondFactor $manage,
         SecondFactorAvailability $availability,
     ): RedirectResponse {
-        /*
-         * Se comprueba AQUI, no solo en la pantalla.
-         *
-         * Que el boton no aparezca no impide enviar la peticion a mano, y el
-         * resultado seria una cuenta bloqueada de verdad.
-         */
+        // Que el boton no aparezca no impide enviar la peticion a mano, y el
+        // resultado seria una cuenta bloqueada de verdad.
         if (! $availability->isAvailable()) {
-            return back()->withErrors([
-                'mfa' => __('interface.security.unavailable_mail'),
-            ]);
+            return back()->withErrors(['mfa' => __('interface.security.unavailable_mail')]);
         }
 
         /** @var User $user */

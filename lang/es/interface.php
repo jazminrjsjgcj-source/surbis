@@ -50,6 +50,15 @@ return [
     ],
 
     'security' => [
+        'password_heading' => 'Tu contrasena',
+        'current_password' => 'Contrasena actual',
+        'new_password' => 'Contrasena nueva',
+        'confirm_password' => 'Repite la nueva',
+        'change_password' => 'Cambiar contrasena',
+        'password_changed' => 'Contrasena cambiada.',
+        'wrong_current' => 'Esa no es tu contrasena actual.',
+        'same_password' => 'La nueva tiene que ser distinta de la actual.',
+        'set_by_other' => 'Tu contrasena la puso quien creo tu cuenta, asi que la conoce. Cambiala cuando puedas.',
         'unavailable_title' => 'El segundo factor no esta disponible',
         'unavailable_mail_not_configured' => 'Falta configurar el envio de correo. Sin el, el codigo de verificacion no llegaria a nadie.',
         'unavailable_mail' => 'No se puede activar: falta configurar el envio de correo.',

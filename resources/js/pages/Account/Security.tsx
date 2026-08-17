@@ -1,4 +1,5 @@
-import { Head, Link, router } from '@inertiajs/react'
+import { Head, Link, router, useForm } from '@inertiajs/react'
+import type { FormEvent } from 'react'
 
 import StatusMessage from '@/Components/StatusMessage'
 import AdminShell from '@/Layouts/AdminShell'
@@ -7,8 +8,8 @@ import { useTranslate } from '@/lib/translate'
 interface Props {
     mfaEnabled: boolean
     recoveryCodes: string[] | null
-    available: boolean
-    unavailableReason: string | null
+    passwordSetByOther: boolean
+    passwordUrl: string
     enableUrl: string
     disableUrl: string
     codesUrl: string
@@ -23,8 +24,8 @@ interface Props {
  * pasos, codigo inalcanzable.
  */
 export default function Security({
-    available,
-    unavailableReason,
+    passwordSetByOther,
+    passwordUrl,
     mfaEnabled,
     recoveryCodes,
     enableUrl,
@@ -33,6 +34,27 @@ export default function Security({
     backUrl,
 }: Props) {
     const t = useTranslate()
+
+    const pass = useForm({
+        current_password: '',
+        password: '',
+        password_confirmation: '',
+    })
+
+    function cambiarContrasena(event: FormEvent): void {
+        event.preventDefault()
+
+        /*
+         * onSuccess vacia los campos.
+         *
+         * Dejar la contrasena escrita en la pantalla tras guardarla es
+         * exactamente lo que no se quiere en un ordenador compartido.
+         */
+        pass.post(passwordUrl, {
+            preserveScroll: true,
+            onSuccess: () => pass.reset(),
+        })
+    }
 
     return (
         <AdminShell>
@@ -44,18 +66,71 @@ export default function Security({
 
             <StatusMessage />
 
-            {/*
-                Sin correo configurado NO se puede activar. P-013.
+            <form onSubmit={cambiarContrasena} className="card card-pad mb-4 max-w-140">
+                <h2 className="text-lg">{t('interface.security.password_heading')}</h2>
 
-                Activarlo dejaria a esta persona fuera de su propia cuenta: la
-                pantalla le pediria un codigo que nunca va a recibir.
-            */}
-            {!available && (
-                <div className="alert alert-neutral mb-4 max-w-140" role="status">
-                    <p className="alert-title">{t('interface.security.unavailable_title')}</p>
-                    <p>{t(`interface.security.unavailable_${unavailableReason}`)}</p>
+                {/*
+                    El aviso cuando la puso otra persona.
+
+                    No bloquea nada —el cambio es voluntario— pero mientras no
+                    ocurra, esa contraseña la conocen dos.
+                */}
+                {passwordSetByOther && (
+                    <div className="alert alert-neutral mt-3" role="status">
+                        <p>{t('interface.security.set_by_other')}</p>
+                    </div>
+                )}
+
+                <div className="field mt-3">
+                    <label htmlFor="current_password">
+                        {t('interface.security.current_password')}
+                    </label>
+                    <input
+                        id="current_password"
+                        type="password"
+                        className="input"
+                        autoComplete="current-password"
+                        value={pass.data.current_password}
+                        onChange={(e) => pass.setData('current_password', e.target.value)}
+                    />
+                    {pass.errors.current_password && (
+                        <span className="error" role="alert">{pass.errors.current_password}</span>
+                    )}
                 </div>
-            )}
+
+                <div className="field">
+                    <label htmlFor="password">{t('interface.security.new_password')}</label>
+                    <input
+                        id="password"
+                        type="password"
+                        className="input"
+                        autoComplete="new-password"
+                        value={pass.data.password}
+                        onChange={(e) => pass.setData('password', e.target.value)}
+                    />
+                    {pass.errors.password && (
+                        <span className="error" role="alert">{pass.errors.password}</span>
+                    )}
+                </div>
+
+                <div className="field">
+                    <label htmlFor="password_confirmation">
+                        {t('interface.security.confirm_password')}
+                    </label>
+                    <input
+                        id="password_confirmation"
+                        type="password"
+                        className="input"
+                        autoComplete="new-password"
+                        value={pass.data.password_confirmation}
+                        onChange={(e) => pass.setData('password_confirmation', e.target.value)}
+                    />
+                </div>
+
+                <button type="submit" className="btn btn-primary" disabled={pass.processing}>
+                    {t('interface.security.change_password')}
+                </button>
+            </form>
 
             {/*
                 Los codigos se muestran UNA sola vez: en la base solo queda su

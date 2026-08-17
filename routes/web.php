@@ -92,6 +92,15 @@ Route::middleware('auth')->group(function (): void {
      */
     Route::get('/cuenta/seguridad', [SecurityController::class, 'show'])
         ->name('account.security');
+    /*
+     * Cambiar la propia contrasena estando dentro.
+     *
+     * Sin correo configurado, el enlace de restablecer no llega a nadie: esta
+     * es la unica via que queda.
+     */
+    Route::post('/cuenta/contrasena', [SecurityController::class, 'updatePassword'])
+        ->name('account.password');
+
     Route::post('/cuenta/seguridad/mfa', [SecurityController::class, 'enable'])
         ->name('account.security.enable');
     Route::delete('/cuenta/seguridad/mfa', [SecurityController::class, 'disable'])

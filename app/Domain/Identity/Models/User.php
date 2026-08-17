@@ -86,6 +86,7 @@ class User extends Authenticatable
             'email_verified_at' => 'immutable_datetime',
             'mfa_confirmed_at' => 'immutable_datetime',
             'password' => 'hashed',
+            'password_set_by_other_at' => 'datetime',
             'status' => UserStatus::class,
             'is_platform_admin' => 'boolean',
             'mfa_secret' => 'encrypted',
