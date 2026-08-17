@@ -6,6 +6,8 @@ namespace App\Http\Requests\Admin;
 
 use App\Domain\Identity\Enums\MembershipRole;
 use App\Domain\Identity\Models\Membership;
+use App\Domain\Identity\PasswordPolicy;
+use App\Domain\Identity\SecondFactorAvailability;
 use App\Http\Middleware\EnsureActiveOrganization;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -43,6 +45,20 @@ final class InviteMemberRequest extends FormRequest
                  * usuario por correo antes de mirar sus membresias.
                  * RNF-AO-COL-003 y P-004.
                  */
+            ],
+
+            /*
+             * La contrasena, SOLO cuando no hay correo configurado.
+             *
+             * required_if no vale: la disponibilidad no viaja en la peticion
+             * —y si viajara, bastaria con mentir—. Se comprueba en el
+             * servidor contra la configuracion real.
+             */
+            'password' => [
+                Rule::excludeIf(fn (): bool => app(SecondFactorAvailability::class)->isAvailable()),
+                'nullable',
+                'confirmed',
+                PasswordPolicy::rules(),
             ],
 
             'role' => ['required', Rule::enum(MembershipRole::class)],

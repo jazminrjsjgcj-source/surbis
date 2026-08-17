@@ -13,6 +13,7 @@ use App\Domain\Identity\Models\User;
 use App\Domain\Organizations\Models\Organization;
 use Illuminate\Contracts\Auth\PasswordBroker;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 /**
@@ -35,6 +36,12 @@ final class InviteMember
     ) {}
 
     /** @param array{name: string, email: string, role: MembershipRole, branch_id: ?int, area_id: ?int} $data */
+    /**
+     * @param  array<string, mixed>  $data
+     *
+     * `password` opcional: solo llega cuando NO hay correo configurado y quien
+     * da de alta la pone a mano. Decision del area usuaria, 19 ago 2026.
+     */
     public function execute(Organization $organization, array $data): Membership
     {
         $membership = DB::transaction(function () use ($organization, $data): Membership {
@@ -42,17 +49,38 @@ final class InviteMember
                 ['email' => $data['email']],
                 [
                     'name' => $data['name'],
-                    // Una contrasena aleatoria que nadie conoce ni conocera.
-                    // El acceso llega por la liga; esto solo evita dejar la
-                    // columna vacia.
-                    'password' => Str::random(64),
+                    /*
+                     * Sin contrasena dada, una aleatoria que nadie conoce ni
+                     * conocera: el acceso llega por la liga y esto solo evita
+                     * dejar la columna vacia.
+                     *
+                     * Con contrasena dada, la que puso quien da de alta —y se
+                     * marca, porque a partir de ahi la conocen dos personas—.
+                     */
+                    'password' => isset($data['password'])
+                        ? Hash::make($data['password'])
+                        : Str::random(64),
+
+                    'password_set_by_other_at' => isset($data['password']) ? now() : null,
+
                     'status' => UserStatus::Active,
                 ],
             );
 
             $membership = new Membership([
                 'role' => $data['role'],
-                'status' => MembershipStatus::Suspended,
+
+                /*
+                 * Con contrasena directa la membresia nace ACTIVA.
+                 *
+                 * La invitacion normal nace suspendida y se activa al
+                 * aceptarla. Aqui no hay nada que aceptar —no se envio ningun
+                 * correo— asi que dejarla suspendida impediria entrar a
+                 * alguien que ya tiene sus credenciales.
+                 */
+                'status' => isset($data['password'])
+                    ? MembershipStatus::Active
+                    : MembershipStatus::Suspended,
                 'branch_id' => $data['branch_id'],
                 'area_id' => $data['area_id'],
                 'invited_at' => now(),
@@ -62,9 +90,11 @@ final class InviteMember
             $membership->user()->associate($user);
             $membership->save();
 
-            $this->audit->record('membership.invited', $membership, [
-                'role' => $data['role']->value,
-            ]);
+            $this->audit->record(
+                isset($data['password']) ? 'membership.created_with_password' : 'membership.invited',
+                $membership,
+                ['role' => $data['role']->value],
+            );
 
             return $membership;
         });

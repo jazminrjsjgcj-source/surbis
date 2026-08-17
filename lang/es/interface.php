@@ -87,6 +87,11 @@ return [
     ],
 
     'people' => [
+        'no_mail' => 'No hay correo configurado, asi que la invitacion no llegaria. Pon una contrasena y comunicasela a esta persona.',
+        'password' => 'Contrasena',
+        'password_confirm' => 'Repite la contrasena',
+        'password_help' => 'Quien la reciba puede cambiarla desde Mi seguridad.',
+        'created_with_password' => 'Persona dada de alta. Comunicale su contrasena.',
         'title' => 'Usuarios y colaboradores',
         'subtitle' => 'Las personas de tu organizacion: las que usan el sistema y las que se evaluan.',
         'invite' => 'Invitar a alguien',

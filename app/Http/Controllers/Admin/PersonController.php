@@ -10,6 +10,7 @@ use App\Application\Identity\ManageMembership;
 use App\Domain\Identity\Enums\MembershipRole;
 use App\Domain\Identity\Models\Membership;
 use App\Domain\Identity\PersonRow;
+use App\Domain\Identity\SecondFactorAvailability;
 use App\Domain\Organizations\Models\Branch;
 use App\Domain\Organizations\Models\StaffMember;
 use App\Http\Controllers\Controller;
@@ -60,7 +61,7 @@ final class PersonController extends Controller
         ]);
     }
 
-    public function create(Request $request): InertiaResponse
+    public function create(Request $request, SecondFactorAvailability $mail): InertiaResponse
     {
         $this->authorize('create', Membership::class);
 
@@ -68,6 +69,15 @@ final class PersonController extends Controller
 
         return Inertia::render('Admin/People/Invite', [
             'branches' => $this->branchesWithAreas($membership->organization_id),
+            /*
+             * Si se puede invitar por correo.
+             *
+             * Cuando no, la pantalla pide una contrasena: sin correo el
+             * enlace de invitacion no llega a nadie y la persona no podria
+             * entrar nunca.
+             */
+            'canInvite' => $mail->isAvailable(),
+
             'roles' => array_map(fn (MembershipRole $r): string => $r->value, MembershipRole::cases()),
             'action' => route('admin.people.store'),
             'cancelUrl' => route('admin.people.index'),
@@ -86,10 +96,32 @@ final class PersonController extends Controller
             'role' => MembershipRole::from((string) $request->string('role')),
             'branch_id' => $request->integer('branch_id') ?: null,
             'area_id' => $request->integer('area_id') ?: null,
+
+            /*
+             * La contrasena solo llega cuando no hay correo: el Form Request
+             * la excluye del todo si el correo esta configurado, asi que aqui
+             * no hace falta volver a comprobarlo.
+             */
+            /*
+             * La contrasena solo cuando NO hay correo. Se comprueba aqui
+             * ademas del Form Request.
+             *
+             * excludeIf del Request no basta: si alguna otra via llama a este
+             * controlador, la contrasena entraria. Y con correo configurado
+             * habria dos formas de crear cuentas, siendo la mas insegura la
+             * mas comoda.
+             */
+            ...($request->filled('password') && ! app(SecondFactorAvailability::class)->isAvailable()
+                ? ['password' => $request->string('password')->toString()]
+                : []),
         ]);
 
-        return redirect()->route('admin.people.index')
-            ->with('status', __('interface.people.invited'));
+        return redirect()->route('admin.people.index')->with(
+            'status',
+            $request->filled('password')
+                ? __('interface.people.created_with_password')
+                : __('interface.people.invited'),
+        );
     }
 
     public function suspend(Membership $membership, ManageMembership $manage): RedirectResponse

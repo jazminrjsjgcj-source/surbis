@@ -23,6 +23,7 @@ class User extends Authenticatable
 
     /** @var list<string> */
     protected $fillable = [
+        'password_set_by_other_at',
         'name',
         'email',
         'password',

@@ -7,6 +7,7 @@ import AdminShell from '@/Layouts/AdminShell'
 import { useTranslate } from '@/lib/translate'
 
 interface Props {
+    canInvite: boolean
     branches: BranchOption[]
     roles: string[]
     action: string
@@ -17,10 +18,12 @@ interface Props {
  * Invitar a alguien. D-019: se manda una liga de un solo uso y la membresia
  * nace SUSPENDIDA; se activa cuando la persona define su contrasena.
  */
-export default function Invite({ branches, roles, action, cancelUrl }: Props) {
+export default function Invite({ canInvite, branches, roles, action, cancelUrl }: Props) {
     const t = useTranslate()
 
     const { data, setData, post, processing, errors } = useForm({
+        password: '',
+        password_confirmation: '',
         name: '',
         email: '',
         role: roles[0] ?? 'collaborator',
@@ -102,6 +105,94 @@ export default function Invite({ branches, roles, action, cancelUrl }: Props) {
                             setData('area_id', areaId)
                         }}
                     />
+
+                    {/*
+
+                        Sin correo configurado, la contraseña la pone quien da de alta.
+
+
+                        El enlace de invitación no llegaría a nadie, así que sin esto no
+
+                        se podría dar de alta a ninguna persona. Tiene un coste: quien la
+
+                        pone la conoce, y mientras no se cambie puede entrar como esa
+
+                        persona.
+
+                    */}
+
+                    {!canInvite && (
+
+                        <>
+
+                            <div className="alert alert-neutral" role="status">
+
+                                <p>{t('interface.people.no_mail')}</p>
+
+                            </div>
+
+
+                            <div className="field">
+
+                                <label htmlFor="password">{t('interface.people.password')}</label>
+
+                                <input
+
+                                    id="password"
+
+                                    type="password"
+
+                                    className="input"
+
+                                    autoComplete="new-password"
+
+                                    value={data.password}
+
+                                    onChange={(e) => setData('password', e.target.value)}
+
+                                />
+
+                                <span className="hint">{t('interface.people.password_help')}</span>
+
+                                {errors.password && (
+
+                                    <span className="error" role="alert">{errors.password}</span>
+
+                                )}
+
+                            </div>
+
+
+                            <div className="field">
+
+                                <label htmlFor="password_confirmation">
+
+                                    {t('interface.people.password_confirm')}
+
+                                </label>
+
+                                <input
+
+                                    id="password_confirmation"
+
+                                    type="password"
+
+                                    className="input"
+
+                                    autoComplete="new-password"
+
+                                    value={data.password_confirmation}
+
+                                    onChange={(e) => setData('password_confirmation', e.target.value)}
+
+                                />
+
+                            </div>
+
+                        </>
+
+                    )}
+
 
                     <div className="actions">
                         <button type="submit" className="btn btn-primary" disabled={processing}>
