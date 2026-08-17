@@ -239,6 +239,23 @@ export default function Builder({ survey, version, readOnly, questionTypes, impo
                     </p>
                 </div>
 
+                {/*
+                    La encuesta como la verá quien la conteste, en otra
+                    pestaña: volver al constructor no debería perder lo que se
+                    esté escribiendo.
+                */}
+                {questions.length > 0 && (
+                    <a
+                    
+                        href={previewUrl}
+                        className="btn btn-ghost"
+                        target="_blank"
+                        rel="noopener"
+                    >
+                        {t('interface.builder.preview')}
+                    </a>
+                )}
+
                 {!readOnly && (
                     <SaveDraftButton
                     state={state}
@@ -298,17 +315,6 @@ export default function Builder({ survey, version, readOnly, questionTypes, impo
                                     {t('interface.import.link')}
                                 </Link>
 
-                    {/* La encuesta como la vera quien la conteste. En otra
-                        pestaña: volver al constructor no debería perder lo
-                        que se esté escribiendo. */}
-                    
-                        href={previewUrl}
-                        className="btn btn-ghost"
-                        target="_blank"
-                        rel="noopener"
-                    >
-                        {t('interface.builder.preview')}
-                    </a>
                             </div>
                         )}
                     </div>
