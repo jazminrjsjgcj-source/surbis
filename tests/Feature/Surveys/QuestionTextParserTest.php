@@ -213,8 +213,15 @@ final class QuestionTextParserTest extends TestCase
         $questions = $this->parse("[obligatorias, una opcion: Si / No]\n¿Volverias?");
         $estado = $questions->first()->toBuilderState();
 
+        /*
+         * 'condition' entra en la lista con las condiciones al importar.
+         *
+         * Aqui llega SIEMPRE en null: toBuilderState() convierte una pregunta
+         * suelta, y una condicion necesita el ULID de una opcion de otra. La
+         * resuelve QuestionImportController cuando ya tiene la lista entera.
+         */
         $this->assertSame(
-            ['ulid', 'type', 'text', 'help', 'is_required', 'limits', 'options'],
+            ['ulid', 'type', 'text', 'help', 'is_required', 'limits', 'condition', 'options'],
             array_keys($estado),
         );
 

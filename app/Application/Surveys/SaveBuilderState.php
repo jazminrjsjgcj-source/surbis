@@ -161,7 +161,28 @@ final class SaveBuilderState
     /** @param list<array<string, mixed>> $options */
     private function saveOptions(SurveyQuestion $question, array $options): void
     {
-        if (! $question->hasOptions()) {
+        /*
+         * Los tipos con opciones FIJAS las reciben del servidor.
+         *
+         * Si/no no deja editarlas —hasOptions() es false— pero tiene que
+         * TENERLAS: el renderizador pinta los botones recorriendo las
+         * opciones, y sin ellas la pregunta aparece vacia y no se puede
+         * contestar.
+         *
+         * Se generan aqui y no en el cliente porque el cliente no debe poder
+         * decidir cuales son: mandarlas desde el navegador permitiria un
+         * si/no con cuatro respuestas por la via de atras.
+         */
+        if ($question->type->hasFixedOptions()) {
+            $options = array_map(fn (array $fija): array => [
+                'ulid' => null,
+                'label' => $fija['label'],
+                'value' => $fija['value'],
+                'score' => $fija['score'],
+                'display' => 'text',
+                'appearance' => null,
+            ], $question->type->fixedOptions());
+        } elseif (! $question->hasOptions()) {
             // Ya se borraron al cambiar de tipo; aqui solo se evita crearlas.
             return;
         }

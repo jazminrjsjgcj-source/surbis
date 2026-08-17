@@ -1,0 +1,76 @@
+El analizador NO va en este tar: tu version ya tiene las condiciones y la mia
+no, asi que sustituirla las borraria.
+
+Aplica este cambio sobre el tuyo:
+
+cd ~/encuestas
+python3 - <<'PY'
+p = 'app/Domain/Surveys/Import/QuestionTextParser.php'
+s = open(p).read()
+
+nuevo = """        /*
+         * Los tipos con opciones FIJAS las traen del enum.
+         *
+         * Si/no no deja declararlas en el texto —son siempre las mismas— pero
+         * el analizador las devuelve igual: la condicion las necesita para
+         * comprobar que "Si" existe antes de guardar nada.
+         */
+        if ($type->hasFixedOptions()) {
+            return array_map(
+                fn (array $fija): array => [
+                    'label' => $fija['label'],
+                    'value' => $fija['value'],
+                    'score' => $fija['score'],
+                ],
+                $type->fixedOptions(),
+            );
+        }
+
+        if ($part === null || trim($part) === '' || ! $type->hasOptions()) {
+            return [];
+        }"""
+
+# La version original
+viejo_a = """        if ($part === null || trim($part) === '' || ! $type->hasOptions()) {
+            return [];
+        }"""
+
+# Y la que quedo tras el intento anterior
+viejo_b = """        if (! $type->hasOptions()) {
+            return [];
+        }
+
+        /*
+         * Si/no trae sus opciones puestas.
+         *
+         * Sin esto se importaba SIN NINGUNA opcion: la pregunta no se podia
+         * contestar y PublicationChecklist la bloqueaba al publicar, lejos
+         * del sitio donde se cometio el error.
+         *
+         * Declararlas en el texto sigue valiendo —permite escribir "Claro que
+         * si / Para nada"— pero omitirlas ya no rompe nada.
+         */
+        if ($part === null || trim($part) === '') {
+            if ($type !== QuestionType::YesNo) {
+                return [];
+            }
+
+            $part = 'Si / No';
+        }"""
+
+if 'hasFixedOptions' in s:
+    print("ya estaba")
+elif viejo_b in s:
+    open(p, 'w').write(s.replace(viejo_b, nuevo, 1))
+    print("corregido")
+elif viejo_a in s:
+    open(p, 'w').write(s.replace(viejo_a, nuevo, 1))
+    print("corregido")
+else:
+    print("NO encontrado parseOptions: pegame el metodo")
+PY
+
+Y despues:
+
+    docker compose exec app vendor/bin/pint
+    docker compose exec app composer check

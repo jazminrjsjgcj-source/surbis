@@ -95,11 +95,33 @@ final class QuestionTextParser
                 continue;
             }
 
+            /*
+             * La condicion se comprueba contra la pregunta ANTERIOR.
+             *
+             * Aqui, no en parseHeader: la cabecera no sabe que hay antes. Y
+             * comprobarlo al analizar —y no al guardar— permite decir la
+             * linea exacta y que opciones si existen.
+             */
+            if ($header['condition'] !== null) {
+                $problem = $this->checkCondition(
+                    $header['condition'],
+                    $questions->last(),
+                    $line,
+                );
+
+                if ($problem !== null) {
+                    $problems->push($problem);
+
+                    continue;
+                }
+            }
+
             $questions->push(new ParsedQuestion(
                 type: $header['type'],
                 text: $content,
                 isRequired: $header['required'],
                 options: $header['options'],
+                conditionOnPreviousOption: $header['condition'],
             ));
         }
 
@@ -132,6 +154,7 @@ final class QuestionTextParser
 
         $required = false;
         $type = null;
+        $condition = null;
 
         foreach ($parts as $part) {
             if ($this->meansRequired($part)) {
@@ -141,6 +164,21 @@ final class QuestionTextParser
             }
 
             if ($this->meansOptional($part)) {
+                continue;
+            }
+
+            /*
+             * La condicion: si "Etiqueta" en la anterior.
+             *
+             * Va entre las partes separadas por comas y ANTES del ':' de las
+             * opciones, porque el troceado parte por el primer ':'. Escribirla
+             * despues la metería dentro de la lista de opciones.
+             */
+            $etiqueta = $this->readCondition($part);
+
+            if ($etiqueta !== null) {
+                $condition = $etiqueta;
+
                 continue;
             }
 
@@ -168,7 +206,12 @@ final class QuestionTextParser
             ])];
         }
 
-        return [['type' => $type, 'required' => $required, 'options' => $options], null];
+        return [[
+            'type' => $type,
+            'required' => $required,
+            'options' => $options,
+            'condition' => $condition,
+        ], null];
     }
 
     /**
@@ -176,6 +219,24 @@ final class QuestionTextParser
      */
     private function parseOptions(?string $part, QuestionType $type): array
     {
+        /*
+         * Los tipos con opciones FIJAS las traen del enum.
+         *
+         * Si/no no deja declararlas en el texto —son siempre las mismas— pero
+         * el analizador las devuelve igual: la condicion las necesita para
+         * comprobar que "Si" existe antes de guardar nada.
+         */
+        if ($type->hasFixedOptions()) {
+            return array_map(
+                fn (array $fija): array => [
+                    'label' => $fija['label'],
+                    'value' => $fija['value'],
+                    'score' => $fija['score'],
+                ],
+                $type->fixedOptions(),
+            );
+        }
+
         if ($part === null || trim($part) === '' || ! $type->hasOptions()) {
             return [];
         }
@@ -207,6 +268,68 @@ final class QuestionTextParser
                 'score' => $type->isScored() ? $total - $index : null,
             ];
         })->all();
+    }
+
+    /**
+     * Lee `si "Etiqueta" en la anterior` y devuelve la etiqueta.
+     *
+     * Las comillas pueden ser rectas o tipograficas: quien escribe el texto
+     * lo hace en un procesador que las cambia solo, y rechazarlo por eso
+     * seria hacer perder el tiempo a alguien que lo escribio bien.
+     *
+     * Devuelve null si la parte no es una condicion, para que el bucle siga
+     * probando si es un tipo.
+     */
+    private function readCondition(string $part): ?string
+    {
+        $normalizado = $this->normalize($part);
+
+        if (! Str::startsWith($normalizado, 'si ')) {
+            return null;
+        }
+
+        // Comillas rectas, tipograficas de apertura y de cierre.
+        if (preg_match('/["\x{201C}\x{201D}\x{2018}\x{2019}\']([^"\x{201C}\x{201D}\x{2018}\x{2019}\']+)/u', $part, $coincidencias) !== 1) {
+            return null;
+        }
+
+        return trim($coincidencias[1]);
+    }
+
+    /**
+     * Comprueba que la condicion pueda cumplirse.
+     *
+     * Dos formas de que no: que no haya pregunta anterior, y que la anterior
+     * no tenga esa opcion. Las dos dicen QUE opciones si existen, porque un
+     * "no se puede" sin alternativas obliga a adivinar.
+     */
+    private function checkCondition(string $etiqueta, ?ParsedQuestion $anterior, int $line): ?ImportProblem
+    {
+        if ($anterior === null) {
+            return new ImportProblem('condition_without_previous', $line);
+        }
+
+        if ($anterior->options === []) {
+            /*
+             * Una pregunta de texto libre no tiene opciones que elegir, asi
+             * que no hay nada a lo que condicionar.
+             */
+            return new ImportProblem('condition_previous_has_no_options', $line, [
+                'previous' => $anterior->text,
+            ]);
+        }
+
+        $existe = collect($anterior->options)
+            ->contains(fn (array $option): bool => $this->normalize($option['label']) === $this->normalize($etiqueta));
+
+        if (! $existe) {
+            return new ImportProblem('condition_option_not_found', $line, [
+                'written' => $etiqueta,
+                'known' => implode(', ', array_column($anterior->options, 'label')),
+            ]);
+        }
+
+        return null;
     }
 
     private function meansRequired(string $part): bool

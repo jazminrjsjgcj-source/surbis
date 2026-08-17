@@ -46,6 +46,47 @@ enum QuestionType: string
     }
 
     /**
+     * Las opciones que este tipo trae PUESTAS, sin poder cambiarse.
+     *
+     * Si/no las tiene: son siempre las mismas dos. hasOptions() dice si se
+     * pueden EDITAR, que es distinto —dejar editarlas permitiria crear un
+     * si/no con cuatro respuestas y entonces el tipo dejaria de significar
+     * nada—.
+     *
+     * Pero EXISTIR tienen que existir. El renderizador pinta los botones
+     * recorriendo las opciones, la analitica cuenta cuantos dijeron que si, y
+     * la logica condicional necesita una opcion concreta a la que apuntar.
+     * Sin ellas, una pregunta de si/no no se puede contestar.
+     *
+     * @return list<array{label: string, value: string, score: int}>
+     */
+    public function fixedOptions(): array
+    {
+        if ($this !== self::YesNo) {
+            return [];
+        }
+
+        /*
+         * "Si" primero, con la puntuacion mas alta.
+         *
+         * Es el mismo criterio que en el resto del sistema: las opciones se
+         * declaran de mejor a peor. Un "si" no siempre es lo bueno —"¿tuvo
+         * dificultades?"— pero invertirlo por pregunta no se puede decidir
+         * automaticamente, y quien necesite otra cosa usa "una opcion".
+         */
+        return [
+            ['label' => 'Si', 'value' => 'si', 'score' => 2],
+            ['label' => 'No', 'value' => 'no', 'score' => 1],
+        ];
+    }
+
+    /** Si el tipo trae opciones puestas que no se editan. */
+    public function hasFixedOptions(): bool
+    {
+        return $this->fixedOptions() !== [];
+    }
+
+    /**
      * Si las respuestas de este tipo contribuyen a una puntuacion.
      *
      * Es lo que separa "satisfaccion" de "dato": un comentario libre o una

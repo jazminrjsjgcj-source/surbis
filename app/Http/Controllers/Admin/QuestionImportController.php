@@ -15,6 +15,8 @@ use App\Domain\Surveys\Models\SurveyVersion;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ImportQuestionsRequest;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
 
@@ -118,6 +120,57 @@ final class QuestionImportController extends Controller
 
         return redirect()->route('admin.surveys.builder', $survey)
             ->with('status', __('interface.import.done', ['count' => count($importadas)]));
+    }
+
+    /**
+     * Convierte "si tal opcion en la anterior" en una condicion de verdad.
+     *
+     * No se puede hacer en ParsedQuestion: la condicion necesita el ULID de
+     * una opcion de OTRA pregunta, y ahi cada una se convierte por separado
+     * sin saber que hay alrededor.
+     *
+     * Los ULID se generan AQUI, antes de guardar. SaveBuilderState los
+     * respeta cuando vienen puestos, y necesitarlos antes es lo que obliga a
+     * generarlos: una condicion apunta a una opcion que todavia no existe en
+     * la base.
+     *
+     * @param  Collection<int, ParsedQuestion>  $analizadas
+     * @return list<array<string, mixed>>
+     */
+    private function withConditions(Collection $analizadas): array
+    {
+        $estado = [];
+
+        foreach ($analizadas as $indice => $pregunta) {
+            $fila = $pregunta->toBuilderState();
+
+            $fila['ulid'] = (string) Str::ulid();
+
+            $fila['options'] = array_map(
+                fn (array $option): array => [...$option, 'ulid' => (string) Str::ulid()],
+                $fila['options'],
+            );
+
+            if ($pregunta->conditionOnPreviousOption !== null && $indice > 0) {
+                $anterior = $estado[$indice - 1];
+
+                $opcion = collect($anterior['options'])->first(
+                    fn (array $o): bool => mb_strtolower($o['label'])
+                        === mb_strtolower($pregunta->conditionOnPreviousOption),
+                );
+
+                if ($opcion !== null) {
+                    $fila['condition'] = [
+                        'depends_on_ulid' => $anterior['ulid'],
+                        'option_ulid' => $opcion['ulid'],
+                    ];
+                }
+            }
+
+            $estado[] = $fila;
+        }
+
+        return $estado;
     }
 
     /**
