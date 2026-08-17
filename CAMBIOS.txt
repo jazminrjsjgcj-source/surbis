@@ -1,113 +1,79 @@
-TASK-041 · El quiosco. Ultima pieza de la Fase 8.
+TASK-042 · Trabajo sin conexion. Fase 10.
 
-## 1. Migracion, rutas y middleware
+## Lo que cambia de fondo
+
+El "gracias" ya NO depende del servidor: aparece cuando IndexedDB confirma
+la escritura. Decision del area usuaria, 18 ago 2026.
+
+Es lo contrario de lo que hace casi todo el mundo, y es lo correcto: sin
+conexion, esperar al servidor dejaria a alguien mirando una pantalla que no
+avanza, y decir "gracias" antes de guardar confirmaria una respuesta que
+puede perderse.
+
+Si la escritura falla, NO se dice gracias y no se deja empezar otra.
+
+## 1. Idioma
 
 cd ~/encuestas
-docker compose exec app php artisan migrate
-
-python3 - <<'PY'
-import re
-
-p = 'routes/web.php'
-s = open(p).read()
-
-if 'kiosk.link' in s:
-    print("rutas: ya estaban")
-else:
-    nuevas = """
-
-/*
- * El quiosco. SIN sesion de usuario: la tableta se identifica con su
- * credencial en cookie, que ResolveKioskStation comprueba en CADA peticion
- * —asi revocarla apaga la tableta en el momento siguiente—.
- */
-Route::middleware(ResolveKioskStation::class)->group(function (): void {
-    Route::get('/kiosk/vincular', [LinkController::class, 'show'])->name('kiosk.link');
-    Route::post('/kiosk/vincular', [LinkController::class, 'store'])->name('kiosk.link.store');
-
-    Route::get('/kiosk/preparar', [KioskController::class, 'prepare'])->name('kiosk.prepare');
-    Route::post('/kiosk/preparar', [KioskController::class, 'open'])->name('kiosk.prepare.store');
-
-    Route::get('/kiosk', [KioskController::class, 'welcome'])->name('kiosk.welcome');
-    Route::post('/kiosk/responder', KioskResponseController::class)->name('kiosk.submit');
-});
-"""
-
-    for imp in ["use App\\Http\\Controllers\\Kiosk\\KioskController;",
-                "use App\\Http\\Controllers\\Kiosk\\KioskResponseController;",
-                "use App\\Http\\Controllers\\Kiosk\\LinkController;",
-                "use App\\Http\\Middleware\\ResolveKioskStation;"]:
-        if imp not in s:
-            s = s.replace("use App\\Http\\Controllers\\HomeController;",
-                          "use App\\Http\\Controllers\\HomeController;\n" + imp, 1)
-
-    m = list(re.finditer(r'^use\s+[\w\\]+;$', s, re.M))
-    a, b = m[0].start(), m[-1].end()
-    s = s[:a] + '\n'.join(sorted([x.group(0) for x in m], key=lambda l: l[4:].lower())) + s[b:]
-
-    open(p, 'w').write(s.rstrip() + nuevas)
-    print("rutas anadidas")
-PY
-
-OJO: habia un marcador `kiosk.start` de PlaceholderController. Si el grep
-dice que sigue, retiralo:
-
-    grep -n "kiosk.start" routes/web.php
-
-## 2. El CSS
-
-Esta en CSS-A-ANADIR.txt.
-
-## 3. Idioma
-
 python3 - <<'PY'
 p = 'lang/es/interface.php'
 s = open(p).read()
 
-if "'kiosk' => [" in s:
+if "'queue' => [" in s:
     print("ya estaba")
 else:
-    bloque = """    'kiosk' => [
-        'link_title' => 'Vincular esta tableta',
-        'link_help' => 'Escribe la clave que te dio quien administra el sistema.',
-        'key' => 'Clave de la estacion',
-        'link' => 'Vincular',
-        'unknown_device' => 'Esa clave no es valida o ya se uso.',
-        'device_inactive' => 'Esta tableta esta dada de baja.',
-        'prepare_title' => 'Preparar la estacion',
-        'who' => 'A quien se evalua en este turno',
-        'who_help' => 'Elige a la persona que va a atender. Si nadie en concreto, dejalo sin marcar.',
-        'no_staff' => 'No hay personal registrado en esta sucursal. Se puede empezar igual.',
-        'replaces' => 'Al empezar se cierra el turno anterior de esta tableta.',
-        'start' => 'Empezar el turno',
-        'not_ready_title' => 'La estacion no esta lista',
-        'no_deployment' => 'A esta tableta todavia no se le ha asignado ninguna encuesta.',
-        'deployment_not_applying' => 'La encuesta asignada no esta recibiendo respuestas ahora mismo.',
-        'tell_admin' => 'Avisa a quien administra el sistema e indicale que es la tableta :device de :branch.',
-        'retry' => 'Volver a intentar',
-        'begin' => 'Empezar',
-        'thanks' => 'Gracias',
-        'thanks_body' => 'Tu respuesta ayuda a mejorar el servicio.',
+    bloque = """    'queue' => [
+        'ok' => 'Respuestas pendientes de enviar',
+        'warning' => 'La memoria de la tableta se esta llenando',
+        'blocked' => 'No se pueden recoger mas respuestas',
+        'blocked_help' => 'Hay que recuperar la conexion antes de seguir. Avisa a quien administra el sistema.',
+        'pending' => 'Sin enviar: :count',
+        'oldest' => 'La mas antigua lleva :days dias esperando',
+        'last_sync' => 'Ultimo envio: :time',
+        'never_synced' => 'Todavia no se ha enviado ninguna',
+        'capacity' => 'Queda espacio para un :percent% mas',
     ],
 
 """
     i = s.rindex('];')
     open(p, 'w').write(s[:i] + bloque + s[i:])
-    print("anadido")
+    print("queue anadido")
 PY
 
-## 4. Comprueba
+Y dos claves en el bloque 'kiosk' que ya existe:
+
+python3 - <<'PY'
+p = 'lang/es/interface.php'
+s = open(p).read()
+
+if "'not_saved_title'" in s:
+    print("ya estaban")
+else:
+    i = s.index("'kiosk' => [")
+    j = s.index("'thanks' =>", i)
+    fin = s.index('\n', j) + 1
+    open(p, 'w').write(s[:fin] + """        'not_saved_title' => 'No se pudo registrar tu respuesta',
+        'not_saved_body' => 'Avisa al personal de la ventanilla. No se ha guardado nada.',
+""" + s[fin:])
+    print("anadidas")
+PY
+
+## 2. Comprueba
 
     docker compose run --rm node npm run build
     docker compose exec app vendor/bin/pint
     docker compose exec app composer check
 
-## Lo que queda preparado para la Fase 10
+## Lo que NO va aqui
 
-El envio del quiosco tiene UN solo punto —la funcion `enviar` de Welcome.tsx—
-y el UUID se genera al empezar CADA respuesta, no al cargar la pantalla. Una
-tableta no se recarga en todo el dia: si el UUID fuera de la pantalla, la
-segunda persona reutilizaria el de la primera y su respuesta se descartaria
-por idempotente.
+    el service worker y el manifiesto — la PWA instalable
+    Van en una segunda tarea: la cola funciona sin ellos mientras la pestana
+    este abierta, que es el caso de una tableta de ventanilla encendida todo
+    el dia. El service worker anade que sobreviva a recargas sin red.
 
-La cola local de la Fase 10 sustituye esa funcion sin tocar las pantallas.
+## Sin pruebas de navegador todavia
+
+IndexedDB no existe en PHPUnit, asi que la cola solo tiene las pruebas de
+LIMITES (servidor). El comportamiento de kioskQueue.ts y kioskSync.ts
+necesita Playwright, y eso entra en la deuda ya anotada de "el renderizador
+no tiene pruebas de navegador".

@@ -1,6 +1,8 @@
 import { Head, useForm } from '@inertiajs/react'
+import { useCallback, useState } from 'react'
 import type { FormEvent } from 'react'
 
+import QueueStatus from '@/Components/QueueStatus'
 import { useTranslate } from '@/lib/translate'
 
 interface Props {
@@ -9,6 +11,9 @@ interface Props {
     staff: { ulid: string; name: string }[]
     current: string | null
     action: string
+
+    /** Los limites de offline, decididos en el servidor. */
+    offline: { limitDays: number; limitCount: number; warnAt: number }
 }
 
 /**
@@ -18,9 +23,20 @@ interface Props {
  * aparte de la vinculación a propósito: vincular lo hace quien administra una
  * vez, y esto se hace cada turno.
  */
-export default function Prepare({ device, survey, staff, current, action }: Props) {
+export default function Prepare({ device, survey, staff, current, action, offline }: Props) {
     const t = useTranslate()
     const { data, setData, post, processing } = useForm({ staff: current ?? '' })
+
+    /*
+     * Con la cola llena NO se puede abrir turno. Decision del area usuaria.
+     *
+     * El quiosco deja de iniciar encuestas nuevas y se queda aqui hasta
+     * recuperar conexion. Es preferible no recoger respuestas a recogerlas
+     * sin poder guardarlas.
+     */
+    const [bloqueado, setBloqueado] = useState(false)
+
+    const alBloquear = useCallback((valor: boolean) => setBloqueado(valor), [])
 
     function enviar(event: FormEvent): void {
         event.preventDefault()
@@ -74,13 +90,26 @@ export default function Prepare({ device, survey, staff, current, action }: Prop
                     </fieldset>
                 )}
 
+                <QueueStatus
+                    limitDays={offline.limitDays}
+                    limitCount={offline.limitCount}
+                    warnAt={offline.warnAt}
+                    onBlocked={alBloquear}
+                />
+
                 <button
                     type="submit"
                     className="btn btn-primary btn-lg mt-4"
-                    disabled={processing}
+                    disabled={processing || bloqueado}
                 >
                     {t('interface.kiosk.start')}
                 </button>
+
+                {bloqueado && (
+                    <p className="error mt-2" role="alert">
+                        {t('interface.queue.blocked_help')}
+                    </p>
+                )}
 
                 {/*
                     Cambiar de persona CIERRA la sesión anterior y abre otra.

@@ -804,7 +804,21 @@ return [
         'retry' => 'Volver a intentar',
         'begin' => 'Empezar',
         'thanks' => 'Gracias',
+        'not_saved_title' => 'No se pudo registrar tu respuesta',
+        'not_saved_body' => 'Avisa al personal de la ventanilla. No se ha guardado nada.',
         'thanks_body' => 'Tu respuesta ayuda a mejorar el servicio.',
+    ],
+
+    'queue' => [
+        'ok' => 'Respuestas pendientes de enviar',
+        'warning' => 'La memoria de la tableta se esta llenando',
+        'blocked' => 'No se pueden recoger mas respuestas',
+        'blocked_help' => 'Hay que recuperar la conexion antes de seguir. Avisa a quien administra el sistema.',
+        'pending' => 'Sin enviar: :count',
+        'oldest' => 'La mas antigua lleva :days dias esperando',
+        'last_sync' => 'Ultimo envio: :time',
+        'never_synced' => 'Todavia no se ha enviado ninguna',
+        'capacity' => 'Queda espacio para un :percent% mas',
     ],
 
 ];

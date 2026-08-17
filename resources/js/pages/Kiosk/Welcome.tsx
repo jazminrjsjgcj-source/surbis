@@ -1,7 +1,9 @@
-import { Head, router } from '@inertiajs/react'
+import { Head } from '@inertiajs/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import SurveyRenderer from '@/Components/Renderer/SurveyRenderer'
+import { enqueue } from '@/lib/kioskQueue'
+import { startSyncing } from '@/lib/kioskSync'
 import type { Answers, RenderableSurvey } from '@/lib/renderer'
 import { useTranslate } from '@/lib/translate'
 
@@ -9,6 +11,9 @@ interface Props {
     survey: RenderableSurvey
     submitUrl: string
     sessionUlid: string
+
+    /** Para que las pendientes conserven la version con la que se contesto. */
+    surveyVersionId: string
 }
 
 /**
@@ -18,11 +23,12 @@ interface Props {
  * administrativo (RF-COL-011), y con el mismo SurveyRenderer que el enlace
  * público y la vista previa (RNF-COL-012).
  */
-export default function Welcome({ survey, submitUrl, sessionUlid }: Props) {
+export default function Welcome({ survey, submitUrl, sessionUlid, surveyVersionId }: Props) {
     const t = useTranslate()
 
     const [empezada, setEmpezada] = useState(false)
     const [terminada, setTerminada] = useState(false)
+    const [fallo, setFallo] = useState(false)
 
     /*
      * El UUID se genera al EMPEZAR cada respuesta, no al cargar la pantalla.
@@ -48,6 +54,7 @@ export default function Welcome({ survey, submitUrl, sessionUlid }: Props) {
     const reiniciar = useCallback((): void => {
         setEmpezada(false)
         setTerminada(false)
+        setFallo(false)
         setIdempotencyKey(crypto.randomUUID())
     }, [])
 
@@ -112,25 +119,67 @@ export default function Welcome({ survey, submitUrl, sessionUlid }: Props) {
         return () => window.clearTimeout(vuelta)
     }, [terminada, reiniciar])
 
-    function enviar(respuestas: Answers): void {
+    /*
+     * La sincronización corre en segundo plano mientras la pantalla vive.
+     *
+     * No bloquea nada: quien contesta ya recibió su "gracias" cuando la
+     * respuesta quedó guardada en el dispositivo.
+     */
+    useEffect(() => startSyncing(submitUrl), [submitUrl])
+
+    async function enviar(respuestas: Answers): Promise<void> {
         /*
-         * Punto ÚNICO de envío.
+         * PRIMERO se guarda en el dispositivo. Decisión del área usuaria,
+         * 18 ago 2026.
          *
-         * En la Fase 10 esto pasa por una cola local que reintenta sin
-         * conexión. Está aislado aquí a propósito: el cambio no tocará las
-         * pantallas.
+         * El "gracias" solo aparece cuando IndexedDB confirma la escritura,
+         * no cuando responde el servidor. Es lo contrario de lo que hace casi
+         * todo el mundo, y es lo correcto: sin conexión, esperar al servidor
+         * dejaría a alguien mirando una pantalla que no avanza, y decir
+         * "gracias" antes de guardar confirmaría una respuesta que puede
+         * perderse.
+         *
+         * Si la escritura falla, NO se dice gracias: se dice que no se pudo
+         * registrar y no se deja empezar otra.
          */
-        router.post(
-            submitUrl,
-            {
-                idempotency_key: idempotencyKey,
-                session: sessionUlid,
+        try {
+            await enqueue({
+                idempotencyKey,
+                sessionUlid,
+                surveyVersionId,
                 answers: respuestas,
-            },
-            {
-                preserveScroll: true,
-                onSuccess: () => setTerminada(true),
-            },
+                comment: null,
+            })
+
+            setTerminada(true)
+        } catch {
+            setFallo(true)
+
+            return
+        }
+
+        // Y se intenta enviar ya, sin esperar al reloj. Si no hay conexión,
+        // se queda en la cola y no pasa nada.
+        void startSyncing(submitUrl, 0)
+    }
+
+    /*
+     * No se pudo guardar: NO se dice gracias.
+     *
+     * Y no se ofrece "reintentar": si el almacenamiento local falla o está
+     * lleno, reintentar dará el mismo resultado. Lo que hace falta es que
+     * alguien lo mire, así que se manda a avisar.
+     */
+    if (fallo) {
+        return (
+            <div className="kiosk kiosk-centered">
+                <Head title={survey.name} />
+
+                <div className="kiosk-panel text-center">
+                    <h1 className="text-xl">{t('interface.kiosk.not_saved_title')}</h1>
+                    <p className="mt-2">{t('interface.kiosk.not_saved_body')}</p>
+                </div>
+            </div>
         )
     }
 
@@ -181,7 +230,7 @@ export default function Welcome({ survey, submitUrl, sessionUlid }: Props) {
             <Head title={survey.name} />
 
             <div className="kiosk-panel">
-                <SurveyRenderer survey={survey} onComplete={enviar} />
+                <SurveyRenderer survey={survey} onComplete={(r) => void enviar(r)} />
             </div>
         </div>
     )

@@ -8,6 +8,7 @@ use App\Application\Kiosk\Exceptions\StationNotReady;
 use App\Application\Kiosk\OpenKioskSession;
 use App\Application\Kiosk\ResolveStation;
 use App\Domain\Kiosk\Models\KioskSession;
+use App\Domain\Kiosk\OfflineLimits;
 use App\Domain\Organizations\Enums\StaffMemberStatus;
 use App\Domain\Organizations\Models\Device;
 use App\Domain\Organizations\Models\StaffMember;
@@ -31,8 +32,11 @@ final class KioskController extends Controller
     /**
      * Preparar la estacion: elegir a quien se evalua. RF-COL-001 a 006.
      */
-    public function prepare(Request $request, ResolveStation $stations): InertiaResponse|RedirectResponse
-    {
+    public function prepare(
+        Request $request,
+        ResolveStation $stations,
+        OfflineLimits $limits,
+    ): InertiaResponse|RedirectResponse {
         $device = $this->device($request);
 
         if ($device === null) {
@@ -74,6 +78,19 @@ final class KioskController extends Controller
             'staff' => $staff,
             'current' => $this->openSession($device)?->staffMember?->ulid,
             'action' => route('kiosk.prepare.store'),
+
+            /*
+             * Los limites los decide el SERVIDOR.
+             *
+             * Si el cliente los llevara escritos, cambiar el ajuste de una
+             * organizacion no llegaria a las tabletas hasta que alguien
+             * recompilara.
+             */
+            'offline' => [
+                'limitDays' => $limits->of($device->organization)['days'],
+                'limitCount' => $limits->of($device->organization)['count'],
+                'warnAt' => OfflineLimits::WARN_AT,
+            ],
         ]);
     }
 
@@ -155,6 +172,17 @@ final class KioskController extends Controller
              */
             'submitUrl' => route('kiosk.submit'),
             'sessionUlid' => $session->ulid,
+
+            /*
+             * La version con la que se contesta, para que una respuesta en
+             * cola conserve la suya.
+             *
+             * Decision del area usuaria: si el deployment cambia mientras la
+             * tableta esta desconectada, las pendientes se sincronizan con su
+             * version original. Nunca se mezclan preguntas de dos versiones
+             * ni se migran respuestas.
+             */
+            'surveyVersionId' => $deployment->version->ulid,
         ]);
     }
 
