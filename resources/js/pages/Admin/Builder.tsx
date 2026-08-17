@@ -50,6 +50,7 @@ interface Props {
     importUrl: string
     media: MediaOption[]
     mediaUploadUrl: string
+    previewUrl: string
 }
 
 const MAX_TEXT = 1000
@@ -66,7 +67,7 @@ const MAX_HELP = 1000
  * grupos dejan de confundirse porque estan en columnas distintas, no porque
  * cambien de color.
  */
-export default function Builder({ survey, version, readOnly, questionTypes, importUrl, media, mediaUploadUrl }: Props) {
+export default function Builder({ survey, version, readOnly, questionTypes, importUrl, media, mediaUploadUrl, previewUrl }: Props) {
     const t = useTranslate()
     const [questions, setQuestions] = useState<Question[]>(version.questions)
     const [selected, setSelected] = useState(0)
@@ -296,6 +297,18 @@ export default function Builder({ survey, version, readOnly, questionTypes, impo
                                 <Link href={importUrl} className="btn btn-ghost">
                                     {t('interface.import.link')}
                                 </Link>
+
+                    {/* La encuesta como la vera quien la conteste. En otra
+                        pestaña: volver al constructor no debería perder lo
+                        que se esté escribiendo. */}
+                    
+                        href={previewUrl}
+                        className="btn btn-ghost"
+                        target="_blank"
+                        rel="noopener"
+                    >
+                        {t('interface.builder.preview')}
+                    </a>
                             </div>
                         )}
                     </div>

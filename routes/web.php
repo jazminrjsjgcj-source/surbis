@@ -18,6 +18,7 @@ use App\Http\Controllers\Admin\QuestionImportController;
 use App\Http\Controllers\Admin\ResponseController;
 use App\Http\Controllers\Admin\StaffMemberController;
 use App\Http\Controllers\Admin\SurveyController;
+use App\Http\Controllers\Admin\SurveyPreviewController;
 use App\Http\Controllers\Admin\VersionSettingsController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\NewPasswordController;
@@ -258,6 +259,15 @@ Route::middleware(['auth', 'organization'])->group(function (): void {
          */
         Route::post('/admin/encuestas/{survey}/multimedia', MediaUploadController::class)
             ->name('admin.surveys.media.upload');
+
+        /*
+         * Vista previa: la encuesta como la vera quien la conteste.
+         *
+         * El controlador estaba escrito desde la Fase 7 y sin ruta, asi que
+         * no habia forma de llegar.
+         */
+        Route::get('/admin/encuestas/{survey}/vista-previa', SurveyPreviewController::class)
+            ->name('admin.surveys.preview');
 
         Route::get('/admin/encuestas/{survey}', [SurveyController::class, 'edit'])
             ->name('admin.surveys.edit');

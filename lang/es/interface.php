@@ -179,6 +179,7 @@ return [
     ],
 
     'builder' => [
+        'preview' => 'Ver como quedara',
         'title' => 'Constructor',
         'save_draft' => 'Guardar como borrador',
         'saving' => 'Guardando...',
