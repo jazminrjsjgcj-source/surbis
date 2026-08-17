@@ -7,6 +7,9 @@ namespace App\Application\Surveys;
 use App\Domain\Audit\RecordAuditLog;
 use App\Domain\Surveys\Enums\SurveyVersionStatus;
 use App\Domain\Surveys\Models\Survey;
+use App\Domain\Surveys\Models\SurveyQuestion;
+use App\Domain\Surveys\Models\SurveyQuestionCondition;
+use App\Domain\Surveys\Models\SurveyQuestionOption;
 use App\Domain\Surveys\Models\SurveyVersion;
 use Illuminate\Support\Facades\DB;
 
@@ -72,11 +75,125 @@ final class OpenDraft
                 'settings' => $ultima?->settings,
             ]);
 
+            /*
+             * Las preguntas se COPIAN de la version anterior.
+             *
+             * Un borrador vacio obligaria a reescribir la encuesta entera
+             * para cambiar una coma, y nadie va a teclear veinte preguntas
+             * otra vez: se quedaria sin corregir.
+             *
+             * Se copian —no se comparten— porque las respuestas guardan el
+             * texto de la pregunta que se hizo. Si las versiones compartieran
+             * preguntas, cambiar una en la v2 cambiaria lo que dice la
+             * respuesta de quien contesto la v1, y la fotografia historica
+             * dejaria de ser fiel.
+             */
+            if ($ultima !== null) {
+                $this->copyQuestions($ultima, $draft);
+            }
+
             $this->audit->record('survey_version.draft_opened', $draft, [
                 'version_number' => $draft->version_number,
+                'copied_from' => $ultima?->version_number,
             ]);
 
             return $draft;
         });
+    }
+
+    /**
+     * Duplica preguntas, opciones y condiciones en el borrador nuevo.
+     *
+     * Lo delicado son las CONDICIONES: apuntan a una pregunta y a una opcion
+     * concretas. Copiarlas tal cual dejaria la version nueva señalando
+     * preguntas de la version vieja, y editar una de ellas cambiaria el
+     * comportamiento de la otra.
+     *
+     * Por eso se copia en dos pasadas: primero preguntas y opciones
+     * guardando la correspondencia vieja→nueva, y despues las condiciones
+     * traducidas contra esa correspondencia.
+     */
+    private function copyQuestions(SurveyVersion $origen, SurveyVersion $destino): void
+    {
+        $origen->load(['questions.options', 'questions.condition']);
+
+        /** @var array<int, int> $preguntas */
+        $preguntas = [];
+
+        /** @var array<int, int> $opciones */
+        $opciones = [];
+
+        foreach ($origen->questions as $pregunta) {
+            $copia = SurveyQuestion::query()->create([
+                'survey_version_id' => $destino->id,
+                'organization_id' => $pregunta->organization_id,
+                'type' => $pregunta->type,
+                'text' => $pregunta->text,
+                'help' => $pregunta->help,
+                'is_required' => $pregunta->is_required,
+                'limits' => $pregunta->limits,
+                'position' => $pregunta->position,
+            ]);
+
+            $preguntas[$pregunta->id] = $copia->id;
+
+            foreach ($pregunta->options as $opcion) {
+                $copiaOpcion = SurveyQuestionOption::query()->create([
+                    'survey_question_id' => $copia->id,
+                    'organization_id' => $opcion->organization_id,
+                    'label' => $opcion->label,
+                    'value' => $opcion->value,
+                    'score' => $opcion->score,
+                    'display' => $opcion->display,
+
+                    /*
+                     * La imagen SI se comparte: es un archivo de la
+                     * biblioteca, no parte de la pregunta. Duplicarla dejaria
+                     * dos copias del mismo archivo por cada version.
+                     */
+                    'media_id' => $opcion->media_id,
+
+                    'appearance' => $opcion->appearance,
+                    'position' => $opcion->position,
+                ]);
+
+                $opciones[$opcion->id] = $copiaOpcion->id;
+            }
+        }
+
+        /*
+         * Segunda pasada: ahora que existen todas las copias, las condiciones
+         * pueden traducirse.
+         *
+         * En una sola pasada, una pregunta condicionada a otra que viene
+         * DESPUES no encontraria su destino —y el constructor permite
+         * reordenar, asi que ese caso ocurre—.
+         */
+        foreach ($origen->questions as $pregunta) {
+            $condicion = $pregunta->condition;
+
+            if ($condicion === null) {
+                continue;
+            }
+
+            /*
+             * Si falta alguna de las dos referencias no se copia la
+             * condicion.
+             *
+             * Mejor una pregunta que siempre se muestra que una condicion
+             * apuntando a la version anterior: lo primero se ve y se corrige;
+             * lo segundo funciona mal en silencio.
+             */
+            if (! isset($preguntas[$condicion->depends_on_question_id], $opciones[$condicion->option_id])) {
+                continue;
+            }
+
+            SurveyQuestionCondition::query()->create([
+                'survey_question_id' => $preguntas[$pregunta->id],
+                'organization_id' => $condicion->organization_id,
+                'depends_on_question_id' => $preguntas[$condicion->depends_on_question_id],
+                'option_id' => $opciones[$condicion->option_id],
+            ]);
+        }
     }
 }
