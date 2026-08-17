@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\Responses;
 
+use App\Application\Analytics\RecordResponseMetric;
 use App\Application\Responses\Exceptions\ResponseRejected;
 use App\Domain\Deployments\Models\Deployment;
 use App\Domain\Kiosk\Models\KioskSession;
@@ -29,7 +30,10 @@ use Illuminate\Support\Facades\DB;
  */
 final class SubmitResponse
 {
-    public function __construct(private readonly BlindIndex $blindIndex) {}
+    public function __construct(
+        private readonly BlindIndex $blindIndex,
+        private readonly RecordResponseMetric $metrics,
+    ) {}
 
     /**
      * @param  array<string, string|list<string>>  $answers  Por ULID de pregunta.
@@ -104,6 +108,18 @@ final class SubmitResponse
                 'score' => $puntos['score'],
                 'max_score' => $puntos['max'],
             ])->save();
+
+            /*
+             * Los indicadores se actualizan DENTRO de la transaccion.
+             *
+             * Fuera, un fallo entre guardar la respuesta y sumarla dejaria el
+             * resumen corto para siempre. Dentro, o entran las dos cosas o no
+             * entra ninguna.
+             *
+             * Y aunque se desfasara, RebuildMetrics puede rehacerlo: las
+             * respuestas son la fuente oficial.
+             */
+            $this->metrics->record($response->fresh());
 
             return $response;
         });

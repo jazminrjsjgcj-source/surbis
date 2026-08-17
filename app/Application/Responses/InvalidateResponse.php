@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\Responses;
 
+use App\Application\Analytics\RecordResponseMetric;
 use App\Domain\Audit\RecordAuditLog;
 use App\Domain\Identity\Models\User;
 use App\Domain\Responses\Models\Response;
@@ -19,7 +20,10 @@ use InvalidArgumentException;
  */
 final class InvalidateResponse
 {
-    public function __construct(private readonly RecordAuditLog $audit) {}
+    public function __construct(
+        private readonly RecordAuditLog $audit,
+        private readonly RecordResponseMetric $metrics,
+    ) {}
 
     public function execute(Response $response, User $actor, string $reason): Response
     {
@@ -44,6 +48,9 @@ final class InvalidateResponse
             ])->save();
 
             // RNF-AO-RES-004: las invalidaciones quedan registradas.
+            // Sale de los indicadores y entra en el recuento de excluidas.
+            $this->metrics->invalidate($response);
+
             $this->audit->record('response.invalidated', $response, [
                 'reason' => $motivo,
             ], actor: $actor);
@@ -69,6 +76,8 @@ final class InvalidateResponse
                 'invalidated_by' => null,
                 'invalidation_reason' => null,
             ])->save();
+
+            $this->metrics->revalidate($response);
 
             $this->audit->record('response.revalidated', $response, [
                 'previous_reason' => $anterior,
