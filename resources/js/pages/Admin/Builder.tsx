@@ -243,7 +243,21 @@ export default function Builder({ survey, version, readOnly, questionTypes, impo
                     dirty={dirty}
                     rejection={rejection}
                     lastSavedAt={lastSavedAt}
-                    onSave={save}
+                    /*
+                     * onSave={() => save()} y NO onSave={save}.
+                     *
+                     * El onClick de React pasa el EVENTO como primer
+                     * argumento, y save() espera ahi un lock_version
+                     * opcional. Con onSave={save}, lock_version se convertia
+                     * en un objeto de evento y JSON.stringify lanzaba por
+                     * referencias circulares: el catch lo tomaba por un fallo
+                     * del servidor y mostraba "No se pudo guardar" sin haber
+                     * enviado nada.
+                     *
+                     * El sintoma —error sin peticion en Network— no se parece
+                     * en nada a la causa.
+                     */
+                    onSave={() => save()}
                 />
                 )}
             </div>

@@ -47,7 +47,20 @@ export default function SaveDraftButton({
                 // Sin cambios no hay nada que guardar, y ofrecerlo invitaria
                 // a pulsar por si acaso.
                 disabled={state === 'saving' || (! dirty && state !== 'rejected')}
-                onClick={onSave}
+                /*
+                 * onClick={() => onSave()} y NO onClick={onSave}.
+                 *
+                 * React pasa el EVENTO como primer argumento, y quien recibe
+                 * este callback lo usa como lock_version opcional. Con el
+                 * evento ahi, JSON.stringify lanza por referencias circulares
+                 * y el guardado falla ANTES de enviar nada: aparece "No se
+                 * pudo guardar" sin ninguna peticion en la red.
+                 *
+                 * El sintoma no se parece a la causa, y por eso costo diez
+                 * intentos encontrarlo mirando el servidor y el bloqueo
+                 * optimista.
+                 */
+                onClick={() => onSave()}
             >
                 {t('interface.builder.save_draft')}
             </button>
