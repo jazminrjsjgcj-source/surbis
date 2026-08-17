@@ -81,6 +81,7 @@ final class AnalyticsController extends Controller
             'branches' => $this->options(Branch::query()->forOrganization($organization->id)),
             'channels' => DeploymentChannel::values(),
             'indexUrl' => route('admin.analytics'),
+            'exportUrl' => route('admin.analytics.export'),
         ]);
     }
 

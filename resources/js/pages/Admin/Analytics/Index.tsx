@@ -37,6 +37,7 @@ interface Props {
     branches: { ulid: string; name: string }[]
     channels: string[]
     indexUrl: string
+    exportUrl: string
 }
 
 export default function Index({
@@ -52,6 +53,7 @@ export default function Index({
     branches,
     channels,
     indexUrl,
+    exportUrl,
 }: Props) {
     const t = useTranslate()
 
@@ -182,6 +184,12 @@ export default function Index({
                         </>
                     )}
                 </FilterBar>
+
+                {/* Descarga directa con <a>, no con router: es un archivo,
+                    no una navegación de Inertia. */}
+                <a href={exportUrl} className="btn btn-ghost">
+                    {t('interface.export.download')}
+                </a>
             </div>
 
             <div className="metric-grid">

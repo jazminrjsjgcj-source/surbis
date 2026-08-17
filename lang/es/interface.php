@@ -846,4 +846,14 @@ return [
         'never_updated' => 'Todavia no se ha calculado nada.',
     ],
 
+    'export' => [
+        'download' => 'Descargar indicadores',
+        'section' => 'Seccion',
+        'group' => 'Grupo',
+        'total' => 'Total',
+        'period' => 'Todo el periodo',
+        'by_day' => 'Por dia',
+        'excluded' => 'Invalidadas excluidas',
+    ],
+
 ];

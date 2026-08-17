@@ -1,6 +1,7 @@
 import '../css/app.css'
 
 import { registerKioskWorker } from '@/lib/kioskWorker'
+import { reportWidgetHeight } from '@/lib/widgetHeight'
 import { createInertiaApp } from '@inertiajs/react'
 import { createRoot } from 'react-dom/client'
 
@@ -46,3 +47,11 @@ createInertiaApp({
 if (window.location.pathname.startsWith('/kiosk')) {
     registerKioskWorker()
 }
+
+/*
+ * Dentro de un widget, la encuesta le dice al sitio anfitrion cuanto mide.
+ *
+ * Se llama siempre: la propia funcion comprueba si esta en un iframe con
+ * ?widget=1 y no hace nada si no lo esta.
+ */
+reportWidgetHeight()

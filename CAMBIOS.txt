@@ -1,6 +1,13 @@
-TASK-045 · La pantalla de analisis. Cierra la Fase 12.
+TASK-046 · Widget y exportaciones. Fase 13.
 
-## 1. Ruta, nav y contadores
+## 0. El contexto
+
+    rm -f CONTEXTO-2026-08-18.md
+
+CONTEXTO-2026-08-19.md viene en este tar. Cincuenta y tres decisiones,
+sesenta y nueve trampas.
+
+## 1. Ruta de exportacion y enlace
 
 cd ~/encuestas
 python3 - <<'PY'
@@ -9,102 +16,82 @@ import re
 p = 'routes/web.php'
 s = open(p).read()
 
-if 'admin.analytics' in s:
+if 'admin.analytics.export' in s:
     print("ruta: ya estaba")
 else:
-    ancla = "        Route::get('/admin/respuestas', [ResponseController::class, 'index'])\n            ->name('admin.responses.index');"
+    ancla = "        Route::get('/admin/analisis', AnalyticsController::class)->name('admin.analytics');"
     nueva = ancla + """
-
-        Route::get('/admin/analisis', AnalyticsController::class)->name('admin.analytics');"""
+        Route::get('/admin/analisis/exportar', AnalyticsExportController::class)
+            ->name('admin.analytics.export');"""
 
     if ancla not in s:
         print("NO encontrado el ancla")
     else:
         s = s.replace(ancla, nueva, 1)
 
-        if 'use App\\Http\\Controllers\\Admin\\AnalyticsController;' not in s:
-            s = s.replace("use App\\Http\\Controllers\\Admin\\AreaController;",
-                          "use App\\Http\\Controllers\\Admin\\AnalyticsController;\nuse App\\Http\\Controllers\\Admin\\AreaController;", 1)
+        if 'use App\\Http\\Controllers\\Admin\\AnalyticsExportController;' not in s:
+            s = s.replace("use App\\Http\\Controllers\\Admin\\AnalyticsController;",
+                          "use App\\Http\\Controllers\\Admin\\AnalyticsController;\nuse App\\Http\\Controllers\\Admin\\AnalyticsExportController;", 1)
 
         m = list(re.finditer(r'^use\s+[\w\\]+;$', s, re.M))
         a, b = m[0].start(), m[-1].end()
         s = s[:a] + '\n'.join(sorted([x.group(0) for x in m], key=lambda l: l[4:].lower())) + s[b:]
         open(p, 'w').write(s)
         print("ruta anadida")
-
-# El menu
-p2 = 'app/Http/Middleware/HandleInertiaRequests.php'
-t = open(p2).read()
-
-if "'analytics'" in t:
-    print("nav: ya estaba")
-else:
-    ancla2 = "            ['key' => 'responses', 'url' => route('admin.responses.index')],"
-    t = t.replace(ancla2, ancla2 + "\n            ['key' => 'analytics', 'url' => route('admin.analytics')],", 1)
-    open(p2, 'w').write(t)
-    print("nav anadido")
-
-# Los contadores del menu: de 6 a 7
-for ruta in ('tests/Feature/Admin/AdminShellTest.php',
-             'tests/Feature/Admin/DashboardTest.php'):
-    u = open(ruta).read()
-    n = u.count("->has('nav', 6)")
-    if n:
-        open(ruta, 'w').write(u.replace("->has('nav', 6)", "->has('nav', 7)"))
-        print(f"{ruta.split('/')[-1]}: {n} contador(es) a 7")
 PY
+
+Y en AnalyticsController, junto a 'indexUrl':
+
+    'exportUrl' => route('admin.analytics.export'),
+
+Con el boton en Admin/Analytics/Index.tsx, en la barra de filtros:
+
+    <a href={exportUrl} className="btn btn-ghost">
+        {t('interface.export.download')}
+    </a>
+
+Anadiendo exportUrl a Props y a la desestructuracion.
 
 ## 2. Idioma
 
 python3 - <<'PY'
 p = 'lang/es/interface.php'
 s = open(p).read()
-hechos = []
 
-if "'analytics' => [" not in s:
-    bloque = """    'analytics' => [
-        'title' => 'Analisis',
-        'responses' => 'Respuestas',
-        'average' => 'Promedio',
-        'percentage' => 'Satisfaccion',
-        'over_time' => 'Como ha ido',
-        'branch' => 'Sucursal',
-        'area' => 'Area',
-        'staff' => 'Persona evaluada',
-        'channel' => 'Canal',
-        'from' => 'Desde',
-        'to' => 'Hasta',
-        'all' => 'Todo',
-        'unassigned' => 'Sin asignar',
-        'insufficient' => 'Datos insuficientes',
-        'insufficient_help' => 'Hacen falta mas respuestas para mostrar esto sin identificar a nadie.',
-        'excluded' => 'Se excluyo :count respuesta invalidada.|Se excluyeron :count respuestas invalidadas.',
-        'days_hidden' => 'Se oculta :count dia por tener menos de :threshold respuestas.|Se ocultan :count dias por tener menos de :threshold respuestas.',
-        'updated_at' => 'Calculado por ultima vez el :time',
-        'never_updated' => 'Todavia no se ha calculado nada.',
+if "'export' => [" in s:
+    print("ya estaba")
+else:
+    bloque = """    'export' => [
+        'download' => 'Descargar indicadores',
+        'section' => 'Seccion',
+        'group' => 'Grupo',
+        'total' => 'Total',
+        'period' => 'Todo el periodo',
+        'by_day' => 'Por dia',
+        'excluded' => 'Invalidadas excluidas',
     ],
 
 """
     i = s.rindex('];')
-    s = s[:i] + bloque + s[i:]
-    hechos.append('analytics')
-
-if "'analytics' => 'Analisis'" not in s:
-    ancla = "        'responses' => 'Respuestas',"
-    i = s.index("'nav' => [") if "'nav' => [" in s else -1
-    if i != -1 and ancla in s[i:]:
-        j = s.index(ancla, i)
-        fin = s.index('\n', j) + 1
-        s = s[:fin] + "        'analytics' => 'Analisis',\n" + s[fin:]
-        hechos.append('etiqueta del menu')
-
-open(p, 'w').write(s)
-print("hechos:", hechos or "nada")
+    open(p, 'w').write(s[:i] + bloque + s[i:])
+    print("anadido")
 PY
 
-## 3. El CSS
+## 3. El widget
 
-Esta en CSS-A-ANADIR.txt: una sola regla.
+public/widget.js se copia tal cual. Para usarlo, quien tenga una web pega:
+
+    <div data-encuesta="EL-TOKEN-DEL-DEPLOYMENT"></div>
+    <script src="https://tu-dominio/widget.js" async></script>
+
+Y en resources/js/app.tsx, junto al registro del service worker:
+
+    import { reportWidgetHeight } from '@/lib/widgetHeight'
+
+    reportWidgetHeight()
+
+Se llama siempre: la propia funcion comprueba si esta dentro de un iframe con
+?widget=1 y no hace nada si no lo esta.
 
 ## 4. Comprueba
 
@@ -112,11 +99,15 @@ Esta en CSS-A-ANADIR.txt: una sola regla.
     docker compose exec app vendor/bin/pint
     docker compose exec app composer check
 
-## Lo que cierra esta fase
+## Lo que NO va aqui
 
-El umbral se aplica en QueryMetrics y NADA lo esquiva: tarjetas, serie por
-dia, comparaciones por sucursal, area, persona y canal.
+    exportar respuestas individuales
+    Decision del area usuaria: sera una funcion SEPARADA, con permiso
+    especifico, justificacion y auditoria. No es "lo mismo con mas detalle":
+    es otra operacion con otro riesgo, y separarla desde el diseno evita que
+    aparezca como una casilla en un formulario.
 
-Y los dias sin datos suficientes se QUITAN del grafico en vez de dibujarse en
-cero: un punto oculto y uno con valor cero se ven igual en una linea, y eso
-haria leer una caida donde solo hay pocos datos.
+    Excel nativo (.xlsx)
+    El CSV que se genera se abre en Excel correctamente —con BOM y punto y
+    coma—. Un .xlsx de verdad necesita una libreria, y conviene decidir si
+    hace falta antes de anadir la dependencia.
