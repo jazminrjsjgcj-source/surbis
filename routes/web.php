@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\BuilderController;
 use App\Http\Controllers\Admin\DeploymentController;
 use App\Http\Controllers\Admin\DeploymentQrController;
 use App\Http\Controllers\Admin\DeviceKeyController;
+use App\Http\Controllers\Admin\MediaUploadController;
 use App\Http\Controllers\Admin\PersonController;
 use App\Http\Controllers\Admin\QuestionImportController;
 use App\Http\Controllers\Admin\ResponseController;
@@ -248,6 +249,15 @@ Route::middleware(['auth', 'organization'])->group(function (): void {
             ->name('admin.surveys.builder');
         Route::put('/admin/encuestas/{survey}/constructor', [BuilderController::class, 'update'])
             ->name('admin.surveys.builder.update');
+
+        /*
+         * Subir una imagen a la biblioteca.
+         *
+         * Cuelga de la encuesta porque el permiso es el de editarla: subir
+         * solo tiene sentido para poner la imagen en una pregunta.
+         */
+        Route::post('/admin/encuestas/{survey}/multimedia', MediaUploadController::class)
+            ->name('admin.surveys.media.upload');
 
         Route::get('/admin/encuestas/{survey}', [SurveyController::class, 'edit'])
             ->name('admin.surveys.edit');

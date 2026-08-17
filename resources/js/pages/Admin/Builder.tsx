@@ -49,6 +49,7 @@ interface Props {
     questionTypes: QuestionTypeInfo[]
     importUrl: string
     media: MediaOption[]
+    mediaUploadUrl: string
 }
 
 const MAX_TEXT = 1000
@@ -65,7 +66,7 @@ const MAX_HELP = 1000
  * grupos dejan de confundirse porque estan en columnas distintas, no porque
  * cambien de color.
  */
-export default function Builder({ survey, version, readOnly, questionTypes, importUrl, media }: Props) {
+export default function Builder({ survey, version, readOnly, questionTypes, importUrl, media, mediaUploadUrl }: Props) {
     const t = useTranslate()
     const [questions, setQuestions] = useState<Question[]>(version.questions)
     const [selected, setSelected] = useState(0)
@@ -402,6 +403,7 @@ export default function Builder({ survey, version, readOnly, questionTypes, impo
                                     isScored={tipoDe(actual.type)?.is_scored ?? false}
                                     readOnly={readOnly}
                                     media={media}
+                    mediaUploadUrl={mediaUploadUrl}
                                     onChange={(options) => update({ options })}
                                 />
                             )}

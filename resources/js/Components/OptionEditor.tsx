@@ -20,6 +20,7 @@ interface Props {
     isScored: boolean
     readOnly: boolean
     media: MediaOption[]
+    mediaUploadUrl?: string
     onChange: (options: Option[]) => void
 }
 
@@ -31,7 +32,7 @@ export default function OptionEditor({
     options,
     isScored,
     readOnly,
-    media,
+    media, mediaUploadUrl,
     onChange,
 }: Props) {
     const t = useTranslate()
@@ -270,6 +271,7 @@ export default function OptionEditor({
             <MediaPicker
                 open={eligiendoImagen !== null}
                 media={media}
+                uploadUrl={mediaUploadUrl}
                 selected={
                     eligiendoImagen === null
                         ? null

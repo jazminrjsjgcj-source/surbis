@@ -64,6 +64,7 @@ final class BuilderController extends Controller
              * miles, y el selector tiene que abrirse sin esperar. Si algun
              * dia crece, se pagina; hoy seria complicar sin medir.
              */
+            'mediaUploadUrl' => route('admin.surveys.media.upload', $survey),
             'media' => MediaItem::query()
                 ->usableBy($survey->organization_id)
                 ->orderByRaw('organization_id nulls first')

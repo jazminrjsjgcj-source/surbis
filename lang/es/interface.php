@@ -554,6 +554,11 @@ return [
     ],
 
     'media' => [
+        'upload_failed' => 'No se pudo subir la imagen.',
+        'upload' => 'Subir una imagen',
+        'uploaded' => 'Imagen subida.',
+        'uploading' => 'Subiendo...',
+        'upload_help' => 'JPG, PNG o WebP. Hasta 2 MB.',
         'pick_title' => 'Elegir una imagen',
         'search' => 'Buscar por nombre',
         'empty' => 'No hay imagenes que coincidan.',
